@@ -12,12 +12,16 @@ function Navbar() {
     { title: "Profile", link: "/profile" },
   ];
 
+  const handleLinkClick = () => {
+    setMenuOpen(false); // closes the menu
+  };
+
   return (
     <nav className="w-full bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 text-white px-4 sm:px-8 py-4 shadow-lg">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
 
         {/* Logo & Title */}
-        <Link to="/" className="flex items-center gap-4">
+        <Link to="/" className="flex items-center gap-4" onClick={handleLinkClick}>
           <img
             className="h-10 transform hover:scale-110 transition-transform duration-300"
             src="./logo.png"
@@ -32,7 +36,7 @@ function Navbar() {
         <div className="lg:hidden">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="text-yellow-400 focus:outline-none"
+            className="text-yellow-400 focus:outline-none text-2xl"
           >
             ☰
           </button>
@@ -55,7 +59,7 @@ function Navbar() {
             <Link to="/LogIn" className="px-5 py-1 border-2 border-yellow-400 text-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-black shadow-md hover:shadow-yellow-400 transition-all duration-300">
               Log In
             </Link>
-            <Link to="/SignUp"  className="px-5 py-1 bg-yellow-400 text-black rounded-lg hover:bg-white hover:text-black shadow-md hover:shadow-yellow-400 transition-all duration-300">
+            <Link to="/SignUp" className="px-5 py-1 bg-yellow-400 text-black rounded-lg hover:bg-white hover:text-black shadow-md hover:shadow-yellow-400 transition-all duration-300">
               Sign Up
             </Link>
           </div>
@@ -64,20 +68,30 @@ function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="lg:hidden mt-4 px-4 flex flex-col gap-4 text-sm font-semibold">
+        <div className="lg:hidden mt-4 px-4 flex flex-col justify-between items-center gap-4 text-sm font-semibold">
           {links.map((item, i) => (
-            <Link to={item.link} 
+            <Link
+              to={item.link}
               key={i}
+              onClick={handleLinkClick}
               className="text-white hover:text-yellow-400 transition-colors duration-300"
             >
               {item.title}
             </Link>
           ))}
           <div className="flex flex-col gap-3 mt-2">
-             <Link to="/LogIn" className="w-full py-2 border-2 border-yellow-400 text-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-black shadow-md hover:shadow-yellow-400 transition-all duration-300">
+            <Link
+              to="/LogIn"
+              onClick={handleLinkClick}
+              className="w-full py-2 px-6 border-2 border-yellow-400 text-yellow-400 rounded-lg hover:bg-yellow-400 hover:text-black shadow-md hover:shadow-yellow-400 transition-all duration-300"
+            >
               Log In
             </Link>
-           <Link to="/SignUp" className="w-full py-2 bg-yellow-400 text-black rounded-lg hover:bg-white hover:text-black shadow-md hover:shadow-yellow-400 transition-all duration-300">
+            <Link
+              to="/SignUp"
+              onClick={handleLinkClick}
+              className="w-full py-2 px-5 bg-yellow-400 text-black rounded-lg hover:bg-white hover:text-black shadow-md hover:shadow-yellow-400 transition-all duration-300"
+            >
               Sign Up
             </Link>
           </div>

@@ -102,6 +102,37 @@ router.get("/get-recent-books", async(req, res) =>{
     }
 });
 
+
+// GET trending books (sorted by views or sales or any custom field)
+router.get("/get-trending-books", async (req, res) => {
+  try {
+    // Example logic: Assuming you have a 'views' or 'sold' field to determine trending
+    const books = await Book.find().sort({ views: -1 }).limit(10); // You can change `views` to `sold` or any metric
+    return res.json({
+      status: "Success",
+      data: books,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+});
+
+
+router.get("/get-editors-choice", async (req, res) => {
+  try {
+    const books = await Book.find().sort({ sold: -1 }).limit(4); // you can change logic
+    return res.json({
+      status: "Success",
+      data: books,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+});
+
+
 //get book by id  ( public api's)
 router.get("/get-book-by-id/:id", async(req, res) =>{
     try {

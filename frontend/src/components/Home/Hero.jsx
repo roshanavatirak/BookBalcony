@@ -5,6 +5,7 @@ import {
   FaUniversity,
   FaLaptopCode,
 } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 function Hero() {
   return (
@@ -18,9 +19,11 @@ function Hero() {
         <p className="text-md md:text-lg lg:text-xl text-zinc-300">
           Explore a wide selection of engineering textbooks, academic references, and timeless reads — all in one place.
         </p>
-        <button className="mt-4 text-yellow-100 text-lg font-semibold border border-yellow-100 px-6 py-3 rounded-full hover:bg-yellow-100 hover:text-black transition duration-500">
-          Explore Collection
-        </button>
+       <Link to="/all-books">
+  <button className="mt-4 text-yellow-100 text-lg font-semibold border border-yellow-100 px-6 py-3 rounded-full hover:bg-yellow-100 hover:text-black transition duration-500">
+    Explore Collection
+  </button>
+</Link>
       </div>
 
       {/* Image + Icons Section */}
@@ -32,7 +35,7 @@ function Hero() {
         />
 
         {/* Floating Icons with adjusted positions and slow bounce */}
-        <div className="absolute top-1 left-1 text-yellow-400 text-2xl bg-white/10 p-3 rounded-full shadow-lg backdrop-blur-sm animate-slow-bounce transition-transform duration-500 hover:scale-110">
+        <div className="absolute top-1 left-1 text-yellow-400 text-2xl bg-white/10 p-4 rounded-full shadow-lg backdrop-blur-sm animate-slow-bounce transition-transform duration-500 hover:scale-110">
           <FaBook />
         </div>
         <div className="absolute bottom-12 right-8 text-blue-400 text-3xl bg-white/10 p-3 rounded-full shadow-lg backdrop-blur-sm animate-slow-bounce transition-transform duration-500 hover:scale-110">
