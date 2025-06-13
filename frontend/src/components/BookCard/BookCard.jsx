@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 function BookCard({ data }) {
   return (
-    <Link to={`/book/${data.id}`} className="group">
+    <Link to={`/view-book-details/${data._id}`} className="group">
       <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl p-4 shadow-lg hover:shadow-yellow-400 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02]">
         
         <div className="bg-zinc-900 rounded-lg overflow-hidden flex items-center justify-center h-[25vh] relative">

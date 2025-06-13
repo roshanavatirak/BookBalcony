@@ -88,9 +88,9 @@ const {authenticateToken} = require("./userAuth");
 // Sign-Up
 router.post("/sign-up", async (req, res) => {
     try {
-        const { username, email, password, address } = req.body;
+        const { username, email, password, phone } = req.body;
 
-        if (!username || !email || !password || !address) {
+        if (!username || !email || !password || !phone) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
@@ -109,6 +109,12 @@ router.post("/sign-up", async (req, res) => {
             return res.status(400).json({ message: "Password must be at least 8 characters long" });
         }
 
+        // Optional: Validate phone format
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ message: "Invalid phone number format" });
+    }
+
         // Hash Password
         const salt = await bcrypt.genSalt(12);
         const hashPass = await bcrypt.hash(password, salt);
@@ -118,7 +124,7 @@ router.post("/sign-up", async (req, res) => {
             username,
             email,
             password: hashPass,
-            address,
+            phone,
         });
         await newUser.save();
 
@@ -129,45 +135,86 @@ router.post("/sign-up", async (req, res) => {
     }
 });
 
-// Sign-In
+
+// Sign-In Route
 router.post("/sign-in", async (req, res) => {
-    try {
-        const { username, password } = req.body;
+  try {
+    const { emailOrMobile, password } = req.body;
 
-        // Check if the user exists
-        const existingUser = await User.findOne({ username });
-        if (!existingUser) {
-            return res.status(400).json({ message: "Invalid credentials. Please try again." });
-        }
-
-        // Validate password
-        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-        if (!isPasswordValid) {
-            return res.status(400).json({ message: "Invalid credentials. Please try again." });
-        }
-
-        const authClaims=[
-            {name : existingUser.username},
-            {role: existingUser.role},
-    ]
-        const token = jwt.sign({authClaims}, "bookStore123", {expiresIn:"30d"});
-        return res.status(200).json({ id:existingUser._id, role:existingUser.role, token:token});
-    } catch (error) {
-        console.error("Error during sign-in:", error);
-        res.status(500).json({ message: "Internal server error" });
+    if (!emailOrMobile || !password) {
+      return res.status(400).json({ message: "Email/Phone and password are required." });
     }
+
+    // Check if the user exists using email or phone
+    const existingUser = await User.findOne({
+      $or: [{ email: emailOrMobile }, { phone: emailOrMobile }],
+    });
+
+    if (!existingUser) {
+      return res.status(400).json({ message: "Invalid credentials. Please try again." });
+    }
+
+    // Validate password
+    const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Invalid credentials. Please try again." });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: existingUser._id,
+        role: existingUser.role,
+        name: existingUser.username,
+      },
+      "bookStore123", // Replace with secure env variable in production
+      { expiresIn: "30d" }
+    );
+
+    return res.status(200).json({
+      id: existingUser._id,
+      role: existingUser.role,
+      token: token,
+    });
+  } catch (error) {
+    console.error("Error during sign-in:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
+
 
 //get-user-information
-router.get("/get-user-information", authenticateToken, async(req, res)=>{
-    try {
-        const {id}= req.headers;
-        const data = await User.findById(id).select('-password');
-        return res.status(200).json(data);
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+// router.get("/get-user-information", authenticateToken, async(req, res)=>{
+//     try {
+//         const {id}= req.headers;
+//         const data = await User.findById(id).select('-password');
+//         return res.status(200).json(data);
+//     } catch (error) {
+//         res.status(500).json({ message: "Internal server error" });
+//     }
+// });
+
+router.get("/get-user-information", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    
+    if (!id) {
+      return res.status(400).json({ message: "Missing user ID in headers" });
     }
+
+    const data = await User.findById(id).select("-password");
+
+    if (!data) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in /get-user-information:", error.message);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
+
 
 //update address
 router.put("/update-address", authenticateToken, async (req, res) => {

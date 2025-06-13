@@ -30,8 +30,8 @@ function Footer() {
           <h2 className="text-lg font-semibold mb-3">Connect With Us</h2>
           <div className="flex space-x-5 text-2xl text-zinc-400">
             <a href="#" className="hover:text-pink-500 transition"><FaInstagram /></a>
-            <a href="#" className="hover:text-blue-500 transition"><FaLinkedin /></a>
-            <a href="#" className="hover:text-gray-300 transition"><FaGithub /></a>
+            <a href="https://www.linkedin.com/in/roshan-avatirak/" className="hover:text-blue-500 transition"><FaLinkedin /></a>
+            <a href="https://github.com/roshanavatirak" className="hover:text-gray-300 transition"><FaGithub /></a>
           </div>
         </div>
 

@@ -41,7 +41,7 @@ function EditorsChoice() {
             className="relative group transition-transform duration-500 hover:scale-105 border border-transparent hover:border-purple-500 rounded-2xl shadow-lg overflow-hidden bg-zinc-800 hover:bg-zinc-900"
           >
             {/* Badge */}
-            <span className="absolute top-2 right-2 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-20">
+            <span className="absolute top-2 left-2 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-20">
               Editor's Pick
             </span>
 

@@ -11,17 +11,22 @@ const user = new mongoose.Schema({
         required: true,
         unique:true,
     },
+     phone: {
+    type: String,
+    required: true,
+    unique:true,
+  },
     password:{
         type: String,
         required: true,
     },
     address:{
         type: String,
-        required: true,
+        
     },
     avatar:{
         type: String,
-        default:"https://www.freepik.com/free-photos-vectors/default-user",
+        default:"https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg?ga=GA1.1.710266921.1749747219&semt=ais_hybrid&w=740",
     },
     role:{
         type : String,
