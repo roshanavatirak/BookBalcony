@@ -17,7 +17,21 @@ import { authActions } from "./store/auth"
 import Favourites from './components/Profile/Favourites';
 import UserOrderHistory from './components/Profile/UserOrderHistory';
 import Settings from './components/Profile/Settings';
+import Admin from "./components/Navbar/AdminNavbar"
+import AdminProfile from './components/Admin/AdminProfile';
+import AddBook from './components/Admin/AddBook';
+import AdminUsers from './components/Admin/AdminUsers';
+import BecomeSeller from './components/Profile/BecomeSeller';
+import SellerForm from './components/Seller/SellerForm';
+import BankDetailsForm from './components/Seller/BankDetailsForm';
+import SellerAddressForm from './components/Seller/SellerAddressForm';
+import SellerPreview from './components/Seller/SellerPreview';
+import VerifiedSeller from './components/Profile/VerifiedSeller';
+import SellerAccountInfo from './components/SellerProfile/SellerAccountInfo';
 
+import SellerSidebar from './components/SellerProfile/SellerSidebar';
+import SellerProfile1 from './pages/SellerProfile';
+import SellerBankInfo from './components/SellerProfile/SellerBankInfo';
 const App=()=> {
   const dispatch=useDispatch();
   const role= useSelector((state)=>state.auth.role);
@@ -36,7 +50,8 @@ const App=()=> {
     <div>
      
         <ScrollToTop/>
-        <Navbar/>
+        {role === "admin" ? <Admin /> : <Navbar />}
+
         <Routes>
           <Route exact path="/" element={<Home/>}/>
           <Route  path="/all-books" element={<AllBooks/>}/>
@@ -45,11 +60,35 @@ const App=()=> {
           <Route  path="/profile" element={<Profile/>}>
           <Route index element={<Favourites/>}/>
           <Route path="/profile/orderHistory" element={<UserOrderHistory/>}/>
+           <Route path="/profile/become-seller" element={<BecomeSeller/>}/>
           <Route path="/profile/settings" element={<Settings/>}/>
-          </Route>
+           <Route path="/profile/verified-seller-info" element={<VerifiedSeller />} />
+         </Route>
+
+   <Route path="/seller/profile" element={<SellerProfile1 />}>
+  <Route index element={<SellerAccountInfo />} />  // default child route
+  <Route path="/seller/profile/bank-info" element={<SellerBankInfo />} />
+</Route>
+
+
+
+          
           <Route  path="/signin" element={<Login/>}/>
           <Route  path="/Signup" element={<SignUp/>}/>
           <Route  path="/view-book-details/:id" element={<ViewBookDetails/>}/>
+         
+
+        <Route path="/Admin/profile" element={<AdminProfile />} />
+<Route path="/Admin/AddBook" element={<AddBook />} />
+<Route path="/Admin/AdminUsers" element={<AdminUsers/>} />
+
+<Route path="/seller/form" element={<SellerForm />} />
+<Route path="/seller/bank-details" element={<BankDetailsForm />} />
+<Route path="/seller/pickup-address" element={<SellerAddressForm />} />
+<Route path="/seller/form-preview" element={<SellerPreview />} />
+
+
+
         </Routes>
         <Footer/>
       

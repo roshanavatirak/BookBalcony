@@ -43,6 +43,9 @@ const SignUp = () => {
       });
 
       setSuccess(response.data.message);
+
+       localStorage.setItem("showOnboarding", "true");
+       
       setTimeout(() => {
         navigate("/signin");
       }, 2000); // Redirect after 2 seconds

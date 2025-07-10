@@ -4,30 +4,55 @@ const jwt = require("jsonwebtoken");
 const Book = require("../models/book");
 const {authenticateToken} = require("./userAuth");
 
-//add book -- admin - post (admin api's)
+// add book -- admin - post (admin api)
 router.post("/add-book", authenticateToken, async (req, res) => {
-    try {
-        const {id} =req.headers;
-        const user = await User.findById(id);
+  try {
+    const { id } = req.headers;
+    const user = await User.findById(id);
 
-        if(user.role !== "admin"){
-           return  res.status(400).json({ message: "You are not having access to perform admin work" });
-        }
-        const book = new Book({
-            url: req.body.url,
-            title: req.body.title,
-            author:req.body.author,
-            price: req.body.price,
-            desc: req.body.desc,
-            language: req.body.language,
-
-        });
-        await book.save();
-        res.status(200).json({message:"Book added successfully"});
-    } catch (error) {
-        console.error("Error during book-admin:", error);
-        res.status(500).json({ message: "Internal server error" });
+    if (!user || user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Access denied: Admin privileges required" });
     }
+
+    const {
+      url,
+      title,
+      author,
+      price,
+      desc,
+      language,
+      category,
+      editionOrPublishYear,
+      stock,
+    } = req.body;
+
+    // Basic validation (can be extended)
+    if (!url || !title || !author || !price || !desc || !language) {
+      return res.status(400).json({ message: "Please fill all required fields" });
+    }
+
+    const newBook = new Book({
+      url,
+      title,
+      author,
+      price,
+      desc,
+      language,
+      category: category || "General",
+      editionOrPublishYear: editionOrPublishYear || "N/A",
+      stock: stock || 1,
+      seller: user._id,
+    });
+
+    await newBook.save();
+
+    return res.status(200).json({ message: "✅ Book added successfully!" });
+  } catch (error) {
+    console.error("❌ Error during admin book addition:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 //update book put (admin api's)
@@ -90,7 +115,7 @@ router.get("/get-all-books", async(req, res) =>{
 //get recently added books limit 4  ( public api's)
 router.get("/get-recent-books", async(req, res) =>{
     try {
-        const books = await Book.find().sort({createdAt : -1}).limit(4);
+        const books = await Book.find().sort({createdAt : -1}).limit(20);
         return res.json({
             status:"Success",
             data:books,
@@ -148,5 +173,7 @@ router.get("/get-book-by-id/:id", async(req, res) =>{
         return res.status(500).json({message:"An error occurred"});
     }
 });
+
+
 
 module.exports = router;

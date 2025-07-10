@@ -193,6 +193,22 @@ router.post("/sign-in", async (req, res) => {
 //         res.status(500).json({ message: "Internal server error" });
 //     }
 // });
+// ✅ Get current user profile
+router.get('/get-user-profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.headers.id;
+    const user = await User.findById(userId).select('username email phone avatar');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ user });
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 router.get("/get-user-information", authenticateToken, async (req, res) => {
   try {
@@ -226,5 +242,30 @@ router.put("/update-address", authenticateToken, async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Internal server error" });
     }
-})
+});
+
+
+router.post("/add-address", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const { address } = req.body; // ✅ Fix: extract the address object correctly
+
+    if (!address || typeof address !== "object") {
+      return res.status(400).json({ message: "Invalid address format" });
+    }
+
+     console.log("🛠️ Received address:", address); // ADD THIS
+    console.log("👤 User ID:", id);
+
+    await User.findByIdAndUpdate(id, { address });
+
+    return res.status(200).json({ message: "Address added successfully" });
+  } catch (error) {
+    console.error("Error updating address:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+
 module.exports = router;

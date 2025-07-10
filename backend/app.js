@@ -1,31 +1,35 @@
 const express = require("express");
-const app = express();
 const cors = require("cors");
 require("dotenv").config();
-require("./conn/conn");
+require("./conn/conn"); // Make sure this uses CommonJS too
 
-const user =require("./routes/user");
-const Books= require("./routes/book");
-const Favourite = require("./routes/favourite");
-const Cart = require("./routes/cart");
-const Order = require("./routes/order");
+const paymentRoutes = require("./routes/paymentRoutes");
+const userRoutes = require("./routes/user");
+const bookRoutes = require("./routes/book");
+const favouriteRoutes = require("./routes/favourite");
+const cartRoutes = require("./routes/cart");
+const orderRoutes = require("./routes/order");
+const adminRoutes = require("./routes/admin");
+const sellerRoutes = require("./routes/seller");
 
 
-
-//
-// app.get("/", (req, res) => {
-//     res.send("Hello Roshan");
-// });
+const app = express();
 
 app.use(cors());
 app.use(express.json());
-//routes
-app.use("/api/v1", user);
-app.use("/api/v1", Books);
-app.use("/api/v1", Favourite);
-app.use("/api/v1", Cart);
-app.use("/api/v1", Order);
-//creating port
-app.listen(process.env.PORT, () => {
-    console.log(`Server Started at port ${process.env.PORT}`);
+
+// API routes
+app.use("/api/v1", userRoutes);
+app.use("/api/v1", bookRoutes);
+app.use("/api/v1", favouriteRoutes);
+app.use("/api/v1", cartRoutes);
+app.use("/api/v1", orderRoutes);
+app.use("/api/v1", adminRoutes);
+app.use("/api/v1/payment", paymentRoutes);
+app.use("/api/v1", sellerRoutes);
+
+// Start server
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });

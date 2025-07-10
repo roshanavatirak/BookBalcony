@@ -55,7 +55,7 @@ function Footer() {
 
       {/* Bottom Line */}
      <div className="text-center text-zinc-500 text-sm mt-10 border-t border-zinc-700 pt-6">
-  &copy; {new Date().getFullYear()} <span className="text-white font-semibold">BookBalcanoy</span> — A Legacy Curated by <span className="text-yellow-400 font-medium">RAO</span>. All rights reserved.
+  &copy; {new Date().getFullYear()} <span className="text-white font-semibold">BookBalcanoy</span> — A Legacy Curated by <span className="text-yellow-400 font-medium">RAO DevStudio</span>. All rights reserved.
 </div>
 
     </footer>

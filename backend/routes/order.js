@@ -4,41 +4,45 @@ const Book = require("../models/book");
 const Order = require("../models/order");
 const User = require("../models/user");
 
-//place order
-router.post("/place-order", authenticateToken, async(req ,res)=>{
-    try{
-        const {id}= req.headers;
-        const {order}=req.body;
-        for(const orderData of order){
-            const newOrder = new Order({user: id, book: orderData._id});
-            const orderDataFromDb = await newOrder.save();
+router.post("/place-order", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const { order } = req.body;
 
-            await User.findByIdAndUpdate(id,{
-                $push:{orders:orderDataFromDb._id},
-            });
+    for (const orderData of order) {
+      const newOrder = new Order({
+        user: id,
+        book: orderData.book || orderData._id,
+        orderStatus: orderData.orderStatus || "Order Placed",
+        paymentStatus: orderData.paymentStatus || "Success",
+      });
 
-            await User.findByIdAndUpdate(id,{
-                $pull: {cart:orderData._id},
-            });
-        }
+      const orderDataFromDb = await newOrder.save();
 
-        return res.json({
-            status:"Success",
-            message:"Order Placed Successfully",
-        });
-    } catch (error){
-        console.log(error);
-        return res.status(500).json({message: "An error occurred"});
+      await User.findByIdAndUpdate(id, {
+        $push: { orders: orderDataFromDb._id },
+        $pull: { cart: orderData.book || orderData._id },
+      });
     }
+
+    return res.json({
+      status: "Success",
+      message: "Order Placed Successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
 });
+
 
 //get order history of particular user
 router.get("/get-order-history", authenticateToken, async (req, res)=>{
     try{
         const {id}= req.headers;
-        const userData = await User.findById().populate({
+        const userData = await User.findById(id).populate({
             path:"orders",
-            populate:{path:"book"},
+            populate:{path:"book",select: "title desc price url",},
         });
 
         const ordersData= userData.orders.reverse();

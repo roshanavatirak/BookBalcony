@@ -42,12 +42,15 @@ const Login = () => {
 
       // ✅ Store login info in localStorage for persistence (30 days)
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("role", response.datarole);
+      localStorage.setItem("role", response.data.role);
       localStorage.setItem("id", response.data.id);
 
+      console.log(response.data)
       // ✅ Update Redux store
       dispatch(authActions.login());
       dispatch(authActions.changeRole(role));
+
+
 
       alert("Login successful!");
       navigate("/");

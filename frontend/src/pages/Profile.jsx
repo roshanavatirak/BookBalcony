@@ -35,14 +35,14 @@ const Profile = () => {
   }, []);
 
   return (
-    <div className="bg-zinc-900 px-2 md:px-12 flex flex-col md:flex-row h-screen py-8 gap-4 text-white">
+    <div className="bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 px-2 md:px-12 flex flex-col md:flex-row py-8 gap-4 text-white">
       {!userData ? (
         <div className="w-full h-full flex items-center justify-center">
           <Loader />
         </div>
       ) : (
         <>
-          <div className="flex flex-col md:flex-row min-h-screen w-full">
+          <div className="flex flex-col md:flex-row min-h-screen w-full gap-4">
   <div className="w-full md:w-1/4 xl:w-1/5">
     <Sidebar data={userData} />
   </div>

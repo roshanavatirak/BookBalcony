@@ -9,3 +9,4 @@ console.log("connected to database");
     }
 };
 conn();
+module.exports = conn;
