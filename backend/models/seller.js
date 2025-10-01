@@ -51,6 +51,11 @@ const sellerSchema = new mongoose.Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
+
+    applicationSubmittedAt: {
+    type: Date,
+    default: Date.now, // Set automatically when seller is created
+  },
   },
   { timestamps: true }
 );

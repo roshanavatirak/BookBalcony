@@ -19,7 +19,7 @@ import { authActions } from "../../store/auth";
 
 const userLinks = [
   { title: "Dashboard", link: "/admin/dashboard", icon: <FaTachometerAlt /> },
-  { title: "Users", link: "/admin/AdminUsers", icon: <FaUsers /> },
+  { title: "Users", link: "/admin/Users-List", icon: <FaUsers /> },
   { title: "Books", link: "/admin/books", icon: <FaBook /> },
   { title: "Add Book", link: "/admin/Addbook", icon: <FaPlus /> },
   { title: "Manage Orders", link: "/admin/orders", icon: <FaTruck /> },
@@ -28,7 +28,7 @@ const userLinks = [
 
 const sellerLinks = [
   { title: "Seller Dashboard", link: "/seller/dashboard", icon: <FaStore /> },
-  { title: "All Sellers", link: "/seller/list", icon: <FaUsers /> },
+  { title: "All Sellers", link: "/admin/Sellers-List", icon: <FaUsers /> },
   { title: "Products", link: "/seller/products", icon: <FaClipboardList /> },
   { title: "Add Product", link: "/seller/add", icon: <FaPlus /> },
   { title: "Seller Orders", link: "/seller/orders", icon: <FaTruck /> },

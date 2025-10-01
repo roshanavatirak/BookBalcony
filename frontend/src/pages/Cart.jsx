@@ -72,7 +72,20 @@ const Cart = () => {
     fetchCart();
   }, []);
 
- 
+ const placeOrdernew = () => {
+  if (cart.length === 0) {
+    alert("Your cart is empty!");
+    return;
+  }
+
+  // Navigate to checkout page with all cart items in state
+  navigate(`/checkout/cart`, {
+    state: {
+      cartItems: cart
+    },
+  });
+};
+
  
 
  return (
@@ -153,7 +166,7 @@ const Cart = () => {
                 Total Amount: ₹ {totalAmount}
               </h2>
               <button
-                onClick={placeOrder}
+                onClick={placeOrdernew}
                 disabled={placingOrder}
                 className="mt-3 sm:mt-0 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition duration-300 disabled:opacity-50"
               >

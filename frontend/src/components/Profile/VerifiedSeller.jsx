@@ -3,7 +3,7 @@ import { FaCheckCircle, FaEnvelope, FaHeadset, FaBug } from 'react-icons/fa';
 
 const VerifiedSeller = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-zinc-800 to-gray-900 text-white py-10 px-4 sm:px-8">
+    <div className="min-h-screen bg-zinc-900/50 rounded-3xl p-4 sm:p-8 text-white shadow-xl border border-zinc-700">
       <div className="max-w-4xl mx-auto bg-zinc-900/70 rounded-3xl shadow-2xl p-8 md:p-12 border border-yellow-400">
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-yellow-400 mb-6 flex items-center gap-3">

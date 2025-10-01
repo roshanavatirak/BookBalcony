@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
-const Book = require("../models/book");
+const Book = require("../models/Book");
 const {authenticateToken} = require("./userAuth");
 
 // add book -- admin - post (admin api)

@@ -11,6 +11,9 @@ const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/order");
 const adminRoutes = require("./routes/admin");
 const sellerRoutes = require("./routes/seller");
+const sellerBookRoutes = require("./routes/sellerBookRoutes");
+const premiumRoutes = require("./routes/premiumRoutes");
+const sellerOrder = require("./routes/sellerOrder");
 
 
 const app = express();
@@ -26,7 +29,10 @@ app.use("/api/v1", cartRoutes);
 app.use("/api/v1", orderRoutes);
 app.use("/api/v1", adminRoutes);
 app.use("/api/v1/payment", paymentRoutes);
-app.use("/api/v1", sellerRoutes);
+app.use("/api/v1/seller", sellerRoutes);
+app.use("/api/v1", sellerBookRoutes);
+app.use("/api/v1/premium", premiumRoutes);
+app.use("/api/v1", sellerOrder);
 
 // Start server
 const PORT = process.env.PORT || 4000;

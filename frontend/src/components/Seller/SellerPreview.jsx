@@ -68,13 +68,13 @@ const SellerPreview = () => {
 
   try {
     const response = await axios.post(
-      "http://localhost:3000/api/v1/become-seller",
+      "http://localhost:3000/api/v1/seller/become-seller",
       payload,
       { headers }
     );
     alert(response.data.message || "Seller registered successfully!");
     localStorage.removeItem("sellerDetails");
-    navigate("/");
+    navigate("/profile/Submitted");
   } catch (err) {
     console.error(err);
     alert("Failed to register seller. Check all fields are valid.");
@@ -244,8 +244,10 @@ const SellerPreview = () => {
             >
               Submit & Become Seller
             </button>
+            
           </div>
         </form>
+        
       </div>
     </div>
   );

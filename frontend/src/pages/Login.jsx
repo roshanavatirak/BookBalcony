@@ -47,7 +47,7 @@ const Login = () => {
 
       console.log(response.data)
       // ✅ Update Redux store
-      dispatch(authActions.login());
+      dispatch(authActions.login(response.data));
       dispatch(authActions.changeRole(role));
 
 
