@@ -29,7 +29,7 @@ const userLinks = [
 const sellerLinks = [
   { title: "Seller Dashboard", link: "/seller/dashboard", icon: <FaStore /> },
   { title: "All Sellers", link: "/admin/Sellers-List", icon: <FaUsers /> },
-  { title: "Products", link: "/seller/products", icon: <FaClipboardList /> },
+  { title: "Products", link: "/Admin/Seller-Products", icon: <FaClipboardList /> },
   { title: "Add Product", link: "/seller/add", icon: <FaPlus /> },
   { title: "Seller Orders", link: "/seller/orders", icon: <FaTruck /> },
   { title: "Seller Settings", link: "/seller/settings", icon: <FaTags /> },

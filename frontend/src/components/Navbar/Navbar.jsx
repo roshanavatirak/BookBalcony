@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useSelector, useDispatch } from 'react-redux';
@@ -22,23 +22,30 @@ import {
   FaHeart,
   FaHistory,
   FaExclamationTriangle,
+  FaBriefcase,
 } from 'react-icons/fa';
 
-function Navbar() {
+// ✅ NOW ACCEPTS SELLER AS PROP - SAME AS SIDEBAR
+function Navbar({ seller }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [isSellerApproved, setIsSellerApproved] = useState(false);
   const [sellerMode, setSellerMode] = useState(localStorage.getItem('sellerMode') === 'true');
   const [userProfile, setUserProfile] = useState(null);
-  const [sellerInfo, setSellerInfo] = useState(null);
+  const [sellerInfo, setSellerInfo] = useState(seller || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sellerFetchError, setSellerFetchError] = useState(null);
 
   const location = useLocation();
   const currentPath = location.pathname;
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // ✅ Ref to track polling interval
+  const pollingIntervalRef = useRef(null);
+  const lastFetchTimeRef = useRef(0);
 
   // Default avatar fallback
   const getAvatarSrc = (avatar) => {
@@ -48,142 +55,292 @@ function Navbar() {
     return avatar.startsWith("http") ? avatar : `http://localhost:3000/${avatar}`;
   };
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!isLoggedIn) {
-        setLoading(false);
-        return;
+  // ✅ Enhanced data extraction with debugging
+  const extractUserData = (apiResponse) => {
+    console.group('🔍 User Data Extraction Debug (Navbar)');
+    console.log('Full API Response:', apiResponse);
+
+    try {
+      let userData = null;
+
+      if (apiResponse?.data?.data) {
+        console.log('✅ Found data at: apiResponse.data.data');
+        userData = apiResponse.data.data;
+      }
+      else if (apiResponse?.data && (apiResponse.data.username || apiResponse.data.email)) {
+        console.log('✅ Found data at: apiResponse.data');
+        userData = apiResponse.data;
+      }
+      else if (apiResponse?.username || apiResponse?.email) {
+        console.log('✅ Found data at: apiResponse (root)');
+        userData = apiResponse;
       }
 
-      const token = localStorage.getItem('token');
-      const id = localStorage.getItem('id');
+      console.log('Extracted userData:', userData);
       
-      if (!token || !id) {
-        console.log('No token or id found in localStorage');
-        setLoading(false);
-        return;
+      if (!userData) {
+        console.error('❌ No user data found in any expected location');
+        console.groupEnd();
+        return null;
       }
 
-      try {
-        setError(null);
+      if (!userData.username && !userData.email) {
+        console.error('❌ User data missing required fields (username/email)');
+        console.groupEnd();
+        return null;
+      }
+
+      console.log('✅ Successfully extracted user data:', {
+        username: userData.username,
+        email: userData.email,
+        isSeller: userData.isSeller,
+        sellerApplicationStatus: userData.sellerApplicationStatus,
+        hasAvatar: !!userData.avatar
+      });
+      console.groupEnd();
+
+      return userData;
+    } catch (err) {
+      console.error('❌ Error extracting user data:', err);
+      console.groupEnd();
+      return null;
+    }
+  };
+
+  // ✅ Update sellerInfo when seller prop changes
+  useEffect(() => {
+    console.log('🔄 Seller prop changed:', seller);
+    setSellerInfo(seller || null);
+  }, [seller]);
+
+  // ✅ AUTOMATIC TOGGLE BASED ON ROUTE
+  useEffect(() => {
+    if (!isLoggedIn || !isSellerApproved) return;
+
+    const isSellerRoute = currentPath.startsWith('/seller/');
+    const isUserRoute = !isSellerRoute;
+
+    console.log('📍 Route changed:', currentPath);
+    console.log('🔍 Is seller route?', isSellerRoute);
+    console.log('🏪 Current seller mode:', sellerMode);
+
+    // Auto-switch to seller mode if on seller route
+    if (isSellerRoute && !sellerMode) {
+      console.log('🔄 Auto-switching to SELLER mode (on seller route)');
+      setSellerMode(true);
+      localStorage.setItem('sellerMode', 'true');
+    }
+    // Auto-switch to user mode if on user route
+    else if (isUserRoute && sellerMode && !currentPath.includes('/profile')) {
+      console.log('🔄 Auto-switching to USER mode (on user route)');
+      setSellerMode(false);
+      localStorage.setItem('sellerMode', 'false');
+    }
+  }, [currentPath, isSellerApproved, isLoggedIn, sellerMode]);
+
+  // ✅ FETCH USER DATA WITH REAL-TIME UPDATES
+  const fetchUserData = useCallback(async (isPolling = false) => {
+    // Prevent too frequent polling (minimum 2 seconds between requests)
+    const now = Date.now();
+    if (isPolling && now - lastFetchTimeRef.current < 2000) {
+      return;
+    }
+    lastFetchTimeRef.current = now;
+
+    if (!isPolling) {
+      console.log('🚀 Starting fetchUserData (Navbar)...');
+    }
+    
+    if (!isLoggedIn) {
+      if (!isPolling) console.log('❌ User not logged in, skipping fetch');
+      setLoading(false);
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    const id = localStorage.getItem('id');
+    
+    if (!isPolling) {
+      console.log('Token exists:', !!token);
+      console.log('User ID:', id);
+    }
+
+    if (!token || !id) {
+      console.error('❌ Missing token or ID');
+      setError('Authentication data missing. Please log in again.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setError(null);
+      setSellerFetchError(null);
+      
+      if (!isPolling) console.log('📡 Fetching user profile...');
+      
+      // Fetch user profile
+      const userRes = await axios.get(`http://localhost:3000/api/v1/get-user-information`, {
+        headers: { 
+          authorization: `Bearer ${token}`,
+          id: id 
+        },
+      });
+      
+      if (!isPolling) console.log('📥 User API Response received:', userRes.status);
+      
+      const userData = extractUserData(userRes.data);
+      
+      if (!userData) {
+        throw new Error('Failed to extract user data from API response');
+      }
+
+      // ✅ Check if data actually changed before updating state
+      const hasChanged = JSON.stringify(userProfile) !== JSON.stringify(userData);
+      
+      if (hasChanged || !userProfile) {
+        setUserProfile(userData);
+        if (!isPolling) console.log('✅ User profile updated');
+      }
+
+      // ✅ Use sellerApplicationStatus to determine seller approval
+      const applicationStatus = userData.sellerApplicationStatus;
+      const userIsSeller = userData.isSeller === true || userData.isSeller === 'true';
+      
+      if (!isPolling) {
+        console.log('📋 Application Status:', applicationStatus);
+        console.log('🏪 User isSeller flag:', userIsSeller);
+      }
+
+      // ✅ Check if seller is approved based on application status
+      const newIsSellerApproved = applicationStatus === 'Accepted' && userIsSeller;
+      
+      if (newIsSellerApproved !== isSellerApproved) {
+        console.log(`🔄 Seller approval status changed: ${isSellerApproved} → ${newIsSellerApproved}`);
+        setIsSellerApproved(newIsSellerApproved);
         
-        // Fetch user profile using the correct endpoint from your backend
-        console.log('Fetching user data with ID:', id);
-        const userRes = await axios.get(`http://localhost:3000/api/v1/get-user-information`, {
-          headers: { 
-            authorization: `Bearer ${token}`,
-            id: id 
-          },
-        });
-        
-        console.log('User API Response:', userRes.data);
-        const userData = userRes.data.success  && userRes.data.data  ? userRes.data.data : userRes.data;
-        
-        console.log('Extracted user data:', userData);
-        // Your backend returns user data directly at root level (not nested)
-        if (userData.data && (userData.username || userData.email)) {
-          console.log('Setting user profile:', userData.data);
-          setUserProfile(userData);
-
-          // ✅ FIXED: Check if user.isSeller is true from user data
-          const userIsSeller = userData.isSeller;
-          console.log('User isSeller flag:', userIsSeller);
-
-          if (userIsSeller) {
-            // User has isSeller flag, now check seller status
-            try {
-              const sellerRes = await axios.get(`http://localhost:3000/api/v1/seller/check/${id}`, {
-                headers: { authorization: `Bearer ${token}` },
-              });
-
-              console.log('Seller check response:', sellerRes.data);
-
-              if (sellerRes.data?.isSeller && sellerRes.data?.status === 'Approved') {
-                setIsSellerApproved(true);
-                setSellerInfo({ status: 'Approved', ...sellerRes.data });
-                const savedMode = localStorage.getItem('sellerMode') === 'true';
-                setSellerMode(savedMode);
-              } else {
-                // User has isSeller flag but seller record shows different status
-                setIsSellerApproved(false);
-                setSellerInfo({ status: sellerRes.data?.status || 'Pending' });
-                setSellerMode(false);
-                localStorage.removeItem('sellerMode');
-              }
-            } catch (sellerCheckErr) {
-              console.log('Seller check failed:', sellerCheckErr.response?.status);
-              
-              // ✅ FIXED: If user.isSeller is true but no seller record exists (404)
-              // This means data inconsistency - user was marked as seller but no seller record
-              if (sellerCheckErr.response?.status === 404) {
-                console.warn('Data inconsistency: User has isSeller=true but no seller record found');
-                // Set as pending application status for UI purposes
-                setIsSellerApproved(false);
-                setSellerInfo({ status: 'DataInconsistency' });
-                setSellerMode(false);
-                localStorage.removeItem('sellerMode');
-              } else {
-                setIsSellerApproved(false);
-                setSellerMode(false);
-                setSellerInfo(null);
-              }
-            }
-
-            // Try to get detailed seller info if we think user is a seller
-            if (isSellerApproved || sellerInfo?.status === 'Approved') {
-              try {
-                const sellerInfoRes = await axios.get(`http://localhost:3000/api/v1/seller/get-seller-info`, {
-                  headers: { authorization: `Bearer ${token}` },
-                });
-                console.log('Seller info response:', sellerInfoRes.data);
-                setSellerInfo(prev => ({ ...prev, ...sellerInfoRes.data.data }));
-              } catch (sellerErr) {
-                console.log('Seller info fetch failed:', sellerErr.response?.status);
-              }
-            }
-          } else {
-            // User doesn't have isSeller flag
-            setIsSellerApproved(false);
-            setSellerMode(false);
-            setSellerInfo(null);
-            localStorage.removeItem('sellerMode');
-          }
+        if (newIsSellerApproved) {
+          const savedMode = localStorage.getItem('sellerMode') === 'true';
+          setSellerMode(savedMode);
+          console.log('🔄 Seller mode set to:', savedMode);
         } else {
-          console.warn('User data structure unexpected:', userData.data);
-          setError('Unable to load user profile');
+          setSellerMode(false);
+          localStorage.removeItem('sellerMode');
+        }
+      }
+
+    } catch (err) {
+      if (!isPolling) console.error('❌ Error in fetchUserData:', err);
+      
+      if (err.response) {
+        const status = err.response.status;
+        
+        if (!isPolling) {
+          console.error('HTTP Error Status:', status);
+          console.error('Error Response:', err.response.data);
         }
 
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        
-        if (err.response?.status === 401 || err.response?.status === 403) {
+        if (status === 401 || status === 403) {
           setError('Session expired. Please log in again.');
-          handleLogout();
-        } else if (err.response?.status === 404) {
+          setTimeout(() => handleLogout(), 2000);
+        } else if (status === 404) {
           setError('User not found. Please log in again.');
-          handleLogout();
-        } else if (err.response?.status === 500) {
+          setTimeout(() => handleLogout(), 2000);
+        } else if (status === 500) {
           setError('Server error. Please try again later.');
         } else {
-          setError('Unable to load profile data');
+          setError(`Error: ${err.response.data?.message || 'Unable to load profile'}`);
         }
-      } finally {
-        setLoading(false);
+      } else if (err.request) {
+        if (!isPolling) console.error('❌ No response from server');
+        setError('Cannot connect to server. Please check your connection.');
+      } else {
+        if (!isPolling) console.error('❌ Error:', err.message);
+        setError(err.message || 'Unable to load profile data');
       }
-    };
+    } finally {
+      if (!isPolling) {
+        setLoading(false);
+        console.log('✅ fetchUserData completed (Navbar)');
+      }
+    }
+  }, [isLoggedIn, userProfile, isSellerApproved]);
 
-    fetchUserData();
+  // ✅ INITIAL FETCH
+  useEffect(() => {
+    fetchUserData(false);
   }, [isLoggedIn]);
 
-  // Debug: Log userProfile whenever it changes
+  // ✅ REAL-TIME POLLING FOR STATUS UPDATES
   useEffect(() => {
-    console.log('UserProfile updated:', userProfile);
+    if (!isLoggedIn) {
+      // Clear polling if user logs out
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // Start polling every 5 seconds for status updates
+    pollingIntervalRef.current = setInterval(() => {
+      fetchUserData(true);
+    }, 5000);
+
+    console.log('🔄 Started real-time polling for seller status updates');
+
+    // Cleanup on unmount
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+        console.log('🛑 Stopped real-time polling');
+      }
+    };
+  }, [isLoggedIn, fetchUserData]);
+
+  // ✅ CUSTOM EVENT LISTENER FOR MANUAL STATUS REFRESH
+  useEffect(() => {
+    const handleSellerStatusUpdate = () => {
+      console.log('🔔 Manual seller status update triggered');
+      fetchUserData(false);
+    };
+
+    window.addEventListener('sellerStatusUpdated', handleSellerStatusUpdate);
+
+    return () => {
+      window.removeEventListener('sellerStatusUpdated', handleSellerStatusUpdate);
+    };
+  }, [fetchUserData]);
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('👤 UserProfile state updated (Navbar):', userProfile);
   }, [userProfile]);
 
+  useEffect(() => {
+    console.log('🏪 SellerInfo state updated (Navbar):', sellerInfo);
+  }, [sellerInfo]);
+
+  useEffect(() => {
+    if (error) {
+      console.error('❌ Error state updated (Navbar):', error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (sellerFetchError) {
+      console.error('⚠️ Seller fetch error (Navbar):', sellerFetchError);
+    }
+  }, [sellerFetchError]);
+
   const handleToggleMode = () => {
-    if (!isSellerApproved) return;
+    if (!isSellerApproved) {
+      console.warn('⚠️ Cannot toggle to seller mode - not approved');
+      return;
+    }
     
     const updated = !sellerMode;
+    console.log('🔄 Toggling seller mode to:', updated);
     setSellerMode(updated);
     localStorage.setItem('sellerMode', updated.toString());
     navigate(updated ? '/seller/dashboard' : '/');
@@ -195,62 +352,181 @@ function Navbar() {
   };
 
   const handleLogout = () => {
-    // Clear all localStorage items
+    console.log('👋 Logging out...');
+    
+    // Clear polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    
     localStorage.clear();
     
-    // Reset all state
     setUserProfile(null);
     setSellerInfo(null);
     setIsSellerApproved(false);
     setSellerMode(false);
     setError(null);
+    setSellerFetchError(null);
     setLoading(false);
     
-    // Update Redux state
     dispatch(authActions.logout());
-    
-    // Navigate to signin
     navigate('/signin');
   };
 
-  // ✅ FIXED: Helper function to determine seller status for UI
- const getSellerUIStatus = () => {
-  try {
-    // Case 1: User is not a seller at all (isSeller is false or 'false')
-    if (!userProfile?.isSeller || userProfile?.isSeller === 'false' || userProfile?.isSeller === false) {
-      return { canBecomeSeller: true, status: 'Not a Seller' };
+  // ✅ UPDATED: Use sellerApplicationStatus from user profile
+  const getSellerStatus = () => {
+    console.group('🏪 Seller Status Detection Debug (Navbar)');
+    console.log('userProfile:', userProfile);
+    console.log('sellerInfo:', sellerInfo);
+    console.log('sellerFetchError:', sellerFetchError);
+    
+    try {
+      // ✅ PRIORITY 1: Check user's sellerApplicationStatus field
+      const applicationStatus = userProfile?.sellerApplicationStatus;
+      const isSeller = userProfile?.isSeller === true || userProfile?.isSeller === 'true';
+      
+      console.log('📋 Application Status:', applicationStatus);
+      console.log('🏪 isSeller:', isSeller);
+
+      // ✅ If user hasn't applied yet or status is Available
+      if (!applicationStatus || applicationStatus === "Available") {
+        console.log('🆕 User can apply to become a seller (Available)');
+        console.groupEnd();
+        return { 
+          type: 'not_seller', 
+          status: 'Not a Seller',
+          applicationStatus: 'Available',
+          hasData: false 
+        };
+      }
+
+      // ✅ If user application is Accepted and is marked as seller
+      if (applicationStatus === "Accepted") {
+        if (isSeller) {
+          console.log('✅ User is a verified seller (Accepted + isSeller)');
+          console.groupEnd();
+          return { 
+            type: 'verified', 
+            status: 'Approved',
+            applicationStatus: 'Accepted',
+            hasData: true 
+          };
+        } else {
+          // Data inconsistency: Accepted but not marked as seller
+          console.warn('⚠️ DATA INCONSISTENCY: Accepted but isSeller is false');
+          console.groupEnd();
+          return { 
+            type: 'inconsistent', 
+            status: 'Data Issue',
+            applicationStatus: 'Accepted',
+            errorMessage: 'Application accepted but account not configured as seller. Contact support.',
+            hasData: false 
+          };
+        }
+      }
+
+      // ✅ If user application is Applied (waiting for review)
+      if (applicationStatus === "Applied") {
+        console.log('⏳ User application is under review (Applied)');
+        console.groupEnd();
+        return { 
+          type: 'pending', 
+          status: 'Pending',
+          applicationStatus: 'Applied',
+          hasData: !!sellerInfo 
+        };
+      }
+
+      // ✅ If user application was Rejected
+      if (applicationStatus === "Rejected") {
+        console.log('❌ User application was rejected (can reapply)');
+        console.groupEnd();
+        return { 
+          type: 'rejected', 
+          status: 'Rejected',
+          applicationStatus: 'Rejected',
+          hasData: !!sellerInfo 
+        };
+      }
+
+      // ✅ Fallback: Check seller record if application status is unclear
+      let sellerStatus = null;
+      if (sellerInfo?.data?.status) {
+        sellerStatus = sellerInfo.data.status;
+      } else if (sellerInfo?.status) {
+        sellerStatus = sellerInfo.status;
+      }
+
+      if (sellerStatus) {
+        console.log('📊 Using seller record status as fallback:', sellerStatus);
+        
+        if (sellerStatus === "Approved") {
+          console.groupEnd();
+          return { 
+            type: 'verified', 
+            status: 'Approved',
+            applicationStatus: applicationStatus,
+            hasData: true 
+          };
+        }
+        
+        if (sellerStatus === "Pending") {
+          console.groupEnd();
+          return { 
+            type: 'pending', 
+            status: 'Pending',
+            applicationStatus: applicationStatus,
+            hasData: true 
+          };
+        }
+        
+        if (sellerStatus === "Rejected") {
+          console.groupEnd();
+          return { 
+            type: 'rejected', 
+            status: 'Rejected',
+            applicationStatus: applicationStatus,
+            hasData: true 
+          };
+        }
+      }
+
+      // ✅ Check for data inconsistencies
+      if (isSeller && !sellerInfo && applicationStatus !== "Accepted") {
+        console.warn('⚠️ Data inconsistency: isSeller=true but no seller record or accepted status');
+        console.groupEnd();
+        return { 
+          type: 'inconsistent', 
+          status: 'Data Issue',
+          applicationStatus: applicationStatus,
+          errorMessage: sellerFetchError || 'Your seller data is inconsistent. Contact support.',
+          hasData: false 
+        };
+      }
+      
+      // Default: User is not a seller
+      console.log('ℹ️ User is not a seller (default)');
+      console.groupEnd();
+      return { 
+        type: 'not_seller', 
+        status: 'Not a Seller',
+        applicationStatus: applicationStatus || 'Available',
+        hasData: false 
+      };
+    } catch (error) {
+      console.error('❌ Error in getSellerStatus:', error);
+      console.groupEnd();
+      return { 
+        type: 'error', 
+        status: 'Error',
+        applicationStatus: 'Unknown',
+        errorMessage: 'Failed to determine seller status',
+        hasData: false, 
+        error: true 
+      };
     }
-
-    // Case 2: User has isSeller=true, now check seller info status
-    if (!sellerInfo) {
-      // User has isSeller flag but no seller data (inconsistency)
-      return { hasDataIssue: true, status: 'Data Inconsistency' };
-    }
-
-    // Case 3: Seller status is Approved
-    if (sellerInfo?.status === 'Approved') {
-      return { isVerified: true, status: 'Approved' };
-    }
-
-    // Case 4: Seller status is Pending
-    if (sellerInfo?.status === 'Pending') {
-      return { isPending: true, status: 'Pending' };
-    }
-
-    // Case 5: Explicit Data Inconsistency status
-    if (sellerInfo?.status === 'DataInconsistency') {
-      return { hasDataIssue: true, status: 'Data Inconsistency' };
-    }
-
-    // Case 6: User has isSeller=true but status is unknown/undefined
-    // This handles any edge cases where status exists but isn't one of the expected values
-    return { hasDataIssue: true, status: 'Unknown Status' };
-
-  } catch (error) {
-    console.error('Error in getSellerUIStatus:', error);
-    return { error: true, status: 'Error Loading Status' };
-  }
-};
+  };
 
   // Navigation links logic
   let links = [];
@@ -266,14 +542,14 @@ function Navbar() {
       { title: 'Home', link: '/', icon: <FaHome /> },
       { title: 'About Us', link: '/about-us', icon: <FaInfoCircle /> },
       { title: 'All Books', link: '/all-books', icon: <FaBoxOpen /> },
+      { title: 'Services', link: '/services', icon: <FaBriefcase /> }
     ];
     if (isLoggedIn) {
       links.push({ title: 'Cart', link: '/cart', icon: <FaShoppingCart /> });
     }
   }
 
-  // Get seller UI status for dropdown
-  const sellerUIStatus = getSellerUIStatus();
+  const sellerUIStatus = getSellerStatus();
 
   return (
     <>
@@ -384,7 +660,7 @@ function Navbar() {
                         <FaUserCircle className="text-gray-400" />
                       </div>
                     ) : error ? (
-                      <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center" title={error}>
                         <FaExclamationTriangle className="text-white text-sm" />
                       </div>
                     ) : (
@@ -393,11 +669,14 @@ function Navbar() {
                         alt="Profile"
                         className="w-10 h-10 rounded-full border-2 border-yellow-400/50 group-hover:border-yellow-400 transition-all duration-300 object-cover"
                         onError={(e) => {
+                          console.error('❌ Avatar failed to load');
                           e.target.src = getAvatarSrc(null);
                         }}
                       />
                     )}
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-lg"></div>
+                    {!loading && !error && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-lg"></div>
+                    )}
                   </div>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-semibold text-white group-hover:text-yellow-400 transition-colors duration-300">
@@ -423,20 +702,19 @@ function Navbar() {
                             e.target.src = getAvatarSrc(null);
                           }}
                         />
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 truncate">
                             {userProfile?.username || 'User'}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-gray-600 truncate">
                             {userProfile?.email || 'No email available'}
                           </p>
                           {userProfile?.phone && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 truncate">
                               {userProfile.phone}
                             </p>
                           )}
-                          {/* ✅ FIXED: Show verified seller badge only when truly approved */}
-                          {sellerUIStatus.isVerified && (
+                          {sellerUIStatus.type === 'verified' && (
                             <div className="flex items-center gap-1 mt-1">
                               <FaStore className="text-xs text-yellow-600" />
                               <span className="text-xs text-yellow-600 font-medium">Verified Seller</span>
@@ -447,9 +725,9 @@ function Navbar() {
                     </div>
 
                     {/* Error Display in Dropdown */}
-                    {error && (
-                      <div className="px-4 py-2 bg-red-50 border-l-4 border-red-400">
-                        <p className="text-xs text-red-700">{error}</p>
+                    {(error || sellerFetchError) && (
+                      <div className="px-4 py-2 bg-red-50 border-l-4 border-red-400 m-2 rounded">
+                        <p className="text-xs text-red-700">{error || sellerFetchError}</p>
                       </div>
                     )}
 
@@ -482,10 +760,7 @@ function Navbar() {
                             <FaHistory className="text-sm" />
                             <span className="text-sm">Order History</span>
                           </Link>
-                        </>
-                      )}
-
-                      <Link
+                           <Link
                         to="/profile/settings"
                         onClick={handleLinkClick}
                         className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
@@ -493,43 +768,80 @@ function Navbar() {
                         <FaCog className="text-sm" />
                         <span className="text-sm">Settings</span>
                       </Link>
+                        </>
+                      )}
 
-                      {/* ✅ FIXED: Seller Status - Now shows correct status based on actual data */}
-                      {sellerUIStatus.isVerified ? (
+                      {/* ✅ UPDATED: Show status based on sellerApplicationStatus */}
+                      {sellerUIStatus.error || sellerUIStatus.type === 'error' ? (
+                        <div className="px-4 py-2 text-red-700 bg-red-50">
+                          <div className="flex items-center gap-2">
+                            <FaExclamationTriangle className="text-sm" />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">Status Error</span>
+                              <span className="text-xs opacity-70">{sellerUIStatus.errorMessage || 'Unable to load seller status'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : sellerUIStatus.type === 'verified' ? (
                         <Link
                           to="/profile/verified-seller-info"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 transition-all duration-200"
                         >
                           <FaStore className="text-sm" />
-                          <span className="text-sm font-medium">You're a Verified Seller</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">You're a Verified Seller</span>
+                            
+                          </div>
                         </Link>
-                      ) : sellerUIStatus.isPending ? (
+                      ) : sellerUIStatus.type === 'pending' ? (
                         <Link
                           to="/profile/seller-application-submitted"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-all duration-200"
                         >
                           <FaStore className="text-sm" />
-                          <span className="text-sm">Seller Application Under Review</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm">Application Under Review</span>
+                            
+                          </div>
                         </Link>
-                      ) : sellerUIStatus.hasDataIssue ? (
+                      ) : sellerUIStatus.type === 'rejected' ? (
                         <Link
-                          to="/profile/seller-data-issue"
+                          to="/profile/become-seller"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-red-700 bg-red-50 hover:bg-red-100 transition-all duration-200"
                         >
                           <FaExclamationTriangle className="text-sm" />
-                          <span className="text-sm">Seller Data Issue</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm">Application Rejected - Re-apply</span>
+                            
+                          </div>
                         </Link>
-                      ) : sellerUIStatus.canBecomeSeller ? (
+                      ) : sellerUIStatus.type === 'inconsistent' ? (
+                        <Link
+                          to="/profile/become-seller"
+                          onClick={handleLinkClick}
+                          className="flex items-center gap-3 px-4 py-2 text-red-700 bg-red-50 hover:bg-red-100 transition-all duration-200"
+                          title={sellerUIStatus.errorMessage}
+                        >
+                          <FaExclamationTriangle className="text-sm" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">Seller Data Issue</span>
+                            <span className="text-xs opacity-70">{sellerUIStatus.errorMessage}</span>
+                          </div>
+                        </Link>
+                      ) : sellerUIStatus.type === 'not_seller' ? (
                         <Link
                           to="/profile/become-seller"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-green-700 bg-green-50 hover:bg-green-100 transition-all duration-200"
                         >
                           <FaStore className="text-sm" />
-                          <span className="text-sm">Become a Seller</span>
+                          <div className="flex flex-col">
+                            <span className="text-sm">Become a Seller</span>
+                            
+                          </div>
                         </Link>
                       ) : null}
                     </div>
@@ -605,17 +917,17 @@ function Navbar() {
           </div>
         )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+        {/* Error Message Banner */}
+        {(error || sellerFetchError) && (
+          <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center animate-pulse">
             <div className="flex items-center justify-center gap-2">
               <FaExclamationTriangle />
-              <span>{error}</span>
+              <span>{error || sellerFetchError}</span>
             </div>
-            {(error.includes('Session expired') || error.includes('User not found')) && (
+            {(error?.includes('Session expired') || error?.includes('User not found')) && (
               <button 
                 onClick={handleLogout}
-                className="mt-2 text-xs underline hover:no-underline"
+                className="mt-2 text-xs underline hover:no-underline text-red-300"
               >
                 Click here to log in again
               </button>
@@ -628,7 +940,7 @@ function Navbar() {
       {menuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setMenuOpen(false)}>
           <div 
-            className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-gradient-to-b from-slate-900 to-gray-900 shadow-2xl transform transition-transform duration-300 ease-out"
+            className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-gradient-to-b from-slate-900 to-gray-900 shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
@@ -646,29 +958,37 @@ function Navbar() {
               {isLoggedIn && (
                 <div className="mb-6 p-4 bg-white/10 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={getAvatarSrc(userProfile?.avatar)}
-                      alt="Profile"
-                      className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400"
-                      onError={(e) => {
-                        e.target.src = getAvatarSrc(null);
-                      }}
-                    />
-                    <div>
-                      <p className="text-white font-medium">
-                        {loading ? 'Loading...' : (userProfile?.username || 'User')}
+                    {loading ? (
+                      <div className="w-12 h-12 rounded-full bg-gray-600 animate-pulse" />
+                    ) : error ? (
+                      <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center">
+                        <FaExclamationTriangle className="text-white" />
+                      </div>
+                    ) : (
+                      <img
+                        src={getAvatarSrc(userProfile?.avatar)}
+                        alt="Profile"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-yellow-400"
+                        onError={(e) => {
+                          e.target.src = getAvatarSrc(null);
+                        }}
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium truncate">
+                        {loading ? 'Loading...' : error ? 'Error' : (userProfile?.username || 'User')}
                       </p>
                       <p className="text-gray-400 text-sm">
                         {sellerMode && isSellerApproved ? 'Seller Mode' : 'Customer'}
                       </p>
-                      <p className="text-gray-400 text-xs">
+                      <p className="text-gray-400 text-xs truncate">
                         {userProfile?.email || 'No email'}
                       </p>
                     </div>
                   </div>
-                  {error && (
+                  {(error || sellerFetchError) && (
                     <div className="mt-2 text-xs text-red-400 bg-red-500/10 p-2 rounded">
-                      {error}
+                      {error || sellerFetchError}
                     </div>
                   )}
                 </div>

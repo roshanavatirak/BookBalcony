@@ -1,5 +1,6 @@
 // 📁 src/components/Forms/AddressForm.jsx
 import React from "react";
+import { FaUser, FaPhone, FaHome, FaMapMarkerAlt, FaCity, FaGlobeAmericas, FaMapPin } from "react-icons/fa";
 
 const AddressForm = ({ address, setAddress }) => {
   const handleChange = (e) => {
@@ -7,97 +8,162 @@ const AddressForm = ({ address, setAddress }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-      {/* House Number */}
-      <input
-        type="text"
-        name="houseNumber"
-        value={address.houseNumber || ""}
-        onChange={handleChange}
-        placeholder="House / Flat No."
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+    <div className="space-y-3">
+      {/* Full Name */}
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400">
+          <FaUser className="text-xs" />
+        </div>
+        <input
+          type="text"
+          name="fullName"
+          value={address.fullName || ""}
+          onChange={handleChange}
+          placeholder="Full Name *"
+          required
+          className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+        />
+      </div>
 
-      {/* Street Name */}
-      <input
-        type="text"
-        name="streetName"
-        value={address.streetName || ""}
-        onChange={handleChange}
-        placeholder="Street Name / Building Name"
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+      {/* Phone Number */}
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400">
+          <FaPhone className="text-xs" />
+        </div>
+        <input
+          type="tel"
+          name="phone"
+          value={address.phone || ""}
+          onChange={handleChange}
+          placeholder="Phone Number (10 digits) *"
+          maxLength={10}
+          pattern="[0-9]{10}"
+          required
+          className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+        />
+      </div>
 
-      {/* Landmark */}
-      <input
-        type="text"
-        name="landmark"
-        value={address.landmark || ""}
-        onChange={handleChange}
-        placeholder="Landmark (optional)"
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+      {/* Address Line 1 */}
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400">
+          <FaHome className="text-xs" />
+        </div>
+        <input
+          type="text"
+          name="addressLine1"
+          value={address.addressLine1 || ""}
+          onChange={handleChange}
+          placeholder="House/Flat No. + Street Name *"
+          required
+          className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+        />
+      </div>
 
-      {/* Locality / Area */}
-      <input
-        type="text"
-        name="locality"
-        value={address.locality || ""}
-        onChange={handleChange}
-        placeholder="Locality / Area"
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+      {/* Address Line 2 (Optional) */}
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
+          <FaMapMarkerAlt className="text-xs" />
+        </div>
+        <input
+          type="text"
+          name="addressLine2"
+          value={address.addressLine2 || ""}
+          onChange={handleChange}
+          placeholder="Landmark (optional)"
+          className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+        />
+      </div>
 
-      {/* Village or Town */}
-      <input
-        type="text"
-        name="villageOrTown"
-        value={address.villageOrTown || ""}
-        onChange={handleChange}
-        placeholder="Village / Town"
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+      {/* Two columns for smaller fields */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Locality */}
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400">
+            <FaMapMarkerAlt className="text-xs" />
+          </div>
+          <input
+            type="text"
+            name="locality"
+            value={address.locality || ""}
+            onChange={handleChange}
+            placeholder="Locality/Area *"
+            required
+            className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+          />
+        </div>
 
-      {/* District */}
-      <input
-        type="text"
-        name="district"
-        value={address.district || ""}
-        onChange={handleChange}
-        placeholder="District"
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+        {/* City */}
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400">
+            <FaCity className="text-xs" />
+          </div>
+          <input
+            type="text"
+            name="city"
+            value={address.city || ""}
+            onChange={handleChange}
+            placeholder="City *"
+            required
+            className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+          />
+        </div>
+      </div>
 
-      {/* City */}
-      <input
-        type="text"
-        name="city"
-        value={address.city || ""}
-        onChange={handleChange}
-        placeholder="City"
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+      {/* Two columns for state and postal code */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* State */}
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400">
+            <FaGlobeAmericas className="text-xs" />
+          </div>
+          <input
+            type="text"
+            name="state"
+            value={address.state || ""}
+            onChange={handleChange}
+            placeholder="State *"
+            required
+            className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+          />
+        </div>
 
-      {/* State */}
-      <input
-        type="text"
-        name="state"
-        value={address.state || ""}
-        onChange={handleChange}
-        placeholder="State"
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+        {/* Postal Code */}
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400">
+            <FaMapPin className="text-xs" />
+          </div>
+          <input
+            type="text"
+            name="postalCode"
+            value={address.postalCode || ""}
+            onChange={handleChange}
+            placeholder="Postal Code (6 digits) *"
+            maxLength={6}
+            pattern="[0-9]{6}"
+            required
+            className="w-full bg-zinc-800 border border-zinc-600 focus:border-yellow-400 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-zinc-400 transition-colors outline-none"
+          />
+        </div>
+      </div>
 
-      {/* Pincode */}
-      <input
-        type="text"
-        name="pincode"
-        value={address.pincode || ""}
-        onChange={handleChange}
-        placeholder="Pincode"
-        maxLength={6}
-        className="bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400"
-      />
+      {/* Country (Read-only, pre-filled) */}
+      <div className="relative">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
+          <FaGlobeAmericas className="text-xs" />
+        </div>
+        <input
+          type="text"
+          name="country"
+          value={address.country || "India"}
+          readOnly
+          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-9 pr-4 py-2.5 text-sm text-zinc-400 cursor-not-allowed"
+        />
+      </div>
+
+      {/* Required fields note */}
+      <p className="text-[10px] text-zinc-500 mt-2">
+        * Required fields
+      </p>
     </div>
   );
 };

@@ -386,7 +386,7 @@ export default function COD_Page({ orderDetails, onBack, navigate }) {
 
   // Extract order details
   const payableAmount = orderDetails?.payable || 0;
-  const handlingFee = 20;
+  const handlingFee = 9;
   const totalAmount = payableAmount + handlingFee;
   const address = orderDetails?.address || {};
   const items = orderDetails?.items || [];

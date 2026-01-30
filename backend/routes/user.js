@@ -395,85 +395,313 @@ router.get('/get-user-profile', authenticateToken, async (req, res) => {
   }
 });
 
+// router.get("/get-user-information", authenticateToken, async (req, res) => {
+//   try {
+//     const { id } = req.headers;
+    
+//     if (!id) {
+//       return res.status(400).json({ message: "Missing user ID in headers" });
+//     }
+
+//     const user = await User.findById(id).select("-password");
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//       // Check premium status
+//     const isPremiumActive = user.isPremiumActive 
+//       ? user.isPremiumActive() 
+//       : false;
+
+//     return res.status(200).json({
+//       success: true,
+//       data: {
+//         username: user.username,
+//         email: user.email,
+//         phone: user.phone,
+//         avatar: user.avatar,
+//         role: user.role,
+//         isSeller: user.isSeller,
+//         address: user.address,
+//         // ✅ Premium information
+//         isPremium: isPremiumActive,
+//         premiumType: user.premium?.membershipType || "free",
+//         premiumExpiry: user.premium?.expiryDate || null,
+//         premiumFeatures: user.premium?.features || {},
+//       }
+//     });
+
+//     return res.status(200).json(data);
+//   } catch (error) {
+//     console.error("Error in /get-user-information:", error.message);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+
+// //update address
+// router.put("/update-address", authenticateToken, async (req, res) => {
+//     try {
+//         const {id}= req.headers;
+//         const{address} = req.body;
+//         await User.findByIdAndUpdate(id,{address:address});
+//         return res.status(200).json({message:"Address updated successfully"});
+//     } catch (error) {
+//         res.status(500).json({ message: "Internal server error" });
+//     }
+// });
+
+
+// router.post("/add-address", authenticateToken, async (req, res) => {
+//   try {
+//     const { id } = req.headers;
+//     const { address } = req.body; // ✅ Fix: extract the address object correctly
+
+//     if (!address || typeof address !== "object") {
+//       return res.status(400).json({ message: "Invalid address format" });
+//     }
+
+//      console.log("🛠️ Received address:", address); // ADD THIS
+//     console.log("👤 User ID:", id);
+
+//     await User.findByIdAndUpdate(id, { address });
+
+//     return res.status(200).json({ message: "Address added successfully" });
+//   } catch (error) {
+//     console.error("Error updating address:", error);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+
 router.get("/get-user-information", authenticateToken, async (req, res) => {
   try {
     const { id } = req.headers;
-    
-    if (!id) {
-      return res.status(400).json({ message: "Missing user ID in headers" });
-    }
-
     const user = await User.findById(id).select("-password");
-
+    
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-      // Check premium status
-    const isPremiumActive = user.isPremiumActive 
-      ? user.isPremiumActive() 
-      : false;
-
-    return res.status(200).json({
+    return res.json({
       success: true,
-      data: {
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
-        avatar: user.avatar,
-        role: user.role,
-        isSeller: user.isSeller,
-        address: user.address,
-        // ✅ Premium information
-        isPremium: isPremiumActive,
-        premiumType: user.premium?.membershipType || "free",
-        premiumExpiry: user.premium?.expiryDate || null,
-        premiumFeatures: user.premium?.features || {},
-      }
+      data: user
     });
-
-    return res.status(200).json(data);
   } catch (error) {
-    console.error("Error in /get-user-information:", error.message);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-
-//update address
-router.put("/update-address", authenticateToken, async (req, res) => {
-    try {
-        const {id}= req.headers;
-        const{address} = req.body;
-        await User.findByIdAndUpdate(id,{address:address});
-        return res.status(200).json({message:"Address updated successfully"});
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-
-router.post("/add-address", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.headers;
-    const { address } = req.body; // ✅ Fix: extract the address object correctly
-
-    if (!address || typeof address !== "object") {
-      return res.status(400).json({ message: "Invalid address format" });
-    }
-
-     console.log("🛠️ Received address:", address); // ADD THIS
-    console.log("👤 User ID:", id);
-
-    await User.findByIdAndUpdate(id, { address });
-
-    return res.status(200).json({ message: "Address added successfully" });
-  } catch (error) {
-    console.error("Error updating address:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
 
+// Add new address (up to 3)
+router.post("/add-address", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const addressData = req.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check address limit
+    if (user.addresses.length >= 3) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Maximum 3 addresses allowed" 
+      });
+    }
+
+    // Validate required fields
+    const required = ['fullName', 'phone', 'addressLine1', 'locality', 'city', 'state', 'postalCode'];
+    for (let field of required) {
+      if (!addressData[field]) {
+        return res.status(400).json({ 
+          success: false,
+          message: `${field} is required` 
+        });
+      }
+    }
+
+    // If this is the first address, make it primary
+    if (user.addresses.length === 0) {
+      addressData.isPrimary = true;
+    }
+
+    // Add country default
+    addressData.country = addressData.country || "India";
+
+    user.addresses.push(addressData);
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Address added successfully",
+      addressId: user.addresses[user.addresses.length - 1]._id
+    });
+  } catch (error) {
+    console.error("Add address error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Failed to add address" 
+    });
+  }
+});
+
+// Update all addresses (for settings page)
+router.put("/update-addresses", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const { addresses } = req.body;
+
+    if (!Array.isArray(addresses)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Addresses must be an array" 
+      });
+    }
+
+    if (addresses.length > 3) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Maximum 3 addresses allowed" 
+      });
+    }
+
+    // Ensure at least one address is primary
+    const hasPrimary = addresses.some(addr => addr.isPrimary);
+    if (!hasPrimary && addresses.length > 0) {
+      addresses[0].isPrimary = true;
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.addresses = addresses;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Addresses updated successfully"
+    });
+  } catch (error) {
+    console.error("Update addresses error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Failed to update addresses" 
+    });
+  }
+});
+
+// Set primary address
+router.put("/set-primary-address", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const { addressId } = req.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Set all addresses to non-primary
+    user.addresses.forEach(addr => {
+      addr.isPrimary = addr._id.toString() === addressId;
+    });
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Primary address updated"
+    });
+  } catch (error) {
+    console.error("Set primary error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Failed to set primary address" 
+    });
+  }
+});
+
+// Delete address
+router.delete("/delete-address/:addressId", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const { addressId } = req.params;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.addresses.length <= 1) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Cannot delete the only address" 
+      });
+    }
+
+    const deletedAddress = user.addresses.id(addressId);
+    if (!deletedAddress) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Address not found" 
+      });
+    }
+
+    const wasPrimary = deletedAddress.isPrimary;
+    user.addresses.pull(addressId);
+
+    // If deleted address was primary, make first address primary
+    if (wasPrimary && user.addresses.length > 0) {
+      user.addresses[0].isPrimary = true;
+    }
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Address deleted successfully"
+    });
+  } catch (error) {
+    console.error("Delete address error:", error);
+    return res.status(500).json({ 
+      success: false,
+      message: "Failed to delete address" 
+    });
+  }
+});
+
+// Get primary address (for quick checkout)
+router.get("/get-primary-address", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const user = await User.findById(id);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const primaryAddress = user.addresses.find(addr => addr.isPrimary) || user.addresses[0];
+
+    if (!primaryAddress) {
+      return res.status(404).json({ 
+        success: false,
+        message: "No address found" 
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: primaryAddress
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 
 module.exports = router;

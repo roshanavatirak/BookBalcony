@@ -140,3 +140,163 @@ module.exports = {
   authenticateAdmin,
   authenticateSeller
 };
+
+
+
+
+// const jwt = require("jsonwebtoken");
+// const User = require("../models/user");
+
+// const JWT_SECRET = process.env.JWT_SECRET || "bookStore123";
+
+// const authenticateToken = async (req, res, next) => {
+//   try {
+//     const authHeader = req.headers["authorization"];
+//     const token = authHeader && authHeader.split(" ")[1];
+//     const userId = req.headers.id;
+
+//     // Debug logging (properly formatted)
+//     console.log("\n🔐 Auth Check:", {
+//       hasToken: !!token,
+//       hasUserId: !!userId,
+//       userId: userId || "MISSING"
+//     });
+
+//     if (!token) {
+//       return res.status(401).json({ 
+//         success: false,
+//         message: "Authentication token required" 
+//       });
+//     }
+
+//     if (!userId) {
+//       return res.status(401).json({ 
+//         success: false,
+//         message: "User ID required in headers" 
+//       });
+//     }
+
+//     // Verify token
+//     const decoded = await new Promise((resolve, reject) => {
+//       jwt.verify(token, JWT_SECRET, (err, decoded) => {
+//         if (err) reject(err);
+//         else resolve(decoded);
+//       });
+//     });
+
+//     console.log("✅ Token verified");
+
+//     // Fetch user from database
+//     const user = await User.findById(userId).select("-password");
+
+//     if (!user) {
+//       console.log("❌ User not found in database");
+//       return res.status(404).json({
+//         success: false,
+//         message: "User not found"
+//       });
+//     }
+
+//     console.log("✅ User found:", {
+//       id: user._id.toString(),
+//       email: user.email,
+//       role: user.role,
+//       isSeller: user.isSeller
+//     });
+
+//     // Attach user info to request
+//     req.user = {
+//       ...decoded,
+//       id: user._id,
+//       role: user.role,
+//       isSeller: user.isSeller,
+//       isPremium: user.isPremiumActive ? user.isPremiumActive() : false,
+//       premiumType: user.premium?.membershipType || "free",
+//       premiumExpiry: user.premium?.expiryDate || null,
+//       userData: user
+//     };
+
+//     next();
+
+//   } catch (error) {
+//     console.error("❌ Auth error:", {
+//       name: error.name,
+//       message: error.message
+//     });
+
+//     if (error.name === "TokenExpiredError") {
+//       return res.status(401).json({ 
+//         success: false,
+//         message: "Token expired. Please sign in again",
+//         expired: true 
+//       });
+//     }
+    
+//     if (error.name === "JsonWebTokenError") {
+//       return res.status(403).json({ 
+//         success: false,
+//         message: "Invalid token. Please sign in again" 
+//       });
+//     }
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Authentication error",
+//       error: error.message
+//     });
+//   }
+// };
+
+// // ✅ Middleware to check if user is premium (or admin)
+// const authenticatePremium = async (req, res, next) => {
+//   await authenticateToken(req, res, () => {
+//     const isPremium = req.user.isPremium;
+//     const isAdmin = req.user.role === "admin";
+
+//     if (isPremium || isAdmin) {
+//       return next();
+//     }
+
+//     return res.status(403).json({
+//       success: false,
+//       message: "Premium membership required",
+//       upgradePath: "/premium",
+//       currentPlan: req.user.premiumType
+//     });
+//   });
+// };
+
+// // ✅ Middleware to check if user is admin
+// const authenticateAdmin = async (req, res, next) => {
+//   await authenticateToken(req, res, () => {
+//     if (req.user.role === "admin") {
+//       return next();
+//     }
+
+//     return res.status(403).json({
+//       success: false,
+//       message: "Admin access required"
+//     });
+//   });
+// };
+
+// // ✅ Middleware to check if user is seller
+// const authenticateSeller = async (req, res, next) => {
+//   await authenticateToken(req, res, () => {
+//     if (req.user.isSeller || req.user.role === "admin") {
+//       return next();
+//     }
+
+//     return res.status(403).json({
+//       success: false,
+//       message: "Seller access required"
+//     });
+//   });
+// };
+
+// module.exports = {
+//   authenticateToken,
+//   authenticatePremium,
+//   authenticateAdmin,
+//   authenticateSeller
+// };

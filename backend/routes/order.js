@@ -2,7 +2,8 @@ const router = require("express").Router();
 const { authenticateToken } = require("./userAuth");
 const Order = require("../models/order");
 const User = require("../models/user");
-const Book = require("../models/book");
+const Book = require("../models/Book");
+const mongoose = require("mongoose");
 // // 📌 Place an order
 // router.post("/place-order", authenticateToken, async (req, res) => {
 //   try {

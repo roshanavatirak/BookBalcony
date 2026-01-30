@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Loader from "../components/Loader/Loader";
 import axios from 'axios';
-import { FaTrashAlt, FaShoppingCart } from "react-icons/fa";
+import { FaTrashAlt, FaShoppingCart, FaShieldAlt, FaTruck, FaLock, FaCheckCircle, FaArrowRight, FaHeart, FaTag, FaBox, FaStar } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiSparkles } from "react-icons/hi";
 
 const Cart = () => {
-  const navigate= useNavigate();
+  const navigate = useNavigate();
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState(null);
@@ -40,145 +42,377 @@ const Cart = () => {
     }
   };
 
-  const placeOrder = async () => {
-  if (cart.length === 0) {
-    alert("Cart is empty!");
-    return;
-  }
+  const placeOrdernew = () => {
+    if (cart.length === 0) {
+      alert("Your cart is empty!");
+      return;
+    }
 
-  try {
-    setPlacingOrder(true);
-
-    const res = await axios.post(
-      "http://localhost:3000/api/v1/place-order",
-      { order: cart }, // 🔥 This must be an array
-      { headers }
-    );
-
-    alert(res.data.message || "Order placed!");
-    navigate("/profile/orderHistory");
-    setCart([]); // clear cart in UI
-  } catch (err) {
-    console.error("Order failed:", err.response?.data || err.message);
-    alert("Order failed: " + (err.response?.data?.message || "Unknown error"));
-  } finally {
-    setPlacingOrder(false);
-  }
-};
+    navigate(`/checkout/cart`, {
+      state: {
+        cartItems: cart
+      },
+    });
+  };
 
   const totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
+  const savings = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
 
   useEffect(() => {
     fetchCart();
   }, []);
 
- const placeOrdernew = () => {
-  if (cart.length === 0) {
-    alert("Your cart is empty!");
-    return;
-  }
-
-  // Navigate to checkout page with all cart items in state
-  navigate(`/checkout/cart`, {
-    state: {
-      cartItems: cart
-    },
-  });
-};
-
- 
-
- return (
-  <div className="bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 min-h-screen p-6 sm:p-10 text-white pb-32">
-    {/* Show Loader */}
-    {loading ? (
-      <div className="w-full h-[70vh] flex items-center justify-center">
-        <Loader />
+  return (
+    <div className="bg-gradient-to-br from-gray-900 via-zinc-900 to-black min-h-screen relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.03, 0.06, 0.03],
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute top-0 right-0 w-96 h-96 bg-yellow-400 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.03, 0.06, 0.03],
+          }}
+          transition={{ duration: 10, repeat: Infinity }}
+          className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl"
+        />
       </div>
-    ) : (
-      <>
-        {/* Heading */}
-        <div className="flex justify-between items-center border-b border-zinc-700 pb-4 mb-6">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-yellow-400">🛒 Your Cart</h1>
-          <span className="text-sm text-zinc-400">{cart.length} item{cart.length !== 1 && 's'}</span>
-        </div>
 
-        {/* Empty Cart */}
-        {cart.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[70vh] text-center">
-            <FaShoppingCart className="text-7xl text-zinc-500 mb-4" />
-            <h1 className="text-4xl font-semibold text-zinc-400 mb-2">Cart is Empty</h1>
-            <p className="text-zinc-500 italic">Start adding your favorite books!</p>
+      <div className="relative z-10 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-32">
+        {loading ? (
+          <div className="w-full h-[70vh] flex items-center justify-center">
+            <Loader />
           </div>
         ) : (
           <>
-            {/* Cart Items */}
-            <div className="space-y-6">
-              {cart.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-zinc-800 border border-zinc-700 rounded-2xl p-4 hover:shadow-md transition-shadow duration-300"
+            {/* Header Section */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8"
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 bg-clip-text text-transparent mb-2 flex items-center gap-2">
+                    <FaShoppingCart className="text-yellow-400 text-3xl sm:text-4xl" />
+                    Your Cart
+                  </h1>
+                  <p className="text-zinc-400 text-sm sm:text-base flex items-center gap-2">
+                    <HiSparkles className="text-yellow-400" />
+                    {cart.length > 0 
+                      ? `${cart.length} book${cart.length !== 1 ? 's' : ''} ready for checkout`
+                      : 'Start building your collection'}
+                  </p>
+                </div>
+
+                {cart.length > 0 && (
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="text-right">
+                      <p className="text-xs text-zinc-500 uppercase tracking-wider">Subtotal</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-yellow-400">₹{totalAmount}</p>
+                    </div>
+                    {savings > 0 && (
+                      <div className="flex items-center gap-1 text-green-400 text-xs">
+                        <FaTag className="text-[10px]" />
+                        <span>You saved ₹{savings}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Trust Badges */}
+              {cart.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="grid grid-cols-3 gap-2 sm:gap-4 mb-6"
                 >
-                  <div className="flex items-center gap-4 w-full">
-                    <img
-                      src={item.url}
-                      alt={item.title}
-                      className="w-24 h-32 object-cover rounded-lg shadow-md"
-                    />
+                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-zinc-700/50 text-center">
+                    <FaShieldAlt className="text-green-400 text-lg sm:text-xl mx-auto mb-1" />
+                    <p className="text-zinc-300 text-[10px] sm:text-xs font-semibold">Secure Payment</p>
+                  </div>
+                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-zinc-700/50 text-center">
+                    <FaTruck className="text-blue-400 text-lg sm:text-xl mx-auto mb-1" />
+                    <p className="text-zinc-300 text-[10px] sm:text-xs font-semibold">Fast Delivery</p>
+                  </div>
+                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-zinc-700/50 text-center">
+                    <FaCheckCircle className="text-purple-400 text-lg sm:text-xl mx-auto mb-1" />
+                    <p className="text-zinc-300 text-[10px] sm:text-xs font-semibold">Quality Assured</p>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Empty Cart State */}
+            {cart.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center justify-center min-h-[60vh] text-center"
+              >
+                <div className="bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 backdrop-blur-sm rounded-3xl p-8 sm:p-12 border border-zinc-700/50 max-w-md">
+                  <motion.div
+                    animate={{ 
+                      y: [0, -10, 0],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <FaShoppingCart className="text-7xl sm:text-8xl text-zinc-600 mb-6 mx-auto" />
+                  </motion.div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-zinc-300 mb-3">Your Cart is Empty</h2>
+                  <p className="text-zinc-500 mb-6 text-sm sm:text-base">
+                    Discover amazing books and start building your collection today!
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate('/')}
+                    className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-6 sm:px-8 py-3 rounded-full font-bold hover:from-yellow-500 hover:to-yellow-600 transition-all duration-300 flex items-center gap-2 mx-auto shadow-lg shadow-yellow-500/30"
+                  >
+                    <HiSparkles />
+                    Explore Books
+                    <FaArrowRight className="text-sm" />
+                  </motion.button>
+                </div>
+              </motion.div>
+            ) : (
+              <>
+                {/* Cart Items */}
+                <div className="space-y-4 mb-6">
+                  <AnimatePresence>
+                    {cart.map((item, i) => (
+                      <motion.div
+                        key={item._id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="group relative bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 backdrop-blur-sm rounded-2xl border border-zinc-700/50 hover:border-yellow-400/30 transition-all duration-300 overflow-hidden"
+                      >
+                        {/* Hover Glow Effect */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/5 to-transparent" />
+                        </div>
+
+                        <div className="relative p-4 sm:p-6">
+                          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                            {/* Book Image */}
+                            <div className="relative flex-shrink-0">
+                              <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-xl overflow-hidden shadow-lg group-hover:shadow-yellow-400/20 transition-shadow duration-300">
+                                <img
+                                  src={item.url}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                              </div>
+                              
+                              {/* Stock Badge */}
+                              {item.stock && (
+                                <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg">
+                                  {item.stock} left
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Book Details */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div className="flex-1">
+                                  <h2 className="text-lg sm:text-xl font-bold text-white group-hover:text-yellow-400 transition-colors duration-300 line-clamp-2">
+                                    {item.title}
+                                  </h2>
+                                  <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+                                    by {item.author || 'Unknown Author'}
+                                  </p>
+                                </div>
+
+                                {/* Remove Button - Desktop */}
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => removeFromCart(item._id)}
+                                  className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                    removingId === item._id
+                                      ? "bg-red-400/50 text-white cursor-not-allowed"
+                                      : "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white"
+                                  }`}
+                                  disabled={removingId === item._id}
+                                >
+                                  {removingId === item._id ? (
+                                    <span className="text-xs animate-pulse">Removing...</span>
+                                  ) : (
+                                    <>
+                                      <FaTrashAlt className="text-xs" />
+                                      Remove
+                                    </>
+                                  )}
+                                </motion.button>
+                              </div>
+
+                              <p className="text-xs sm:text-sm text-zinc-400 mb-3 line-clamp-2 sm:line-clamp-3">
+                                {item.desc || 'No description available'}
+                              </p>
+
+                              {/* Bottom Row - Price & Features */}
+                              <div className="flex flex-wrap items-center gap-3">
+                                {/* Price */}
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-2xl font-bold text-yellow-400">₹{item.price}</span>
+                                  {item.discount > 0 && (
+                                    <span className="text-sm text-zinc-500 line-through">₹{item.price + item.discount}</span>
+                                  )}
+                                </div>
+
+                                {/* Rating */}
+                                <div className="flex items-center gap-1 bg-zinc-700/50 px-2 py-1 rounded-full">
+                                  <FaStar className="text-yellow-400 text-[10px]" />
+                                  <span className="text-xs text-zinc-300 font-semibold">4.8</span>
+                                </div>
+
+                                {/* Category Badge */}
+                                {item.category && (
+                                  <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 font-semibold">
+                                    {item.category}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Remove Button - Mobile */}
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => removeFromCart(item._id)}
+                                className={`sm:hidden w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                  removingId === item._id
+                                    ? "bg-red-400/50 text-white cursor-not-allowed"
+                                    : "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white"
+                                }`}
+                                disabled={removingId === item._id}
+                              >
+                                {removingId === item._id ? (
+                                  <span className="text-xs animate-pulse">Removing...</span>
+                                ) : (
+                                  <>
+                                    <FaTrashAlt className="text-xs" />
+                                    Remove from Cart
+                                  </>
+                                )}
+                              </motion.button>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+
+                {/* Promotional Banner */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm border border-purple-500/30 rounded-2xl p-4 mb-6"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="bg-purple-500/20 rounded-full p-3">
+                      <FaBox className="text-purple-400 text-xl" />
+                    </div>
                     <div className="flex-1">
-                      <h2 className="text-xl font-semibold text-yellow-300">{item.title}</h2>
-                      <p className="text-sm text-zinc-400 mt-1 hidden sm:block">
-                        {item.desc.length > 100 ? item.desc.slice(0, 100) + "..." : item.desc}
+                      <p className="text-white font-semibold text-sm sm:text-base">Free Delivery on Orders Above ₹499</p>
+                      <p className="text-zinc-400 text-xs sm:text-sm">
+                        {totalAmount >= 499 
+                          ? '🎉 Congratulations! You qualify for free delivery'
+                          : `Add ₹${499 - totalAmount} more to get free delivery`
+                        }
                       </p>
-                      <p className="text-sm text-zinc-400 mt-1 sm:hidden">
-                        {item.desc.length > 65 ? item.desc.slice(0, 65) + "..." : item.desc}
-                      </p>
-                      <p className="text-lg text-yellow-400 mt-2 font-semibold">₹ {item.price}</p>
                     </div>
                   </div>
+                </motion.div>
 
-                  {/* Remove Button */}
-                  <button
-                    onClick={() => removeFromCart(item._id)}
-                    className={`mt-4 sm:mt-0 sm:ml-4 px-4 py-2 ${
-                      removingId === item._id
-                        ? "bg-red-400 cursor-not-allowed"
-                        : "bg-red-600 hover:bg-red-700"
-                    } text-white rounded-lg flex items-center gap-2 transition duration-300`}
-                    disabled={removingId === item._id}
-                  >
-                    {removingId === item._id ? (
-                      <span className="text-sm animate-pulse">Removing...</span>
-                    ) : (
-                      <>
-                        <FaTrashAlt className="text-sm" />
-                        Remove
-                      </>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
+                {/* Fixed Checkout Footer */}
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-900 via-zinc-900/95 to-transparent backdrop-blur-lg border-t border-zinc-700/50 p-4 sm:p-6 z-50"
+                >
+                  <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      {/* Total Summary */}
+                      <div className="flex items-center gap-4 sm:gap-6">
+                        <div>
+                          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Total Amount</p>
+                          <p className="text-2xl sm:text-3xl font-bold text-yellow-400 flex items-baseline gap-2">
+                            ₹{totalAmount}
+                            {savings > 0 && (
+                              <span className="text-sm text-green-400 font-normal">(-₹{savings})</span>
+                            )}
+                          </p>
+                        </div>
 
-            {/* Fixed Footer Total + Place Order */}
-            <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-700 p-4 sm:px-10 flex flex-col sm:flex-row justify-between items-center z-50">
-              <h2 className="text-lg sm:text-2xl font-bold text-yellow-300">
-                Total Amount: ₹ {totalAmount}
-              </h2>
-              <button
-                onClick={placeOrdernew}
-                disabled={placingOrder}
-                className="mt-3 sm:mt-0 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition duration-300 disabled:opacity-50"
-              >
-                {placingOrder ? "Placing Order..." : "Place Your Order"}
-              </button>
-            </div>
+                        <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-400">
+                          <FaLock className="text-green-400" />
+                          <span>Secure checkout</span>
+                        </div>
+                      </div>
+
+                      {/* Checkout Button */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={placeOrdernew}
+                        disabled={placingOrder}
+                        className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black px-8 py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-500/30 flex items-center justify-center gap-3"
+                      >
+                        {placingOrder ? (
+                          <>
+                            <div className="w-5 h-5 border-3 border-black border-t-transparent rounded-full animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <FaLock className="text-sm" />
+                            Proceed to Checkout
+                            <FaArrowRight className="text-sm" />
+                          </>
+                        )}
+                      </motion.button>
+                    </div>
+
+                    {/* Trust Line */}
+                    <div className="flex items-center justify-center gap-4 mt-3 text-[10px] sm:text-xs text-zinc-500">
+                      <div className="flex items-center gap-1">
+                        <FaCheckCircle className="text-green-400" />
+                        <span>SSL Encrypted</span>
+                      </div>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <FaShieldAlt className="text-blue-400" />
+                        <span>Safe Payments</span>
+                      </div>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <FaTruck className="text-purple-400" />
+                        <span>Fast Shipping</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
           </>
         )}
-      </>
-    )}
-  </div>
-);
-}
+      </div>
+    </div>
+  );
+};
 
 export default Cart;
