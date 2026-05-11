@@ -20,6 +20,9 @@ import {
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const SellerWallet = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +47,7 @@ const SellerWallet = () => {
 
     try {
       const res = await axios.get(
-        "http://localhost:3000/api/v1/seller/dashboard-stats",
+        `${API_URL}/seller/dashboard-stats`,
         { headers }
       );
       setStats(res.data?.data?.overview || null);
@@ -78,7 +81,7 @@ const SellerWallet = () => {
     setWithdrawing(true);
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/v1/seller/withdraw",
+        `${API_URL}/seller/withdraw`,
         { amount },
         { headers }
       );

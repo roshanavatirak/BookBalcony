@@ -6,6 +6,9 @@ import { FaCrown, FaCheck, FaStar, FaShieldAlt, FaBolt, FaGift } from 'react-ico
 import axios from 'axios';
 import { authActions } from '../../store/auth';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const PremiumPage = () => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +24,7 @@ const PremiumPage = () => {
 
   const fetchPlans = async () => {
     try {
-      const res = await axios.get('http://localhost:3000/api/v1/premium/plans');
+      const res = await axios.get(`${API_URL}/premium/plans`);
       setPlans(res.data.plans);
     } catch (err) {
       console.error('Failed to fetch plans:', err);
@@ -36,7 +39,7 @@ const PremiumPage = () => {
 
       // Create order
       const { data } = await axios.post(
-        'http://localhost:3000/api/v1/premium/create-order',
+        `${API_URL}/premium/create-order`,
         { planType: plan.id },
         {
           headers: {
@@ -58,7 +61,7 @@ const PremiumPage = () => {
           try {
             // Verify and activate
             const verifyRes = await axios.post(
-              'http://localhost:3000/api/v1/premium/verify-and-activate',
+              `${API_URL}/premium/verify-and-activate`,
               {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,

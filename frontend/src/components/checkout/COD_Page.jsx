@@ -376,6 +376,9 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { FaRupeeSign, FaArrowLeft } from "react-icons/fa";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 export default function COD_Page({ orderDetails, onBack, navigate }) {
   const [captcha, setCaptcha] = useState("");
   const [userCaptcha, setUserCaptcha] = useState("");
@@ -496,7 +499,7 @@ export default function COD_Page({ orderDetails, onBack, navigate }) {
     try {
       // Place order in database
       const orderResponse = await axios.post(
-        "http://localhost:3000/api/v1/place-order",
+        `${API_URL}/place-order`,
         {
           order: items.map(book => ({
             book: book._id,

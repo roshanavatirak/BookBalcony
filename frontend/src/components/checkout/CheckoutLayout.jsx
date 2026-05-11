@@ -6,6 +6,9 @@ import Step3_Payment from "./Step3_Payment";
 import COD_Page from "./COD_Page"; // <-- Import COD Page
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 export default function CheckoutLayout() {
   const { id } = useParams(); 
   const location = useLocation(); 
@@ -28,7 +31,7 @@ export default function CheckoutLayout() {
       } else if (id) {
         try {
           const res = await axios.get(
-            `http://localhost:3000/api/v1/get-book-by-id/${id}`
+            `${API_URL}/get-book-by-id/${id}`
           );
           setBook(res.data.data);
         } catch (err) {

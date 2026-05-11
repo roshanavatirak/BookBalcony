@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const Loader = () => (
   <div className="flex justify-center items-center">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
@@ -77,7 +80,7 @@ const SellerAccountInfo = () => {
         console.log('📡 Fetching seller information...');
         console.log('Request headers:', headers);
         
-        const res = await axios.get('http://localhost:3000/api/v1/seller/get-seller-info', { headers });
+        const res = await axios.get(`${API_URL}/seller/get-seller-info`, { headers });
         
         console.log('📥 Seller API Response received:', res.status);
         console.log('Raw response data:', res.data);

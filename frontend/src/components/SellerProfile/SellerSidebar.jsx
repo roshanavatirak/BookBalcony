@@ -5,6 +5,9 @@ import { useDispatch } from 'react-redux';
 import { authActions } from '../../store/auth';
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const SellerSidebar = ({ initialData = null, userProfile = null }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,7 +36,7 @@ const SellerSidebar = ({ initialData = null, userProfile = null }) => {
       setError(null);
       
       const headers = getHeaders();
-      const response = await axios.get('http://localhost:3000/api/v1/seller/get-seller-info', { headers });
+      const response = await axios.get(`${API_URL}/seller/get-seller-info`, { headers });
       
       if (response.data?.success) {
         setData(response.data.data);
@@ -87,13 +90,13 @@ const SellerSidebar = ({ initialData = null, userProfile = null }) => {
     const userData = userProfile || {};
     
     if (sellerData?.avatar) {
-      return sellerData.avatar.startsWith("http") ? sellerData.avatar : `http://localhost:3000/${sellerData.avatar}`;
+      return sellerData.avatar.startsWith("http") ? sellerData.avatar : `${BASE_URL}/${sellerData.avatar}`;
     }
     if (sellerData?.user?.avatar) {
-      return sellerData.user.avatar.startsWith("http") ? sellerData.user.avatar : `http://localhost:3000/${sellerData.user.avatar}`;
+      return sellerData.user.avatar.startsWith("http") ? sellerData.user.avatar : `${BASE_URL}/${sellerData.user.avatar}`;
     }
     if (userData?.avatar) {
-      return userData.avatar.startsWith("http") ? userData.avatar : `http://localhost:3000/${userData.avatar}`;
+      return userData.avatar.startsWith("http") ? userData.avatar : `${BASE_URL}/${userData.avatar}`;
     }
     
     return "https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg";

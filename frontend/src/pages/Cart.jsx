@@ -6,6 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiSparkles } from "react-icons/hi";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const Cart = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
@@ -21,7 +24,7 @@ const Cart = () => {
   const fetchCart = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:3000/api/v1/get-user-cart", { headers });
+      const res = await axios.get(`${API_URL}/get-user-cart`, { headers });
       setCart(res.data.data || []);
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -32,7 +35,7 @@ const Cart = () => {
   const removeFromCart = async (bookid) => {
     setRemovingId(bookid);
     try {
-      await axios.put(`http://localhost:3000/api/v1/remove-from-cart/${bookid}`, {}, { headers });
+      await axios.put(`${API_URL}/remove-from-cart/${bookid}`, {}, { headers });
       setCart(prev => prev.filter(item => item._id !== bookid));
     } catch (error) {
       alert("Failed to remove item.");

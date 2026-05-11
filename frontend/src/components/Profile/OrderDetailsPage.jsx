@@ -31,6 +31,9 @@ import Alert from '../Alert/Alert';
 import { useAlert } from '../Alert/useAlert';
 import { generateInvoicePDF, isInvoiceAvailable } from '../../utils/Invoicegenerator';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const Loader = () => (
   <div className="flex items-center justify-center p-8">
     <div className="relative">
@@ -248,7 +251,7 @@ const OrderDetailsPage = () => {
       }
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/get-order-details/${orderId}`,
+        `${API_URL}/get-order-details/${orderId}`,
         {
           headers: {
             id: id,
@@ -319,7 +322,7 @@ const OrderDetailsPage = () => {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/cancel-order/${orderId}`,
+        `${API_URL}/cancel-order/${orderId}`,
         {
           method: 'PUT',
           headers: {

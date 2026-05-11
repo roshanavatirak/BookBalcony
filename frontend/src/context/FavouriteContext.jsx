@@ -3,6 +3,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const FavouriteContext = createContext();
 
 export const useFavourites = () => useContext(FavouriteContext);
@@ -17,7 +20,7 @@ export const FavouriteProvider = ({ children }) => {
 
   const fetchFavourites = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/api/v1/get-favourite-books", {
+      const response = await axios.get(`${API_URL}/get-favourite-books`, {
         headers,
       });
       const ids = response.data.data.map(book => book._id);
@@ -30,7 +33,7 @@ export const FavouriteProvider = ({ children }) => {
   const addToFavourites = async (bookId) => {
     try {
       await axios.put(
-        "http://localhost:3000/api/v1/add-book-to-favourite",
+        `${API_URL}/add-book-to-favourite`,
         {},
         {
           headers: { ...headers, bookid: bookId },
@@ -46,7 +49,7 @@ export const FavouriteProvider = ({ children }) => {
   const removeFromFavourites = async (bookId) => {
     try {
       await axios.put(
-        "http://localhost:3000/api/v1/remove-book-from-favourite",
+        `${API_URL}/remove-book-from-favourite`,
         {},
         {
           headers: { ...headers, bookid: bookId },

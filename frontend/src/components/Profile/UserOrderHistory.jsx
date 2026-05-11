@@ -4,6 +4,9 @@ import Loader from '../Loader/Loader';
 import { Link } from 'react-router-dom';
 import { FaBookOpen, FaShoppingBag, FaTruck, FaBox, FaCheckCircle, FaClock, FaEye } from "react-icons/fa";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const UserOrderHistory = () => {
   const [orderHistory, setOrderHistory] = useState(null);
   const [groupedOrders, setGroupedOrders] = useState({});
@@ -18,7 +21,7 @@ const UserOrderHistory = () => {
     const fetchOrders = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/v1/get-order-history",
+          `${API_URL}/get-order-history`,
           { headers }
         );
         const orders = response.data.data || [];

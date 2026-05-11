@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 export default function useFavouriteBookIds() {
   const [favouriteIds, setFavouriteIds] = useState([]);
 
@@ -11,7 +14,7 @@ export default function useFavouriteBookIds() {
           id: localStorage.getItem("id"),
           authorization: `Bearer ${localStorage.getItem("token")}`,
         };
-        const response = await axios.get("http://localhost:3000/api/v1/get-favourite-books", { headers });
+        const response = await axios.get(`${API_URL}/get-favourite-books`, { headers });
         const favs = response.data.data || [];
         const ids = favs.map(book => book._id);
         setFavouriteIds(ids);

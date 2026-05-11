@@ -4,6 +4,9 @@ import { Outlet } from 'react-router-dom';
 import axios from "axios";
 import Loader from '../components/Loader/Loader';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const Profile = () => {
   const [userData, setUserData] = useState(null);
   const [sellerData, setSellerData] = useState(null);
@@ -17,7 +20,7 @@ const Profile = () => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/v1/get-user-information",
+          `${API_URL}/get-user-information`,
           { headers }
         );
         console.log("User info:", response.data);
@@ -30,7 +33,7 @@ const Profile = () => {
     const fetchSeller = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/v1/seller/get-seller-info", // ✅ Fixed endpoint
+          `${API_URL}/seller/get-seller-info`, // ✅ Fixed endpoint
           { headers }
         );
         console.log("Seller info:", response.data);

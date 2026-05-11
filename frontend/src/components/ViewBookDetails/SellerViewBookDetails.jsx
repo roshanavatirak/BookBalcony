@@ -7,6 +7,9 @@ import { FiEdit } from "react-icons/fi";
 import { MdDeleteOutline } from "react-icons/md";
 import Loader from '../Loader/Loader';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const SellerViewBookDetails = () => {
   const { id } = useParams();
   const [book, setBook] = useState(null);
@@ -22,11 +25,11 @@ const SellerViewBookDetails = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:3000/api/v1/get-book-by-id/${id}`, { headers });
+        const res = await axios.get(`${API_URL}/get-book-by-id/${id}`, { headers });
         setBook(res.data.data);
 
         // Optional: Get similar books
-        const simRes = await axios.get(`http://localhost:3000/api/v1/get-similar-books/${res.data.data.category}`);
+        const simRes = await axios.get(`${API_URL}/get-similar-books/${res.data.data.category}`);
         setSimilarBooks(simRes.data.data.filter(b => b._id !== id));
       } catch (err) {
         console.error("Error fetching book:", err);
@@ -42,7 +45,7 @@ const SellerViewBookDetails = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`http://localhost:3000/api/v1/delete-book/${id}`, { headers });
+      await axios.delete(`${API_URL}/delete-book/${id}`, { headers });
       alert("✅ Book deleted successfully.");
       navigate("/seller/myproducts");
     } catch (err) {

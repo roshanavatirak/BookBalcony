@@ -29,8 +29,8 @@ const SellerProduct = () => {
   const [newPriceValue, setNewPriceValue] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const { alert, showAlert, hideAlert, success, error, warning, info } = useAlert();
-
-  const API_URL = "http://localhost:3000/api/v1";
+const BASE_URL = import.meta.env.VITE_API_URL
+  const API_URL = `${BASE_URL}/api/v1`;
 
   const headers = {
     id: localStorage.getItem("id"),

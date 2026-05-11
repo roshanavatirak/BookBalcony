@@ -4,6 +4,9 @@ import { FaStore } from "react-icons/fa";
 import { motion } from "framer-motion";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const SubmittedPop = () => {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -11,7 +14,7 @@ const SubmittedPop = () => {
   useEffect(() => {
     const fetchSellerInfo = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/v1/get-seller-info", {
+        const response = await axios.get(`${API_URL}/get-seller-info`, {
           headers: {
             id: localStorage.getItem("id"),
             authorization: `Bearer ${localStorage.getItem("token")}`,

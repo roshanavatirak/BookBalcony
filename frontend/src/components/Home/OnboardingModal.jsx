@@ -17,6 +17,9 @@ import {
   FaSpinner
 } from "react-icons/fa";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 // Onboarding slides with enhanced content
 const pages = [
   {
@@ -213,7 +216,7 @@ const OnboardingModal = ({ onClose }) => {
       setLoading(true);
       try {
         const response = await axios.post(
-          "http://localhost:3000/api/v1/add-address",
+          `${API_URL}/add-address`,
           address,
           {
             headers: {

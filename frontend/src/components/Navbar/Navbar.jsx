@@ -5,6 +5,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../../store/auth';
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 // Icons
 import {
   FaHome,
@@ -52,7 +55,7 @@ function Navbar({ seller }) {
     if (!avatar) {
       return "https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg?ga=GA1.1.710266921.1749747219&semt=ais_hybrid&w=740";
     }
-    return avatar.startsWith("http") ? avatar : `http://localhost:3000/${avatar}`;
+    return avatar.startsWith("http") ? avatar : `${BASE_URL}/${avatar}`;
   };
 
   // ✅ Enhanced data extraction with debugging

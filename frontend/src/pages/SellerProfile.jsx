@@ -4,6 +4,9 @@ import SellerSidebar from '../components/SellerProfile/SellerSidebar';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const SellerProfile = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +29,7 @@ const SellerProfile = () => {
           // Try to fetch seller-specific profile data first
           try {
             const sellerResponse = await axios.get(
-              "http://localhost:3000/api/v1/seller/get-seller-info", // Fixed URL
+              `${API_URL}/seller/get-seller-info`, // Fixed URL
               { headers }
             );
             console.log("Seller data fetched:", sellerResponse.data);
@@ -37,7 +40,7 @@ const SellerProfile = () => {
             // If seller profile fails, try to get user profile
             try {
               const userResponse = await axios.get(
-                "http://localhost:3000/api/v1/get-user-information",
+                `${API_URL}/get-user-information`,
                 { headers }
               );
               console.log("User data fetched:", userResponse.data);

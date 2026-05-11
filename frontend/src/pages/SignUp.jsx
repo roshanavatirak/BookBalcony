@@ -3,6 +3,9 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const SignUp = () => {
   const [form, setForm] = useState({
     username: "",
@@ -57,7 +60,7 @@ const SignUp = () => {
       
       console.log("📝 Attempting signup...");
 
-      const response = await axios.post("http://localhost:3000/api/v1/sign-up", {
+      const response = await axios.post(`${API_URL}/sign-up`, {
         username,
         email,
         phone,

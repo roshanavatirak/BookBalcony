@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Eye, EyeOff, Copy, CheckCircle, AlertTriangle, User, CreditCard, Building, RefreshCw } from "lucide-react";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const SellerBankInfo = ({ user, onEdit, initialSeller = null, headers: propHeaders = {} }) => {
   const [showAccountNumber, setShowAccountNumber] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
@@ -82,10 +85,10 @@ const SellerBankInfo = ({ user, onEdit, initialSeller = null, headers: propHeade
         setError(null);
         
         console.log('📡 Fetching seller bank information...');
-        console.log('Request URL: http://localhost:3000/api/v1/seller/get-seller-info');
+        console.log('Request URL: ' + `${API_URL}/seller/get-seller-info`);
         console.log('Request headers:', headers);
         
-        const res = await axios.get('http://localhost:3000/api/v1/seller/get-seller-info', { headers });
+        const res = await axios.get(`${API_URL}/seller/get-seller-info`, { headers });
         
         console.log('📥 Bank API Response received:', res.status);
         console.log('Raw response data:', res.data);
@@ -159,7 +162,7 @@ const SellerBankInfo = ({ user, onEdit, initialSeller = null, headers: propHeade
       setLoading(true);
       setError(null);
       
-      const res = await axios.get('http://localhost:3000/api/v1/seller/get-seller-info', { headers });
+      const res = await axios.get(`${API_URL}/seller/get-seller-info`, { headers });
       console.log('📥 Seller data refetched:', res.status);
       
       const sellerData = extractSellerData(res.data);

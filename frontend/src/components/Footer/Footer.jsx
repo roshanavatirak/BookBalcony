@@ -4,6 +4,9 @@ import Alert from '../Alert/Alert';
 import { useAlert } from '../Alert/useAlert';
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 function Footer() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,7 +28,7 @@ function Footer() {
   const checkSubscriptionStatus = useCallback(async (userEmail, token, id) => {
     try {
       const subsResponse = await axios.get(
-        `http://localhost:3000/api/v1/services/my-subscriptions?email=${encodeURIComponent(userEmail)}`,
+        `${API_URL}/services/my-subscriptions?email=${encodeURIComponent(userEmail)}`,
         {
           headers: {
             authorization: `Bearer ${token}`,
@@ -78,7 +81,7 @@ function Footer() {
       // ✅ Verify token is still valid by fetching user info
       try {
         const userResponse = await axios.get(
-          'http://localhost:3000/api/v1/get-user-information',
+          `${API_URL}/get-user-information`,
           {
             headers: {
               authorization: `Bearer ${token}`,
@@ -162,7 +165,7 @@ function Footer() {
         console.log('🔄 Footer: Attempting to resubscribe:', email.trim());
         
         response = await axios.post(
-          'http://localhost:3000/api/v1/services/resubscribe',
+          `${API_URL}/services/resubscribe`,
           { email: email.trim() },
           {
             headers: {
@@ -192,7 +195,7 @@ function Footer() {
         console.log('⚠️ Footer: Resubscribe failed, trying new subscription');
         
         response = await axios.post(
-          'http://localhost:3000/api/v1/services/notify-me',
+          `${API_URL}/services/notify-me`,
           {
             email: email.trim(),
           },

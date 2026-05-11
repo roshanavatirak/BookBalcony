@@ -43,6 +43,9 @@ import {
   FaLock,
 } from 'react-icons/fa';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 // ✅ Configure how many services should be visible (not blurred)
 const ACTIVE_SERVICES_COUNT = 1;
 
@@ -73,7 +76,7 @@ const ServicesComingSoon = () => {
       console.log('🔍 ServicesComingSoon: Checking subscription status for:', email);
       
       const response = await axios.get(
-        `http://localhost:3000/api/v1/services/my-subscriptions?email=${encodeURIComponent(email)}`,
+        `${API_URL}/services/my-subscriptions?email=${encodeURIComponent(email)}`,
         {
           headers: {
             authorization: `Bearer ${token}`,
@@ -134,7 +137,7 @@ const ServicesComingSoon = () => {
       try {
         console.log('📡 ServicesComingSoon: Fetching user data...');
         
-        const res = await axios.get(`http://localhost:3000/api/v1/get-user-information`, {
+        const res = await axios.get(`${API_URL}/get-user-information`, {
           headers: { authorization: `Bearer ${token}`, id: id },
         });
 
@@ -239,7 +242,7 @@ const ServicesComingSoon = () => {
         console.log('🔄 ServicesComingSoon: Trying resubscribe endpoint...');
         
         response = await axios.post(
-          'http://localhost:3000/api/v1/services/resubscribe',
+          `${API_URL}/services/resubscribe`,
           { email: notifyEmail.trim() },
           {
             headers: isLoggedIn && token && id ? {
@@ -275,7 +278,7 @@ const ServicesComingSoon = () => {
         if (isLoggedIn && token && id) {
           // ✅ Use authenticated endpoint for logged-in users
           response = await axios.post(
-            'http://localhost:3000/api/v1/services/notify-me',
+            `${API_URL}/services/notify-me`,
             {
               email: notifyEmail.trim(),
               userType: isSeller ? 'Seller' : 'Customer',
@@ -289,7 +292,7 @@ const ServicesComingSoon = () => {
           );
         } else {
           // ✅ Use public endpoint for non-logged-in users
-          response = await axios.post('http://localhost:3000/api/v1/services/newsletter-subscribe', {
+          response = await axios.post(`${API_URL}/services/newsletter-subscribe`, {
             email: notifyEmail.trim(),
             name: notifyName || 'Anonymous',
           });

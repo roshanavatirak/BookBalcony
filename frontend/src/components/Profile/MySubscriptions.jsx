@@ -16,6 +16,9 @@ import {
   FaSync,
 } from 'react-icons/fa';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const MySubscriptions = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +40,7 @@ const MySubscriptions = () => {
 
       // Get user info to find email
       const userResponse = await axios.get(
-        'http://localhost:3000/api/v1/get-user-information',
+        `${API_URL}/get-user-information`,
         {
           headers: {
             authorization: `Bearer ${token}`,
@@ -62,7 +65,7 @@ const MySubscriptions = () => {
 
       // Fetch all subscriptions for this email
       const response = await axios.get(
-        `http://localhost:3000/api/v1/services/my-subscriptions?email=${encodeURIComponent(email)}`,
+        `${API_URL}/services/my-subscriptions?email=${encodeURIComponent(email)}`,
         {
           headers: {
             authorization: `Bearer ${token}`,
@@ -124,7 +127,7 @@ const MySubscriptions = () => {
       const id = localStorage.getItem('id');
 
       const response = await axios.post(
-        'http://localhost:3000/api/v1/services/unsubscribe',
+        `${API_URL}/services/unsubscribe`,
         { email: subscriptionEmail },
         {
           headers: {
@@ -160,7 +163,7 @@ const MySubscriptions = () => {
       const id = localStorage.getItem('id');
 
       const response = await axios.post(
-        'http://localhost:3000/api/v1/services/resubscribe',
+        `${API_URL}/services/resubscribe`,
         { email: subscriptionEmail },
         {
           headers: {

@@ -3,6 +3,9 @@ import { Package, TrendingUp, Clock, CheckCircle, XCircle, Bell, AlertCircle, Re
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 export default function SellerOrdersDashboard() {
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
@@ -46,7 +49,7 @@ export default function SellerOrdersDashboard() {
       }
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/seller/orders?${queryParams}`,
+        `${API_URL}/seller/orders?${queryParams}`,
         { headers }
       );
 
@@ -74,7 +77,7 @@ export default function SellerOrdersDashboard() {
       console.log('🔄 Updating order status:', { orderId, newStatus });
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/seller/orders/${orderId}/status`,
+        `${API_URL}/seller/orders/${orderId}/status`,
         {
           method: "PUT",
           headers: {
@@ -118,7 +121,7 @@ export default function SellerOrdersDashboard() {
       console.log('📍 Adding custom tracking update:', customTracking);
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/seller/orders/${selectedOrder._id}/tracking`,
+        `${API_URL}/seller/orders/${selectedOrder._id}/tracking`,
         {
           method: "POST",
           headers: {

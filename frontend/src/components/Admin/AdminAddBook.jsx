@@ -8,6 +8,9 @@ import {
   ArrowLeft, Save, Cloud, Shield, Gauge, Crown
 } from "lucide-react";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const categoriesList = [
   "Engineering",
   "Medical & NEET Preparation",
@@ -213,7 +216,7 @@ const AdminAddBook = () => {
       }, 200);
 
       const res = await axios.post(
-        "http://localhost:3000/api/v1/add-book",
+        `${API_URL}/add-book`,
         formDataToSend,
         {
           headers: {

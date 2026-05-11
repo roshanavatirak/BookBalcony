@@ -4,6 +4,9 @@ import Loader from '../components/Loader/Loader';
 import BookCard from '../components/BookCard/BookCard';
 import useFavouriteBookIds from '../hooks/useFavouriteBookIds';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const AllBooks = () => {
   const [Data, setData] = useState();
   const favouriteIds = useFavouriteBookIds(); // Custom hook to get favourite IDs
@@ -11,7 +14,7 @@ const AllBooks = () => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/v1/get-all-books");
+        const response = await axios.get(`${API_URL}/get-all-books`);
         setData(response.data.data);
       } catch (error) {
         console.error("Error fetching books:", error);

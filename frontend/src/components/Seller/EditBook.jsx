@@ -8,6 +8,9 @@ import {
   ArrowLeft, Save, Cloud, Shield, Gauge
 } from "lucide-react";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const categoriesList = [
   "Engineering",
   "Medical & NEET Preparation",
@@ -81,7 +84,7 @@ const EditBook = () => {
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const res = await axios.get(`http://localhost:3000/api/v1/seller/book/${id}`, { headers });
+        const res = await axios.get(`${API_URL}/seller/book/${id}`, { headers });
         const book = res.data.book;
         
         setFormData({
@@ -298,7 +301,7 @@ const EditBook = () => {
       }, 200);
 
       const res = await axios.put(
-        `http://localhost:3000/api/v1/seller/edit-book/${id}`,
+        `${API_URL}/seller/edit-book/${id}`,
         formDataToSend,
         {
           headers: {

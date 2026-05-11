@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const ForgotPassword = () => {
   const navigate = useNavigate();
 
@@ -83,7 +86,7 @@ const ForgotPassword = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:3000/api/v1/forgot-password/request-otp",
+        `${API_URL}/forgot-password/request-otp`,
         { emailOrMobile: email.trim() }
       );
 
@@ -132,7 +135,7 @@ const ForgotPassword = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:3000/api/v1/forgot-password/verify-otp",
+        `${API_URL}/forgot-password/verify-otp`,
         {
           emailOrMobile: email,
           otp: otp.trim(),
@@ -183,7 +186,7 @@ const ForgotPassword = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:3000/api/v1/forgot-password/reset-password",
+        `${API_URL}/forgot-password/reset-password`,
         {
           emailOrMobile: email,
           newPassword,
@@ -220,7 +223,7 @@ const ForgotPassword = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:3000/api/v1/forgot-password/resend-otp",
+        `${API_URL}/forgot-password/resend-otp`,
         { emailOrMobile: email }
       );
 
@@ -249,7 +252,7 @@ const handleStayLoggedIn = async () => {
 
     // Perform login with the new password
     const response = await axios.post(
-      "http://localhost:3000/api/v1/sign-in",
+      `${API_URL}/sign-in`,
       {
         emailOrMobile: email,
         password: newPassword,

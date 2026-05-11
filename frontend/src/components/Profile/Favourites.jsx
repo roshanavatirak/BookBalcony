@@ -4,6 +4,9 @@ import React, { useEffect, useState } from 'react';
 import axios from "axios";
 import BookCard from '../BookCard/BookCard';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api/v1`;
+
 const Favourites = () => {
   const [favouriteBooks, setFavouriteBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +19,7 @@ const Favourites = () => {
   useEffect(() => {
     const fetchFavourites = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/v1/get-favourite-books", { headers });
+        const response = await axios.get(`${API_URL}/get-favourite-books`, { headers });
         setFavouriteBooks(response.data.data || []);
       } catch (error) {
         console.error("Error fetching favourites:", error);
