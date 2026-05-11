@@ -182,7 +182,7 @@
 const router = require("express").Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
-const Book = require("../models/Book");
+const Book = require("../models/book");
 const { authenticateToken } = require("./userAuth");
 const cloudinary = require("cloudinary").v2;
 const multer = require("multer");
