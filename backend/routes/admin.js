@@ -2343,7 +2343,7 @@
 
 const express = require("express");
 const router = express.Router();
-const Book = require("../models/Book");
+const Book = require("../models/book");
 const User = require("../models/user");
 const Seller = require("../models/seller");
 const Order = require("../models/order");
