@@ -360,8 +360,18 @@ function Navbar({ seller }) {
       pollingIntervalRef.current = null;
     }
     
-    localStorage.clear();
+    // ✅ Clear all localStorage data
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('id');
+    localStorage.removeItem('sellerMode');
     
+    // ✅ CRITICAL: Dispatch logout event to notify Footer and other components
+    const logoutEvent = new CustomEvent('userLoggedOut');
+    window.dispatchEvent(logoutEvent);
+    console.log('📢 Navbar: Dispatched userLoggedOut event to sync with Footer');
+    
+    // Clear component state
     setUserProfile(null);
     setSellerInfo(null);
     setIsSellerApproved(false);
@@ -370,8 +380,11 @@ function Navbar({ seller }) {
     setSellerFetchError(null);
     setLoading(false);
     
+    // Update Redux
     dispatch(authActions.logout());
-    navigate('/signin');
+    
+    // Navigate to login
+    navigate('/signin', { replace: true });
   };
 
   // ✅ UPDATED: Use sellerApplicationStatus from user profile
@@ -533,9 +546,10 @@ function Navbar({ seller }) {
   if (isLoggedIn && sellerMode && isSellerApproved) {
     links = [
       { title: 'Dashboard', link: '/seller/dashboard', icon: <FaHome /> },
-      { title: 'Add Product', link: '/seller/add-book', icon: <FaPlus /> },
+      { title: 'Add Product', link: '/seller/add-product', icon: <FaPlus /> },
       { title: 'My Products', link: '/seller/myproducts', icon: <FaBoxOpen /> },
       { title: 'Orders', link: '/seller/orders', icon: <FaShoppingCart /> },
+      { title: 'Wallet', link: '/seller/mywallet', icon: <FaShoppingCart /> },
     ];
   } else {
     links = [

@@ -13,7 +13,15 @@ function Footer() {
   
   const { alert, showAlert, hideAlert, success, error, warning, info } = useAlert();
 
-  // ✅ Memoized function to check subscription status
+  // ✅ Clear all subscription-related state
+  const clearSubscriptionState = useCallback(() => {
+    setEmail('');
+    setIsSubscribed(false);
+    setIsAuthenticated(false);
+    // Don't clear localStorage here - let logout handler do it
+  }, []);
+
+  // ✅ Memoized function to check subscription status from DB
   const checkSubscriptionStatus = useCallback(async (userEmail, token, id) => {
     try {
       const subsResponse = await axios.get(
@@ -35,72 +43,92 @@ function Footer() {
         );
         
         console.log('✅ Footer: Has active subscription:', hasActiveSubscription);
-        console.log('📊 Footer: Subscription data:', subsResponse.data.data);
         setIsSubscribed(hasActiveSubscription);
-        
-        // ✅ Update localStorage to sync with other components
-        localStorage.setItem('subscriptionStatus', hasActiveSubscription ? 'active' : 'inactive');
         
         return hasActiveSubscription;
       } else {
         console.log('❌ Footer: No subscriptions found');
         setIsSubscribed(false);
-        localStorage.setItem('subscriptionStatus', 'inactive');
         return false;
       }
     } catch (subErr) {
       console.error('Footer: Subscription check error:', subErr);
-      // If 404 or no subscriptions, set to false
+      // If error (401, 404, etc.), user is not subscribed
       setIsSubscribed(false);
-      localStorage.setItem('subscriptionStatus', 'inactive');
       return false;
     }
   }, []);
 
-  // ✅ Check authentication and subscription status on mount
+  // ✅ Check authentication and subscription status - ALWAYS from DB
   const checkAuthAndSubscription = useCallback(async () => {
+    setIsLoading(true);
+    
     try {
       const token = localStorage.getItem('token');
       const id = localStorage.getItem('id');
 
+      // ✅ If no token/id, user is logged out - clear everything
       if (!token || !id) {
+        console.log('🚫 Footer: No authentication found, clearing state');
+        clearSubscriptionState();
         setIsLoading(false);
         return;
       }
 
-      setIsAuthenticated(true);
+      // ✅ Verify token is still valid by fetching user info
+      try {
+        const userResponse = await axios.get(
+          'http://localhost:3000/api/v1/get-user-information',
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+              id: id,
+            },
+          }
+        );
 
-      // Get user information
-      const userResponse = await axios.get(
-        'http://localhost:3000/api/v1/get-user-information',
-        {
-          headers: {
-            authorization: `Bearer ${token}`,
-            id: id,
-          },
+        const userEmail = userResponse.data?.data?.email || userResponse.data?.email;
+        
+        if (userEmail) {
+          console.log('✅ Footer: User authenticated:', userEmail);
+          setIsAuthenticated(true);
+          setEmail(userEmail);
+          
+          // ✅ Always fetch fresh subscription status from DB
+          await checkSubscriptionStatus(userEmail, token, id);
+        } else {
+          console.log('❌ Footer: No user email found');
+          clearSubscriptionState();
         }
-      );
-
-      const userEmail = userResponse.data?.data?.email || userResponse.data?.email;
-      
-      if (userEmail) {
-        setEmail(userEmail);
-        // Check subscription status
-        await checkSubscriptionStatus(userEmail, token, id);
+      } catch (authErr) {
+        console.error('❌ Footer: Authentication failed:', authErr);
+        // Token is invalid or expired - clear everything
+        clearSubscriptionState();
+        // Optionally clear localStorage
+        localStorage.removeItem('token');
+        localStorage.removeItem('id');
       }
     } catch (err) {
-      console.error('Footer: Error checking subscription status:', err);
+      console.error('Footer: Error in checkAuthAndSubscription:', err);
+      clearSubscriptionState();
     } finally {
       setIsLoading(false);
     }
-  }, [checkSubscriptionStatus]);
+  }, [checkSubscriptionStatus, clearSubscriptionState]);
 
+  // ✅ Initial load - check auth and subscription
   useEffect(() => {
     checkAuthAndSubscription();
   }, [checkAuthAndSubscription]);
 
   const handleNewsletterSubscribe = async (e) => {
     e.preventDefault();
+
+    // ✅ Check if user is authenticated
+    if (!isAuthenticated) {
+      warning('Please login to subscribe to our newsletter', 'Login Required');
+      return;
+    }
 
     // ✅ Validation
     if (!email.trim()) {
@@ -121,10 +149,15 @@ function Footer() {
       const token = localStorage.getItem('token');
       const id = localStorage.getItem('id');
 
+      if (!token || !id) {
+        warning('Please login to subscribe', 'Authentication Required');
+        setIsSubmitting(false);
+        return;
+      }
+
       let response;
 
-      // ✅ ALWAYS use resubscribe endpoint for existing subscriptions
-      // First, try to resubscribe (this will work for unsubscribed users)
+      // ✅ Try to resubscribe first (for users who unsubscribed)
       try {
         console.log('🔄 Footer: Attempting to resubscribe:', email.trim());
         
@@ -132,32 +165,24 @@ function Footer() {
           'http://localhost:3000/api/v1/services/resubscribe',
           { email: email.trim() },
           {
-            headers: isAuthenticated && token && id ? {
+            headers: {
               authorization: `Bearer ${token}`,
               id: id,
-            } : {},
+            },
           }
         );
 
         console.log('✅ Footer: Resubscribe successful:', response.data);
-
         success('Welcome back! You have been resubscribed. 🎉', 'Resubscribed');
-        setIsSubscribed(true);
-        localStorage.setItem('subscriptionStatus', 'active');
+        
+        // ✅ Refresh subscription status from DB
+        await checkSubscriptionStatus(email.trim(), token, id);
 
         // ✅ Notify other components
         const event = new CustomEvent('subscriptionUpdated', { 
           detail: { status: 'active', email: email.trim() } 
         });
         window.dispatchEvent(event);
-        console.log('📢 Footer: Dispatched subscriptionUpdated event');
-
-        // Refresh subscription status
-        if (isAuthenticated && token && id) {
-          setTimeout(async () => {
-            await checkSubscriptionStatus(email.trim(), token, id);
-          }, 500);
-        }
 
         setIsSubmitting(false);
         return;
@@ -166,60 +191,40 @@ function Footer() {
         // If resubscribe fails (404 - not found), try to create new subscription
         console.log('⚠️ Footer: Resubscribe failed, trying new subscription');
         
-        if (isAuthenticated && token && id) {
-          response = await axios.post(
-            'http://localhost:3000/api/v1/services/notify-me',
-            {
-              email: email.trim(),
+        response = await axios.post(
+          'http://localhost:3000/api/v1/services/notify-me',
+          {
+            email: email.trim(),
+          },
+          {
+            headers: {
+              authorization: `Bearer ${token}`,
+              id: id,
             },
-            {
-              headers: {
-                authorization: `Bearer ${token}`,
-                id: id,
-              },
-            }
-          );
-        } else {
-          response = await axios.post(
-            'http://localhost:3000/api/v1/services/newsletter-subscribe',
-            {
-              email: email.trim(),
-              name: 'Newsletter Subscriber'
-            }
-          );
-        }
+          }
+        );
       }
 
       console.log('✅ Footer: Newsletter subscription response:', response.data);
 
-      // ✅ Check if already subscribed
+      // ✅ Handle different response scenarios
       if (response.data.data?.alreadySubscribed) {
         info('You are already subscribed to our newsletter!', 'Already Subscribed');
-        setIsSubscribed(true);
-        localStorage.setItem('subscriptionStatus', 'active');
       } else if (response.data.data?.resubscribed) {
         success('Welcome back! You have been resubscribed. 🎉', 'Resubscribed');
-        setIsSubscribed(true);
-        localStorage.setItem('subscriptionStatus', 'active');
       } else {
         success('Successfully subscribed! We\'ll keep you updated. 🎉', 'Subscription Complete');
-        setIsSubscribed(true);
-        localStorage.setItem('subscriptionStatus', 'active');
       }
 
-      // ✅ Notify other components about the subscription change
+      // ✅ Refresh subscription status from DB
+      await checkSubscriptionStatus(email.trim(), token, id);
+
+      // ✅ Notify other components
       const event = new CustomEvent('subscriptionUpdated', { 
         detail: { status: 'active', email: email.trim() } 
       });
       window.dispatchEvent(event);
       console.log('📢 Footer: Dispatched subscriptionUpdated event');
-
-      // ✅ Refresh subscription status after successful subscription
-      if (isAuthenticated && token && id) {
-        setTimeout(async () => {
-          await checkSubscriptionStatus(email.trim(), token, id);
-        }, 500);
-      }
 
     } catch (err) {
       console.error('❌ Footer: Newsletter subscription failed:', err);
@@ -231,6 +236,9 @@ function Footer() {
 
         if (status === 400) {
           warning(errorMessage, 'Validation Error');
+        } else if (status === 401) {
+          warning('Please login again to subscribe', 'Authentication Required');
+          clearSubscriptionState();
         } else if (status === 404) {
           error('Service temporarily unavailable. Please try again later.', 'Service Error');
         } else if (status === 500) {
@@ -248,43 +256,49 @@ function Footer() {
     }
   };
 
-  // ✅ Add event listener for subscription updates from other parts of the app
+  // ✅ Listen for subscription updates from other components
   useEffect(() => {
     const handleSubscriptionUpdate = async (event) => {
-      const token = localStorage.getItem('token');
-      const id = localStorage.getItem('id');
-      
       console.log('🔄 Footer: Subscription update event received');
       
-      if (token && id && email) {
-        console.log('🔄 Footer: Refreshing subscription status...');
-        await checkSubscriptionStatus(email, token, id);
-      }
+      // ✅ Re-check authentication and subscription from DB
+      await checkAuthAndSubscription();
     };
 
-    // Listen for custom event
     window.addEventListener('subscriptionUpdated', handleSubscriptionUpdate);
 
     return () => {
       window.removeEventListener('subscriptionUpdated', handleSubscriptionUpdate);
     };
-  }, [email, checkSubscriptionStatus]);
+  }, [checkAuthAndSubscription]);
 
-  // ✅ Listen for localStorage changes (for cross-tab sync)
+  // ✅ Listen for logout events
   useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === 'subscriptionStatus') {
-        console.log('💾 Footer: localStorage change detected:', e.newValue);
-        setIsSubscribed(e.newValue === 'active');
-      }
+    const handleLogout = () => {
+      console.log('🚪 Footer: Logout event detected, clearing state');
+      clearSubscriptionState();
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('userLoggedOut', handleLogout);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userLoggedOut', handleLogout);
     };
-  }, []);
+  }, [clearSubscriptionState]);
+
+  // ✅ Listen for login events
+  useEffect(() => {
+    const handleLogin = async () => {
+      console.log('🔑 Footer: Login event detected, refreshing subscription status');
+      await checkAuthAndSubscription();
+    };
+
+    window.addEventListener('userLoggedIn', handleLogin);
+
+    return () => {
+      window.removeEventListener('userLoggedIn', handleLogin);
+    };
+  }, [checkAuthAndSubscription]);
 
   return (
     <>
@@ -390,52 +404,62 @@ function Footer() {
               <div className="flex items-center justify-center py-8">
                 <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
               </div>
+            ) : !isAuthenticated ? (
+              // ✅ Show login prompt for non-authenticated users
+              <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4">
+                <p className="text-zinc-300 text-sm mb-3">
+                  Please login to subscribe to our newsletter and get exclusive updates!
+                </p>
+                <a
+                  href="/login"
+                  className="block w-full px-4 py-2 bg-yellow-400 text-black font-semibold rounded-md hover:bg-yellow-300 transition-all transform hover:scale-105 text-center"
+                >
+                  Login to Subscribe
+                </a>
+                <p className="text-xs text-zinc-500 mt-3">
+                  🔒 Your email will be used only for newsletter updates
+                </p>
+              </div>
             ) : isSubscribed ? (
+              // ✅ Show subscribed state for authenticated + subscribed users
               <div className="bg-green-500/10 border border-green-500/50 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-2">
                   <FaCheckCircle className="text-green-400 text-2xl flex-shrink-0" />
                   <div>
                     <p className="text-green-400 font-bold text-sm">You're Subscribed! 🎉</p>
                     <p className="text-green-300 text-xs mt-1 break-all">
-                      {email || 'Thank you for subscribing!'}
+                      {email}
                     </p>
                   </div>
                 </div>
                 <p className="text-zinc-400 text-xs mt-2">
                   We'll keep you updated with the latest news and offers.
                 </p>
-                {isAuthenticated && (
-                  <a
-                    href="/profile/my-subscriptions"
-                    className="block mt-3 text-xs text-yellow-400 hover:text-yellow-300 transition-colors underline"
-                  >
-                    Manage your subscriptions →
-                  </a>
-                )}
+                <a
+                  href="/profile/my-subscriptions"
+                  className="block mt-3 text-xs text-yellow-400 hover:text-yellow-300 transition-colors underline"
+                >
+                  Manage your subscriptions →
+                </a>
               </div>
             ) : (
+              // ✅ Show subscribe form for authenticated but not subscribed users
               <form onSubmit={handleNewsletterSubscribe} className="space-y-3">
                 <div className="relative">
                   <input
                     type="email"
-                    placeholder={isAuthenticated ? "Your email (auto-filled)" : "Enter your email"}
+                    placeholder="Your email (auto-filled)"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={isSubmitting || isAuthenticated}
-                    readOnly={isAuthenticated}
-                    className={`w-full px-4 py-2 rounded-md bg-transparent border ${
-                      isAuthenticated 
-                        ? 'border-yellow-400/50 cursor-not-allowed' 
-                        : 'border-white'
-                    } text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all disabled:opacity-50`}
+                    disabled={isSubmitting}
+                    readOnly
+                    className="w-full px-4 py-2 rounded-md bg-transparent border border-yellow-400/50 cursor-not-allowed text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-yellow-400 focus:outline-none transition-all disabled:opacity-50"
                   />
                   <FaEnvelope className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm pointer-events-none" />
                 </div>
-                {isAuthenticated && (
-                  <p className="text-xs text-yellow-400/80">
-                    ✓ Email auto-filled from your account
-                  </p>
-                )}
+                <p className="text-xs text-yellow-400/80">
+                  ✓ Email auto-filled from your account
+                </p>
                 <button
                   type="submit"
                   disabled={isSubmitting}

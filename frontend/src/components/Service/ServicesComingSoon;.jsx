@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
@@ -51,20 +51,73 @@ const ServicesComingSoon = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [isSeller, setIsSeller] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(true);
 
   const [countdown, setCountdown] = useState({ days: 45, hours: 23, minutes: 59, seconds: 59 });
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifyName, setNotifyName] = useState('');
-  const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeService, setActiveService] = useState(null);
 
-  const launchDate = new Date('2026-02-15T00:00:00');
+  const launchDate = new Date('2026-03-31T00:00:00');
 
+  // ✅ Check subscription status from database
+  const checkSubscriptionStatus = useCallback(async (email, token, id) => {
+    if (!email || !token || !id) {
+      console.log('❌ ServicesComingSoon: Missing credentials for subscription check');
+      return false;
+    }
+
+    try {
+      console.log('🔍 ServicesComingSoon: Checking subscription status for:', email);
+      
+      const response = await axios.get(
+        `http://localhost:3000/api/v1/services/my-subscriptions?email=${encodeURIComponent(email)}`,
+        {
+          headers: {
+            authorization: `Bearer ${token}`,
+            id: id,
+          },
+        }
+      );
+
+      console.log('📋 ServicesComingSoon: Subscription response:', response.data);
+
+      if (response.data.success && response.data.data && response.data.data.length > 0) {
+        // Check if ANY subscription is active
+        const hasActiveSubscription = response.data.data.some(
+          sub => sub.status === 'active'
+        );
+        
+        console.log('✅ ServicesComingSoon: Active subscription found:', hasActiveSubscription);
+        setIsSubscribed(hasActiveSubscription);
+        return hasActiveSubscription;
+      } else {
+        console.log('❌ ServicesComingSoon: No active subscriptions found');
+        setIsSubscribed(false);
+        return false;
+      }
+    } catch (err) {
+      console.error('ServicesComingSoon: Subscription check error:', err);
+      if (err.response?.status === 404) {
+        console.log('❌ ServicesComingSoon: 404 - User has no subscriptions');
+      }
+      setIsSubscribed(false);
+      return false;
+    }
+  }, []);
+
+  // ✅ Fetch user data and subscription status
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
+      setCheckingSubscription(true);
+
       if (!isLoggedIn) {
+        console.log('❌ ServicesComingSoon: User not logged in');
         setLoading(false);
+        setCheckingSubscription(false);
         return;
       }
 
@@ -72,11 +125,15 @@ const ServicesComingSoon = () => {
       const id = localStorage.getItem('id');
 
       if (!token || !id) {
+        console.log('❌ ServicesComingSoon: Missing auth credentials');
         setLoading(false);
+        setCheckingSubscription(false);
         return;
       }
 
       try {
+        console.log('📡 ServicesComingSoon: Fetching user data...');
+        
         const res = await axios.get(`http://localhost:3000/api/v1/get-user-information`, {
           headers: { authorization: `Bearer ${token}`, id: id },
         });
@@ -88,23 +145,30 @@ const ServicesComingSoon = () => {
                             (userData.isSeller === true || userData.isSeller === 'true');
         setIsSeller(sellerStatus);
 
-        // ✅ Auto-fill email for logged-in users
+        // ✅ Auto-fill email and name for logged-in users
         if (userData.email) {
           setNotifyEmail(userData.email);
+          console.log('✅ ServicesComingSoon: Email auto-filled:', userData.email);
         }
         if (userData.username) {
           setNotifyName(userData.username);
         }
+
+        // ✅ Check subscription status from database
+        await checkSubscriptionStatus(userData.email, token, id);
+        
       } catch (err) {
-        console.error('Failed to fetch user data:', err);
+        console.error('ServicesComingSoon: Failed to fetch user data:', err);
       } finally {
         setLoading(false);
+        setCheckingSubscription(false);
       }
     };
 
     fetchUserData();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, checkSubscriptionStatus]);
 
+  // ✅ Countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -123,9 +187,42 @@ const ServicesComingSoon = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // ✅ Listen for subscription updates from Footer or MySubscriptions
+  useEffect(() => {
+    const handleSubscriptionUpdate = async (event) => {
+      console.log('🔄 ServicesComingSoon: Subscription update event received:', event.detail);
+      
+      const token = localStorage.getItem('token');
+      const id = localStorage.getItem('id');
+      
+      if (token && id && notifyEmail) {
+        console.log('🔄 ServicesComingSoon: Refreshing subscription status...');
+        await checkSubscriptionStatus(notifyEmail, token, id);
+      }
+    };
+
+    window.addEventListener('subscriptionUpdated', handleSubscriptionUpdate);
+
+    return () => {
+      window.removeEventListener('subscriptionUpdated', handleSubscriptionUpdate);
+    };
+  }, [notifyEmail, checkSubscriptionStatus]);
+
   const handleNotifyMe = async (e) => {
     e.preventDefault();
-    if (!notifyEmail.trim()) return;
+
+    // ✅ Validation
+    if (!notifyEmail.trim()) {
+      alert('Please enter your email address');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(notifyEmail)) {
+      alert('Please enter a valid email address');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -135,33 +232,74 @@ const ServicesComingSoon = () => {
 
       let response;
 
-      // ✅ Use authenticated endpoint if logged in
-      if (isLoggedIn && token && id) {
+      console.log('📧 ServicesComingSoon: Attempting to subscribe:', notifyEmail.trim());
+
+      // ✅ ALWAYS try resubscribe first (for users who previously unsubscribed)
+      try {
+        console.log('🔄 ServicesComingSoon: Trying resubscribe endpoint...');
+        
         response = await axios.post(
-          'http://localhost:3000/api/v1/services/notify-me',
+          'http://localhost:3000/api/v1/services/resubscribe',
+          { email: notifyEmail.trim() },
           {
-            email: notifyEmail.trim(),
-            userType: isSeller ? 'Seller' : 'Customer',
-          },
-          {
-            headers: {
+            headers: isLoggedIn && token && id ? {
               authorization: `Bearer ${token}`,
               id: id,
-            },
+            } : {},
           }
         );
-      } else {
-        // ✅ Use public endpoint for non-logged-in users
-        response = await axios.post('http://localhost:3000/api/v1/services/newsletter-subscribe', {
-          email: notifyEmail.trim(),
-          name: notifyName || 'Anonymous',
+
+        console.log('✅ ServicesComingSoon: Resubscribe successful:', response.data);
+        setIsSubscribed(true);
+
+        // ✅ Dispatch event to notify Footer and MySubscriptions
+        const event = new CustomEvent('subscriptionUpdated', { 
+          detail: { status: 'active', email: notifyEmail.trim() } 
         });
+        window.dispatchEvent(event);
+        console.log('📢 ServicesComingSoon: Dispatched subscriptionUpdated event');
+
+        // ✅ Refresh subscription status
+        if (isLoggedIn && token && id) {
+          setTimeout(async () => {
+            await checkSubscriptionStatus(notifyEmail.trim(), token, id);
+          }, 500);
+        }
+
+        return; // Exit early on successful resubscribe
+
+      } catch (resubErr) {
+        console.log('⚠️ ServicesComingSoon: Resubscribe failed, trying new subscription...');
+        
+        // If resubscribe fails (404), try to create new subscription
+        if (isLoggedIn && token && id) {
+          // ✅ Use authenticated endpoint for logged-in users
+          response = await axios.post(
+            'http://localhost:3000/api/v1/services/notify-me',
+            {
+              email: notifyEmail.trim(),
+              userType: isSeller ? 'Seller' : 'Customer',
+            },
+            {
+              headers: {
+                authorization: `Bearer ${token}`,
+                id: id,
+              },
+            }
+          );
+        } else {
+          // ✅ Use public endpoint for non-logged-in users
+          response = await axios.post('http://localhost:3000/api/v1/services/newsletter-subscribe', {
+            email: notifyEmail.trim(),
+            name: notifyName || 'Anonymous',
+          });
+        }
       }
 
-      console.log('✅ ServicesComingSoon: Subscription response:', response.data);
+      console.log('✅ ServicesComingSoon: Subscription successful:', response.data);
 
-      // ✅ Update localStorage
-      localStorage.setItem('subscriptionStatus', 'active');
+      // ✅ Update subscription state
+      setIsSubscribed(true);
 
       // ✅ Dispatch event to notify Footer and MySubscriptions
       const event = new CustomEvent('subscriptionUpdated', { 
@@ -170,19 +308,24 @@ const ServicesComingSoon = () => {
       window.dispatchEvent(event);
       console.log('📢 ServicesComingSoon: Dispatched subscriptionUpdated event');
 
-      setEmailSubmitted(true);
-      setTimeout(() => {
-        setNotifyEmail('');
-        setNotifyName('');
-        setEmailSubmitted(false);
-      }, 5000);
+      // ✅ Refresh subscription status from database
+      if (isLoggedIn && token && id) {
+        setTimeout(async () => {
+          await checkSubscriptionStatus(notifyEmail.trim(), token, id);
+        }, 500);
+      }
+
     } catch (err) {
-      console.error('ServicesComingSoon: Failed to submit email:', err);
+      console.error('❌ ServicesComingSoon: Subscription failed:', err);
       
       if (err.response?.data?.message) {
         alert(err.response.data.message);
+      } else if (err.response?.status === 400) {
+        alert('Invalid email or you are already subscribed');
+      } else if (err.response?.status === 500) {
+        alert('Server error. Please try again later.');
       } else {
-        alert('Failed to submit. Please try again later.');
+        alert('Failed to subscribe. Please try again later.');
       }
     } finally {
       setIsSubmitting(false);
@@ -314,7 +457,7 @@ const ServicesComingSoon = () => {
         <div className="flex justify-center mb-6">
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400/10 rounded-full border border-yellow-400/30 backdrop-blur-sm shadow-lg">
             <FaRocket className="text-yellow-400 animate-pulse" />
-            <span className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Launching February 15, 2026</span>
+            <span className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Launching March 31, 2026</span>
           </div>
         </div>
 
@@ -353,75 +496,99 @@ const ServicesComingSoon = () => {
 
         {/* Notify Form */}
         <div className="max-w-xl mx-auto bg-zinc-800/60 backdrop-blur-xl p-6 rounded-2xl border border-zinc-700/50 shadow-xl mb-10">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <FaBell className="text-yellow-400 text-xl animate-pulse" />
-            <h3 className="text-lg font-bold text-white">Get Notified at Launch</h3>
-          </div>
-          <p className="text-zinc-400 text-sm mb-4 text-center">
-            Be first to access - Get 30% off launch discount!
-          </p>
-          
-          {!emailSubmitted ? (
-            <form onSubmit={handleNotifyMe} className="space-y-3">
-              <input
-                type="text"
-                value={notifyName}
-                onChange={(e) => setNotifyName(e.target.value)}
-                placeholder="Your Name (Optional)"
-                disabled={isLoggedIn}
-                readOnly={isLoggedIn}
-                className={`w-full px-4 py-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all ${
-                  isLoggedIn ? 'cursor-not-allowed opacity-75' : ''
-                }`}
-              />
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <input
-                    type="email"
-                    value={notifyEmail}
-                    onChange={(e) => setNotifyEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    required
-                    disabled={isLoggedIn}
-                    readOnly={isLoggedIn}
-                    className={`w-full px-4 py-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all ${
-                      isLoggedIn ? 'cursor-not-allowed opacity-75 border-yellow-400/50' : ''
-                    }`}
-                  />
-                  <FaEnvelope className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm" />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-200 text-black text-sm font-bold rounded-lg hover:from-yellow-500 hover:to-yellow-300 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-                    </>
-                  ) : (
-                    <>
-                      <span>Notify</span>
-                      <FaArrowRight />
-                    </>
-                  )}
-                </button>
-              </div>
-              {isLoggedIn && (
-                <p className="text-xs text-yellow-400/80 text-center">
-                  ✓ Email auto-filled from your account
-                </p>
-              )}
-              <p className="text-xs text-zinc-500 text-center">Secure & no spam. Unsubscribe anytime.</p>
-            </form>
-          ) : (
-            <div className="p-4 bg-green-500/10 border border-green-500/50 rounded-lg flex items-center gap-2">
-              <FaCheckCircle className="text-green-400 text-xl" />
-              <div>
-                <p className="text-green-400 font-bold text-sm">Successfully Registered! 🎉</p>
-                <p className="text-green-300 text-xs">We'll notify you on launch day</p>
-              </div>
+          {checkingSubscription ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+              <span className="ml-3 text-zinc-400">Checking subscription status...</span>
             </div>
+          ) : isSubscribed ? (
+            // ✅ Already Subscribed State
+            <div className="bg-green-500/10 border border-green-500/50 rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <FaCheckCircle className="text-green-400 text-3xl flex-shrink-0" />
+                <div>
+                  <p className="text-green-400 font-bold text-lg">You're Already Subscribed! 🎉</p>
+                  <p className="text-green-300 text-sm mt-1 break-all">
+                    {notifyEmail || 'We\'ll notify you at launch!'}
+                  </p>
+                </div>
+              </div>
+              <p className="text-zinc-400 text-sm mt-3">
+                We'll notify you on <span className="text-yellow-400 font-semibold">February 15, 2026</span> when services launch with an exclusive <span className="text-green-400 font-semibold">30% discount</span>!
+              </p>
+              {isLoggedIn && (
+                <Link
+                  to="/profile/my-subscriptions"
+                  className="block mt-4 text-sm text-yellow-400 hover:text-yellow-300 transition-colors underline text-center"
+                >
+                  Manage your subscriptions →
+                </Link>
+              )}
+            </div>
+          ) : (
+            // ✅ Not Subscribed - Show Subscribe Form
+            <>
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <FaBell className="text-yellow-400 text-xl animate-pulse" />
+                <h3 className="text-lg font-bold text-white">Get Notified at Launch</h3>
+              </div>
+              <p className="text-zinc-400 text-sm mb-4 text-center">
+                Be first to access - Get <span className="text-green-400 font-semibold">30% off</span> launch discount!
+              </p>
+              
+              <form onSubmit={handleNotifyMe} className="space-y-3">
+                <input
+                  type="text"
+                  value={notifyName}
+                  onChange={(e) => setNotifyName(e.target.value)}
+                  placeholder="Your Name (Optional)"
+                  disabled={isLoggedIn}
+                  readOnly={isLoggedIn}
+                  className={`w-full px-4 py-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all ${
+                    isLoggedIn ? 'cursor-not-allowed opacity-75' : ''
+                  }`}
+                />
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <input
+                      type="email"
+                      value={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      required
+                      disabled={isLoggedIn}
+                      readOnly={isLoggedIn}
+                      className={`w-full px-4 py-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all ${
+                        isLoggedIn ? 'cursor-not-allowed opacity-75 border-yellow-400/50' : ''
+                      }`}
+                    />
+                    <FaEnvelope className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm" />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-200 text-black text-sm font-bold rounded-lg hover:from-yellow-500 hover:to-yellow-300 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
+                      </>
+                    ) : (
+                      <>
+                        <span>Notify Me</span>
+                        <FaArrowRight />
+                      </>
+                    )}
+                  </button>
+                </div>
+                {isLoggedIn && (
+                  <p className="text-xs text-yellow-400/80 text-center">
+                    ✓ Email auto-filled from your account
+                  </p>
+                )}
+                <p className="text-xs text-zinc-500 text-center">Secure & no spam. Unsubscribe anytime.</p>
+              </form>
+            </>
           )}
         </div>
 

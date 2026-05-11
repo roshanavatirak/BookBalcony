@@ -2,7 +2,7 @@ const router = require("express").Router();
 const { authenticateToken } = require("./userAuth");
 const Order = require("../models/order");
 const User = require("../models/user");
-const Book = require("../models/Book");
+const Book = require("../models/book");
 const mongoose = require("mongoose");
 // // 📌 Place an order
 // router.post("/place-order", authenticateToken, async (req, res) => {
@@ -449,5 +449,94 @@ router.get('/validate-order/:orderId', authenticateToken, async (req, res) => {
     });
   }
 });
+
+
+// 📌 Cancel order (user can cancel before shipping)
+router.put('/cancel-order/:orderId', authenticateToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const userId = req.headers.id;
+    
+    console.log(`Cancel order request for orderId: ${orderId}, userId: ${userId}`);
+    
+    // Validate orderId format
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid order ID format" 
+      });
+    }
+    
+    // Find the order
+    const order = await Order.findById(orderId).populate('book');
+    
+    if (!order) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Order not found" 
+      });
+    }
+    
+    // Verify ownership
+    if (order.user.toString() !== userId) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Access denied - you can only cancel your own orders" 
+      });
+    }
+    
+    // Check if order can be cancelled
+    const nonCancellableStatuses = ['Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
+    if (nonCancellableStatuses.includes(order.orderStatus)) {
+      return res.status(400).json({ 
+        success: false,
+        message: `Cannot cancel order. Order is already ${order.orderStatus}. Orders can only be cancelled before shipping.` 
+      });
+    }
+    
+    // Update order status to Cancelled
+    order.orderStatus = 'Cancelled';
+    order.currentLocation = 'Cancelled';
+    
+    // Add cancellation to tracking history
+    order.trackingHistory.push({
+      status: 'Cancelled',
+      location: 'Cancelled by user',
+      date: new Date(),
+      notes: 'Order cancelled by customer'
+    });
+    
+    // Update payment status for refund processing
+    if (order.paymentMethod === 'RAZORPAY' && order.paymentStatus === 'Success') {
+      order.paymentStatus = 'Refund Pending';
+    }
+    
+    await order.save();
+    
+    // Restore book stock if needed
+    if (order.book) {
+      await Book.findByIdAndUpdate(order.book._id, {
+        $inc: { sold: -1, stock: 1 }
+      });
+    }
+    
+    console.log(`Order ${orderId} cancelled successfully`);
+    
+    res.json({ 
+      success: true,
+      message: 'Order cancelled successfully',
+      data: order
+    });
+    
+  } catch (error) {
+    console.error("Cancel Order Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error while cancelling order",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 
 module.exports= router;

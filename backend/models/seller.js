@@ -45,6 +45,22 @@ const sellerSchema = new mongoose.Schema(
       required: true,
     },
 
+   walletBalance: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalEarned: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalWithdrawn: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    
     // Status for admin review
     status: {
       type: String,

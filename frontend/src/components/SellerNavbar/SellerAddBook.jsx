@@ -1746,6 +1746,7 @@ const categoriesList = [
   "Data Science, AI & Machine Learning",
   "Comics & Graphic Novels",
   "Cookbooks & Food Culture",
+  "Business / Startup",
   "Other",
 ];
 

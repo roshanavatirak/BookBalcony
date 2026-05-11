@@ -350,7 +350,6 @@
 // };
 
 // export default Login;
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -423,6 +422,17 @@ const Login = () => {
 
       console.log("✅ Redux state updated with role:", role);
 
+      // ✅ Dispatch login event to notify Footer and other components
+      const loginEvent = new CustomEvent('userLoggedIn', {
+        detail: {
+          email: response.data.email,
+          userId: id,
+          role: role
+        }
+      });
+      window.dispatchEvent(loginEvent);
+      console.log("📢 Login: Dispatched userLoggedIn event");
+
       // Show success alert
       success(
         `Welcome back! Redirecting to your ${role === "admin" ? "admin panel" : "dashboard"}...`,
@@ -477,7 +487,7 @@ const Login = () => {
         }
       }, 1500);
     }
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, info]);
 
   return (
     <>

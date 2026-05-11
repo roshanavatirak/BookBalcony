@@ -189,8 +189,10 @@ import SellerAddressForm from './components/Seller/SellerAddressForm';
 import SellerPreview from './components/Seller/SellerPreview';
 import VerifiedSeller from './components/Profile/VerifiedSeller';
 import SellerAccountInfo from './components/SellerProfile/SellerAccountInfo';
-import SellerAddBook from './components/Seller/SellerAddBook';
-import MyProducts from './components/Seller/MyProducts';
+import SellerAddBook from './components/SellerNavbar/SellerAddBook';
+import MyProducts from './components/SellerNavbar/MyProducts';
+import SellerDashboard from './components/SellerNavbar/SellerDashboard';
+import SellerWallet from './components/SellerNavbar/SellerWallet'
 
 import SellerSidebar from './components/SellerProfile/SellerSidebar';
 import SellerProfile1 from './pages/SellerProfile';
@@ -209,6 +211,7 @@ import PremiumPage from './components/Premium/PremiumPage';
 import SellerOrdersDashboard from './components/SellerOrder/SellerOrdersDashboard';
 import EditBook from './components/Seller/EditBook';
 import SellerProduct from './components/Admin/Seller/SellerProduct';
+
 
 
 
@@ -289,7 +292,9 @@ const App=()=> {
         {/* <Route path="/seller/myproducts" element={<Navigate to="/seller/profile/my-products" replace />}/> */}
 
         <Route path="/seller/myproducts" element={<MyProducts/>}/>
-        <Route path="/seller/add-book" element={<SellerAddBook/>}/>
+        <Route path="/seller/add-product" element={<SellerAddBook/>}/>
+        <Route path="/seller/dashboard" element={<SellerDashboard/>}/>
+        <Route path="/seller/mywallet" element={<SellerWallet/>}/>
         
         {/* Seller Profile Routes - WITH SIDEBAR */}
         <Route path="/seller/profile" element={<SellerProfile1 />}>
@@ -313,6 +318,8 @@ const App=()=> {
         <Route path="/Admin/Users-List" element={<AdminUsers/>} />
         <Route path="/Admin/Sellers-List" element={<AdminSellers/>} />
         <Route path="/Admin/Seller-Products" element={<SellerProduct/>} />
+
+        <Route path="/Admin/books" element={<AllBooks/>} />
 
         {/* Seller Form Routes */}
         <Route path="/seller/form" element={<SellerForm />} />
