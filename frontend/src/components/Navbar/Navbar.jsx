@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../../store/auth';
 import axios from 'axios';
 import MobileBottomNav from './MobileBottomNav';
+import SellerMobileBottomNav from './SellerMobileBottomNav';
 
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -451,15 +452,15 @@ function Navbar({ seller }) {
               <div className="relative">
                 <div
                   className={`flex items-center cursor-pointer w-36 h-12 rounded-full p-1 transition-all duration-500 ease-in-out transform hover:scale-105 ${sellerMode
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
-                      : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
+                    ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
+                    : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
                     }`}
                   onClick={handleToggleMode}
                 >
                   <div
                     className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${!sellerMode
-                        ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
-                        : 'text-white/80 translate-x-0'
+                      ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
+                      : 'text-white/80 translate-x-0'
                       }`}
                   >
                     <FaUser className="mr-1 text-xs" />
@@ -467,8 +468,8 @@ function Navbar({ seller }) {
                   </div>
                   <div
                     className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${sellerMode
-                        ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
-                        : 'text-white/80 translate-x-0'
+                      ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
+                      : 'text-white/80 translate-x-0'
                       }`}
                   >
                     <FaStore className="mr-1 text-xs" />
@@ -491,8 +492,8 @@ function Navbar({ seller }) {
                       to={item.link}
                       onClick={handleLinkClick}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${isActive
-                          ? 'text-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20'
-                          : 'text-gray-300 hover:text-yellow-400 hover:bg-white/5'
+                        ? 'text-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20'
+                        : 'text-gray-300 hover:text-yellow-400 hover:bg-white/5'
                         }`}
                     >
                       <span className={`text-lg transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
@@ -733,15 +734,7 @@ function Navbar({ seller }) {
               </div>
             )}
 
-            {/* Mobile Menu Button â€” only for logged-in seller overflow items */}
-            {isLoggedIn && sellerMode && isSellerApproved && (
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="lg:hidden p-2 text-yellow-400 hover:text-white transition-colors duration-300 hover:bg-white/10 rounded-lg"
-              >
-                {menuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
-              </button>
-            )}
+
 
             {/* Show hamburger for non-logged-in on mobile (sign in / sign up) */}
             {!isLoggedIn && (
@@ -760,8 +753,8 @@ function Navbar({ seller }) {
           <div className="md:hidden mt-4 flex justify-center">
             <div
               className={`flex items-center cursor-pointer w-36 h-10 rounded-full p-1 transition-all duration-500 ease-in-out ${sellerMode
-                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
-                  : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
+                ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
+                : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
                 }`}
               onClick={handleToggleMode}
             >
@@ -805,6 +798,9 @@ function Navbar({ seller }) {
       {/* Mobile Bottom Nav + Search (extracted component) */}
       {!(isLoggedIn && sellerMode && isSellerApproved) && (
         <MobileBottomNav />
+      )}
+      {isLoggedIn && sellerMode && isSellerApproved && (
+        <SellerMobileBottomNav />
       )}
 
 
@@ -873,8 +869,8 @@ function Navbar({ seller }) {
                     to={item.link}
                     onClick={handleLinkClick}
                     className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${currentPath === item.link
-                        ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30'
-                        : 'text-white hover:text-yellow-400 hover:bg-white/5'
+                      ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30'
+                      : 'text-white hover:text-yellow-400 hover:bg-white/5'
                       }`}
                   >
                     <span className="text-lg">{item.icon}</span>
