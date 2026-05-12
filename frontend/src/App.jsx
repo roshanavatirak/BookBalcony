@@ -170,7 +170,7 @@ import Admin from "./components/Navbar/AdminNavbar"
 import AdminProfile from './components/Admin/AdminProfile';
 import AddBook from './components/Admin/AdminAddBook';
 import AdminUsers from './components/Admin/AdminUsers';
-import ServicesComingSoon from './components/Service/ServicesComingSoon;';
+import ServicesComingSoon from './components/Service/ServicesComingSoon';
 
 
 // footer
@@ -279,11 +279,11 @@ const App=()=> {
 
 
 //footer
-<Route  path="/privacy-policy" element={<PrivacyPolicy/>}/>
-<Route  path="/terms-of-service" element={<TermsOfService/>}/>
-<Route  path="/refund-policy" element={<RefundPolicy/>}/>
-<Route  path="/support" element={<Support/>}/>
-
+{/* footer */}
+<Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
+<Route path="/terms-of-service" element={<TermsOfService/>}/>
+<Route path="/refund-policy" element={<RefundPolicy/>}/>
+<Route path="/support" element={<Support/>}/>
 
 
 
