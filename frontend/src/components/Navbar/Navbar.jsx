@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+﻿import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../../store/auth';
 import axios from 'axios';
+import MobileBottomNav from './MobileBottomNav';
+
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -26,9 +28,25 @@ import {
   FaHistory,
   FaExclamationTriangle,
   FaBriefcase,
+  FaBook,
+  FaCompass,
+  FaStar,
+  FaBell,
+  FaArrowRight,
 } from 'react-icons/fa';
 
-// ✅ NOW ACCEPTS SELLER AS PROP - SAME AS SIDEBAR
+import {
+  FiHome,
+  FiBookOpen,
+  FiInfo,
+  FiBriefcase,
+  FiShoppingCart,
+  FiSearch,
+} from 'react-icons/fi';
+
+import { FaSearch } from 'react-icons/fa';
+
+// âœ… NOW ACCEPTS SELLER AS PROP - SAME AS SIDEBAR
 function Navbar({ seller }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
@@ -39,6 +57,8 @@ function Navbar({ seller }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sellerFetchError, setSellerFetchError] = useState(null);
+  const [activeTab, setActiveTab] = useState('/');
+  const [ripple, setRipple] = useState({ key: null, x: 0, y: 0 });
 
   const location = useLocation();
   const currentPath = location.pathname;
@@ -46,7 +66,7 @@ function Navbar({ seller }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ✅ Ref to track polling interval
+  // âœ… Ref to track polling interval
   const pollingIntervalRef = useRef(null);
   const lastFetchTimeRef = useRef(0);
 
@@ -58,42 +78,42 @@ function Navbar({ seller }) {
     return avatar.startsWith("http") ? avatar : `${BASE_URL}/${avatar}`;
   };
 
-  // ✅ Enhanced data extraction with debugging
+  // âœ… Enhanced data extraction with debugging
   const extractUserData = (apiResponse) => {
-    console.group('🔍 User Data Extraction Debug (Navbar)');
+    console.group('ðŸ” User Data Extraction Debug (Navbar)');
     console.log('Full API Response:', apiResponse);
 
     try {
       let userData = null;
 
       if (apiResponse?.data?.data) {
-        console.log('✅ Found data at: apiResponse.data.data');
+        console.log('âœ… Found data at: apiResponse.data.data');
         userData = apiResponse.data.data;
       }
       else if (apiResponse?.data && (apiResponse.data.username || apiResponse.data.email)) {
-        console.log('✅ Found data at: apiResponse.data');
+        console.log('âœ… Found data at: apiResponse.data');
         userData = apiResponse.data;
       }
       else if (apiResponse?.username || apiResponse?.email) {
-        console.log('✅ Found data at: apiResponse (root)');
+        console.log('âœ… Found data at: apiResponse (root)');
         userData = apiResponse;
       }
 
       console.log('Extracted userData:', userData);
       
       if (!userData) {
-        console.error('❌ No user data found in any expected location');
+        console.error('âŒ No user data found in any expected location');
         console.groupEnd();
         return null;
       }
 
       if (!userData.username && !userData.email) {
-        console.error('❌ User data missing required fields (username/email)');
+        console.error('âŒ User data missing required fields (username/email)');
         console.groupEnd();
         return null;
       }
 
-      console.log('✅ Successfully extracted user data:', {
+      console.log('âœ… Successfully extracted user data:', {
         username: userData.username,
         email: userData.email,
         isSeller: userData.isSeller,
@@ -104,46 +124,48 @@ function Navbar({ seller }) {
 
       return userData;
     } catch (err) {
-      console.error('❌ Error extracting user data:', err);
+      console.error('âŒ Error extracting user data:', err);
       console.groupEnd();
       return null;
     }
   };
 
-  // ✅ Update sellerInfo when seller prop changes
+  // âœ… Update sellerInfo when seller prop changes
   useEffect(() => {
-    console.log('🔄 Seller prop changed:', seller);
+    console.log('ðŸ”„ Seller prop changed:', seller);
     setSellerInfo(seller || null);
   }, [seller]);
 
-  // ✅ AUTOMATIC TOGGLE BASED ON ROUTE
+  // âœ… Sync active tab with route
+  useEffect(() => {
+    setActiveTab(currentPath);
+  }, [currentPath]);
+
+  // âœ… AUTOMATIC TOGGLE BASED ON ROUTE
   useEffect(() => {
     if (!isLoggedIn || !isSellerApproved) return;
 
     const isSellerRoute = currentPath.startsWith('/seller/');
     const isUserRoute = !isSellerRoute;
 
-    console.log('📍 Route changed:', currentPath);
-    console.log('🔍 Is seller route?', isSellerRoute);
-    console.log('🏪 Current seller mode:', sellerMode);
+    console.log('ðŸ“ Route changed:', currentPath);
+    console.log('ðŸ” Is seller route?', isSellerRoute);
+    console.log('ðŸª Current seller mode:', sellerMode);
 
-    // Auto-switch to seller mode if on seller route
     if (isSellerRoute && !sellerMode) {
-      console.log('🔄 Auto-switching to SELLER mode (on seller route)');
+      console.log('ðŸ”„ Auto-switching to SELLER mode (on seller route)');
       setSellerMode(true);
       localStorage.setItem('sellerMode', 'true');
     }
-    // Auto-switch to user mode if on user route
     else if (isUserRoute && sellerMode && !currentPath.includes('/profile')) {
-      console.log('🔄 Auto-switching to USER mode (on user route)');
+      console.log('ðŸ”„ Auto-switching to USER mode (on user route)');
       setSellerMode(false);
       localStorage.setItem('sellerMode', 'false');
     }
   }, [currentPath, isSellerApproved, isLoggedIn, sellerMode]);
 
-  // ✅ FETCH USER DATA WITH REAL-TIME UPDATES
+  // âœ… FETCH USER DATA WITH REAL-TIME UPDATES
   const fetchUserData = useCallback(async (isPolling = false) => {
-    // Prevent too frequent polling (minimum 2 seconds between requests)
     const now = Date.now();
     if (isPolling && now - lastFetchTimeRef.current < 2000) {
       return;
@@ -151,11 +173,11 @@ function Navbar({ seller }) {
     lastFetchTimeRef.current = now;
 
     if (!isPolling) {
-      console.log('🚀 Starting fetchUserData (Navbar)...');
+      console.log('ðŸš€ Starting fetchUserData (Navbar)...');
     }
     
     if (!isLoggedIn) {
-      if (!isPolling) console.log('❌ User not logged in, skipping fetch');
+      if (!isPolling) console.log('âŒ User not logged in, skipping fetch');
       setLoading(false);
       return;
     }
@@ -163,13 +185,8 @@ function Navbar({ seller }) {
     const token = localStorage.getItem('token');
     const id = localStorage.getItem('id');
     
-    if (!isPolling) {
-      console.log('Token exists:', !!token);
-      console.log('User ID:', id);
-    }
-
     if (!token || !id) {
-      console.error('❌ Missing token or ID');
+      console.error('âŒ Missing token or ID');
       setError('Authentication data missing. Please log in again.');
       setLoading(false);
       return;
@@ -179,9 +196,6 @@ function Navbar({ seller }) {
       setError(null);
       setSellerFetchError(null);
       
-      if (!isPolling) console.log('📡 Fetching user profile...');
-      
-      // Fetch user profile
       const userRes = await axios.get(`http://localhost:3000/api/v1/get-user-information`, {
         headers: { 
           authorization: `Bearer ${token}`,
@@ -189,42 +203,29 @@ function Navbar({ seller }) {
         },
       });
       
-      if (!isPolling) console.log('📥 User API Response received:', userRes.status);
-      
       const userData = extractUserData(userRes.data);
       
       if (!userData) {
         throw new Error('Failed to extract user data from API response');
       }
 
-      // ✅ Check if data actually changed before updating state
       const hasChanged = JSON.stringify(userProfile) !== JSON.stringify(userData);
       
       if (hasChanged || !userProfile) {
         setUserProfile(userData);
-        if (!isPolling) console.log('✅ User profile updated');
       }
 
-      // ✅ Use sellerApplicationStatus to determine seller approval
       const applicationStatus = userData.sellerApplicationStatus;
       const userIsSeller = userData.isSeller === true || userData.isSeller === 'true';
-      
-      if (!isPolling) {
-        console.log('📋 Application Status:', applicationStatus);
-        console.log('🏪 User isSeller flag:', userIsSeller);
-      }
 
-      // ✅ Check if seller is approved based on application status
       const newIsSellerApproved = applicationStatus === 'Accepted' && userIsSeller;
       
       if (newIsSellerApproved !== isSellerApproved) {
-        console.log(`🔄 Seller approval status changed: ${isSellerApproved} → ${newIsSellerApproved}`);
         setIsSellerApproved(newIsSellerApproved);
         
         if (newIsSellerApproved) {
           const savedMode = localStorage.getItem('sellerMode') === 'true';
           setSellerMode(savedMode);
-          console.log('🔄 Seller mode set to:', savedMode);
         } else {
           setSellerMode(false);
           localStorage.removeItem('sellerMode');
@@ -232,15 +233,8 @@ function Navbar({ seller }) {
       }
 
     } catch (err) {
-      if (!isPolling) console.error('❌ Error in fetchUserData:', err);
-      
       if (err.response) {
         const status = err.response.status;
-        
-        if (!isPolling) {
-          console.error('HTTP Error Status:', status);
-          console.error('Error Response:', err.response.data);
-        }
 
         if (status === 401 || status === 403) {
           setError('Session expired. Please log in again.');
@@ -254,29 +248,25 @@ function Navbar({ seller }) {
           setError(`Error: ${err.response.data?.message || 'Unable to load profile'}`);
         }
       } else if (err.request) {
-        if (!isPolling) console.error('❌ No response from server');
         setError('Cannot connect to server. Please check your connection.');
       } else {
-        if (!isPolling) console.error('❌ Error:', err.message);
         setError(err.message || 'Unable to load profile data');
       }
     } finally {
       if (!isPolling) {
         setLoading(false);
-        console.log('✅ fetchUserData completed (Navbar)');
       }
     }
   }, [isLoggedIn, userProfile, isSellerApproved]);
 
-  // ✅ INITIAL FETCH
+  // âœ… INITIAL FETCH
   useEffect(() => {
     fetchUserData(false);
   }, [isLoggedIn]);
 
-  // ✅ REAL-TIME POLLING FOR STATUS UPDATES
+  // âœ… REAL-TIME POLLING FOR STATUS UPDATES
   useEffect(() => {
     if (!isLoggedIn) {
-      // Clear polling if user logs out
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
@@ -284,27 +274,21 @@ function Navbar({ seller }) {
       return;
     }
 
-    // Start polling every 5 seconds for status updates
     pollingIntervalRef.current = setInterval(() => {
       fetchUserData(true);
     }, 5000);
 
-    console.log('🔄 Started real-time polling for seller status updates');
-
-    // Cleanup on unmount
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
-        console.log('🛑 Stopped real-time polling');
       }
     };
   }, [isLoggedIn, fetchUserData]);
 
-  // ✅ CUSTOM EVENT LISTENER FOR MANUAL STATUS REFRESH
+  // âœ… CUSTOM EVENT LISTENER FOR MANUAL STATUS REFRESH
   useEffect(() => {
     const handleSellerStatusUpdate = () => {
-      console.log('🔔 Manual seller status update triggered');
       fetchUserData(false);
     };
 
@@ -315,35 +299,9 @@ function Navbar({ seller }) {
     };
   }, [fetchUserData]);
 
-  // Debug: Log state changes
-  useEffect(() => {
-    console.log('👤 UserProfile state updated (Navbar):', userProfile);
-  }, [userProfile]);
-
-  useEffect(() => {
-    console.log('🏪 SellerInfo state updated (Navbar):', sellerInfo);
-  }, [sellerInfo]);
-
-  useEffect(() => {
-    if (error) {
-      console.error('❌ Error state updated (Navbar):', error);
-    }
-  }, [error]);
-
-  useEffect(() => {
-    if (sellerFetchError) {
-      console.error('⚠️ Seller fetch error (Navbar):', sellerFetchError);
-    }
-  }, [sellerFetchError]);
-
   const handleToggleMode = () => {
-    if (!isSellerApproved) {
-      console.warn('⚠️ Cannot toggle to seller mode - not approved');
-      return;
-    }
-    
+    if (!isSellerApproved) return;
     const updated = !sellerMode;
-    console.log('🔄 Toggling seller mode to:', updated);
     setSellerMode(updated);
     localStorage.setItem('sellerMode', updated.toString());
     navigate(updated ? '/seller/dashboard' : '/');
@@ -355,26 +313,19 @@ function Navbar({ seller }) {
   };
 
   const handleLogout = () => {
-    console.log('👋 Logging out...');
-    
-    // Clear polling
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
     
-    // ✅ Clear all localStorage data
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('id');
     localStorage.removeItem('sellerMode');
     
-    // ✅ CRITICAL: Dispatch logout event to notify Footer and other components
     const logoutEvent = new CustomEvent('userLoggedOut');
     window.dispatchEvent(logoutEvent);
-    console.log('📢 Navbar: Dispatched userLoggedOut event to sync with Footer');
     
-    // Clear component state
     setUserProfile(null);
     setSellerInfo(null);
     setIsSellerApproved(false);
@@ -383,90 +334,36 @@ function Navbar({ seller }) {
     setSellerFetchError(null);
     setLoading(false);
     
-    // Update Redux
     dispatch(authActions.logout());
-    
-    // Navigate to login
     navigate('/signin', { replace: true });
   };
 
-  // ✅ UPDATED: Use sellerApplicationStatus from user profile
+  // âœ… UPDATED: Use sellerApplicationStatus from user profile
   const getSellerStatus = () => {
-    console.group('🏪 Seller Status Detection Debug (Navbar)');
-    console.log('userProfile:', userProfile);
-    console.log('sellerInfo:', sellerInfo);
-    console.log('sellerFetchError:', sellerFetchError);
-    
     try {
-      // ✅ PRIORITY 1: Check user's sellerApplicationStatus field
       const applicationStatus = userProfile?.sellerApplicationStatus;
       const isSeller = userProfile?.isSeller === true || userProfile?.isSeller === 'true';
-      
-      console.log('📋 Application Status:', applicationStatus);
-      console.log('🏪 isSeller:', isSeller);
 
-      // ✅ If user hasn't applied yet or status is Available
       if (!applicationStatus || applicationStatus === "Available") {
-        console.log('🆕 User can apply to become a seller (Available)');
-        console.groupEnd();
-        return { 
-          type: 'not_seller', 
-          status: 'Not a Seller',
-          applicationStatus: 'Available',
-          hasData: false 
-        };
+        return { type: 'not_seller', status: 'Not a Seller', applicationStatus: 'Available', hasData: false };
       }
 
-      // ✅ If user application is Accepted and is marked as seller
       if (applicationStatus === "Accepted") {
         if (isSeller) {
-          console.log('✅ User is a verified seller (Accepted + isSeller)');
-          console.groupEnd();
-          return { 
-            type: 'verified', 
-            status: 'Approved',
-            applicationStatus: 'Accepted',
-            hasData: true 
-          };
+          return { type: 'verified', status: 'Approved', applicationStatus: 'Accepted', hasData: true };
         } else {
-          // Data inconsistency: Accepted but not marked as seller
-          console.warn('⚠️ DATA INCONSISTENCY: Accepted but isSeller is false');
-          console.groupEnd();
-          return { 
-            type: 'inconsistent', 
-            status: 'Data Issue',
-            applicationStatus: 'Accepted',
-            errorMessage: 'Application accepted but account not configured as seller. Contact support.',
-            hasData: false 
-          };
+          return { type: 'inconsistent', status: 'Data Issue', applicationStatus: 'Accepted', errorMessage: 'Application accepted but account not configured as seller. Contact support.', hasData: false };
         }
       }
 
-      // ✅ If user application is Applied (waiting for review)
       if (applicationStatus === "Applied") {
-        console.log('⏳ User application is under review (Applied)');
-        console.groupEnd();
-        return { 
-          type: 'pending', 
-          status: 'Pending',
-          applicationStatus: 'Applied',
-          hasData: !!sellerInfo 
-        };
+        return { type: 'pending', status: 'Pending', applicationStatus: 'Applied', hasData: !!sellerInfo };
       }
 
-      // ✅ If user application was Rejected
       if (applicationStatus === "Rejected") {
-        console.log('❌ User application was rejected (can reapply)');
-        console.groupEnd();
-        return { 
-          type: 'rejected', 
-          status: 'Rejected',
-          applicationStatus: 'Rejected',
-          hasData: !!sellerInfo 
-        };
+        return { type: 'rejected', status: 'Rejected', applicationStatus: 'Rejected', hasData: !!sellerInfo };
       }
 
-      // ✅ Fallback: Check seller record if application status is unclear
       let sellerStatus = null;
       if (sellerInfo?.data?.status) {
         sellerStatus = sellerInfo.data.status;
@@ -475,72 +372,18 @@ function Navbar({ seller }) {
       }
 
       if (sellerStatus) {
-        console.log('📊 Using seller record status as fallback:', sellerStatus);
-        
-        if (sellerStatus === "Approved") {
-          console.groupEnd();
-          return { 
-            type: 'verified', 
-            status: 'Approved',
-            applicationStatus: applicationStatus,
-            hasData: true 
-          };
-        }
-        
-        if (sellerStatus === "Pending") {
-          console.groupEnd();
-          return { 
-            type: 'pending', 
-            status: 'Pending',
-            applicationStatus: applicationStatus,
-            hasData: true 
-          };
-        }
-        
-        if (sellerStatus === "Rejected") {
-          console.groupEnd();
-          return { 
-            type: 'rejected', 
-            status: 'Rejected',
-            applicationStatus: applicationStatus,
-            hasData: true 
-          };
-        }
+        if (sellerStatus === "Approved") return { type: 'verified', status: 'Approved', applicationStatus, hasData: true };
+        if (sellerStatus === "Pending") return { type: 'pending', status: 'Pending', applicationStatus, hasData: true };
+        if (sellerStatus === "Rejected") return { type: 'rejected', status: 'Rejected', applicationStatus, hasData: true };
       }
 
-      // ✅ Check for data inconsistencies
       if (isSeller && !sellerInfo && applicationStatus !== "Accepted") {
-        console.warn('⚠️ Data inconsistency: isSeller=true but no seller record or accepted status');
-        console.groupEnd();
-        return { 
-          type: 'inconsistent', 
-          status: 'Data Issue',
-          applicationStatus: applicationStatus,
-          errorMessage: sellerFetchError || 'Your seller data is inconsistent. Contact support.',
-          hasData: false 
-        };
+        return { type: 'inconsistent', status: 'Data Issue', applicationStatus, errorMessage: sellerFetchError || 'Your seller data is inconsistent. Contact support.', hasData: false };
       }
       
-      // Default: User is not a seller
-      console.log('ℹ️ User is not a seller (default)');
-      console.groupEnd();
-      return { 
-        type: 'not_seller', 
-        status: 'Not a Seller',
-        applicationStatus: applicationStatus || 'Available',
-        hasData: false 
-      };
+      return { type: 'not_seller', status: 'Not a Seller', applicationStatus: applicationStatus || 'Available', hasData: false };
     } catch (error) {
-      console.error('❌ Error in getSellerStatus:', error);
-      console.groupEnd();
-      return { 
-        type: 'error', 
-        status: 'Error',
-        applicationStatus: 'Unknown',
-        errorMessage: 'Failed to determine seller status',
-        hasData: false, 
-        error: true 
-      };
+      return { type: 'error', status: 'Error', applicationStatus: 'Unknown', errorMessage: 'Failed to determine seller status', hasData: false, error: true };
     }
   };
 
@@ -566,10 +409,18 @@ function Navbar({ seller }) {
     }
   }
 
+  const handleRipple = (e, key) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRipple({ key, x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setTimeout(() => setRipple({ key: null, x: 0, y: 0 }), 600);
+  };
+
   const sellerUIStatus = getSellerStatus();
 
   return (
     <>
+
+
       <nav className="w-full bg-gradient-to-r from-slate-900 via-gray-900 to-slate-900 backdrop-blur-sm text-white px-4 sm:px-8 py-4 shadow-2xl border-b border-gray-800/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
@@ -686,7 +537,6 @@ function Navbar({ seller }) {
                         alt="Profile"
                         className="w-10 h-10 rounded-full border-2 border-yellow-400/50 group-hover:border-yellow-400 transition-all duration-300 object-cover"
                         onError={(e) => {
-                          console.error('❌ Avatar failed to load');
                           e.target.src = getAvatarSrc(null);
                         }}
                       />
@@ -777,18 +627,17 @@ function Navbar({ seller }) {
                             <FaHistory className="text-sm" />
                             <span className="text-sm">Order History</span>
                           </Link>
-                           <Link
-                        to="/profile/settings"
-                        onClick={handleLinkClick}
-                        className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
-                      >
-                        <FaCog className="text-sm" />
-                        <span className="text-sm">Settings</span>
-                      </Link>
+                          <Link
+                            to="/profile/settings"
+                            onClick={handleLinkClick}
+                            className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
+                          >
+                            <FaCog className="text-sm" />
+                            <span className="text-sm">Settings</span>
+                          </Link>
                         </>
                       )}
 
-                      {/* ✅ UPDATED: Show status based on sellerApplicationStatus */}
                       {sellerUIStatus.error || sellerUIStatus.type === 'error' ? (
                         <div className="px-4 py-2 text-red-700 bg-red-50">
                           <div className="flex items-center gap-2">
@@ -808,7 +657,6 @@ function Navbar({ seller }) {
                           <FaStore className="text-sm" />
                           <div className="flex flex-col">
                             <span className="text-sm font-medium">You're a Verified Seller</span>
-                            
                           </div>
                         </Link>
                       ) : sellerUIStatus.type === 'pending' ? (
@@ -820,7 +668,6 @@ function Navbar({ seller }) {
                           <FaStore className="text-sm" />
                           <div className="flex flex-col">
                             <span className="text-sm">Application Under Review</span>
-                            
                           </div>
                         </Link>
                       ) : sellerUIStatus.type === 'rejected' ? (
@@ -832,7 +679,6 @@ function Navbar({ seller }) {
                           <FaExclamationTriangle className="text-sm" />
                           <div className="flex flex-col">
                             <span className="text-sm">Application Rejected - Re-apply</span>
-                            
                           </div>
                         </Link>
                       ) : sellerUIStatus.type === 'inconsistent' ? (
@@ -857,7 +703,6 @@ function Navbar({ seller }) {
                           <FaStore className="text-sm" />
                           <div className="flex flex-col">
                             <span className="text-sm">Become a Seller</span>
-                            
                           </div>
                         </Link>
                       ) : null}
@@ -893,13 +738,25 @@ function Navbar({ seller }) {
               </div>
             )}
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 text-yellow-400 hover:text-white transition-colors duration-300 hover:bg-white/10 rounded-lg"
-            >
-              {menuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
-            </button>
+            {/* Mobile Menu Button â€” only for logged-in seller overflow items */}
+            {isLoggedIn && sellerMode && isSellerApproved && (
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="lg:hidden p-2 text-yellow-400 hover:text-white transition-colors duration-300 hover:bg-white/10 rounded-lg"
+              >
+                {menuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+              </button>
+            )}
+
+            {/* Show hamburger for non-logged-in on mobile (sign in / sign up) */}
+            {!isLoggedIn && (
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="lg:hidden p-2 text-yellow-400 hover:text-white transition-colors duration-300 hover:bg-white/10 rounded-lg"
+              >
+                {menuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+              </button>
+            )}
           </div>
         </div>
 
@@ -953,7 +810,13 @@ function Navbar({ seller }) {
         )}
       </nav>
 
-      {/* Mobile Navigation Overlay */}
+      {/* Mobile Bottom Nav + Search (extracted component) */}
+      {!(isLoggedIn && sellerMode && isSellerApproved) && (
+        <MobileBottomNav />
+      )}
+
+
+      {/* Mobile Navigation Overlay (Seller mode overflow / non-logged-in auth) */}
       {menuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setMenuOpen(false)}>
           <div 

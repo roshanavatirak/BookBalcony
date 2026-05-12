@@ -3,7 +3,7 @@ import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope, FaCheckCircle } from 're
 import Alert from '../Alert/Alert';
 import { useAlert } from '../Alert/useAlert';
 import axios from 'axios';
-
+import logo from '../../assets/logo.png';
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
@@ -322,12 +322,20 @@ function Footer() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
           
           {/* Branding */}
-          <div>
-            <h1 className="text-2xl font-bold mb-2">📚 BookBalcony</h1>
-            <p className="text-zinc-400 text-sm">
-              Where Stories Find a Second Home. Resell, Reuse, Reignite the joy of reading.
-            </p>
-          </div>
+          
+<div>
+  <div className="flex items-center gap-3 mb-3">
+    <img
+      src={logo}
+      alt="BookBalcony Logo"
+      className="h-10 w-10 rounded-xl shadow-lg"
+    />
+    <h1 className="text-2xl font-bold text-white">BookBalcony</h1>
+  </div>
+  <p className="text-zinc-400 text-sm">
+    Where Stories Find a Second Home. Resell, Reuse, Reignite the joy of reading.
+  </p>
+</div>
 
           {/* Quick Links */}
           <div>

@@ -87,7 +87,7 @@ const Cart = () => {
         />
       </div>
 
-      <div className="relative z-10 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-32">
+      <div className="relative z-10 px-3 py-3 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-36 lg:pb-32">
         {loading ? (
           <div className="w-full h-[70vh] flex items-center justify-center">
             <Loader />
@@ -98,15 +98,15 @@ const Cart = () => {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
+              className="mb-4 sm:mb-8"
             >
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <div className="flex flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 bg-clip-text text-transparent mb-2 flex items-center gap-2">
-                    <FaShoppingCart className="text-yellow-400 text-3xl sm:text-4xl" />
+                  <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 bg-clip-text text-transparent mb-1 sm:mb-2 flex items-center gap-1.5 sm:gap-2">
+                    <FaShoppingCart className="text-yellow-400 text-xl sm:text-4xl" />
                     Your Cart
                   </h1>
-                  <p className="text-zinc-400 text-sm sm:text-base flex items-center gap-2">
+                  <p className="text-zinc-400 text-[11px] sm:text-base flex items-center gap-1 sm:gap-2">
                     <HiSparkles className="text-yellow-400" />
                     {cart.length > 0 
                       ? `${cart.length} book${cart.length !== 1 ? 's' : ''} ready for checkout`
@@ -115,14 +115,14 @@ const Cart = () => {
                 </div>
 
                 {cart.length > 0 && (
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-col items-end gap-0.5">
                     <div className="text-right">
-                      <p className="text-xs text-zinc-500 uppercase tracking-wider">Subtotal</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-yellow-400">₹{totalAmount}</p>
+                      <p className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider">Subtotal</p>
+                      <p className="text-lg sm:text-3xl font-bold text-yellow-400">₹{totalAmount}</p>
                     </div>
                     {savings > 0 && (
-                      <div className="flex items-center gap-1 text-green-400 text-xs">
-                        <FaTag className="text-[10px]" />
+                      <div className="flex items-center gap-1 text-green-400 text-[10px] sm:text-xs">
+                        <FaTag className="text-[8px] sm:text-[10px]" />
                         <span>You saved ₹{savings}</span>
                       </div>
                     )}
@@ -136,19 +136,19 @@ const Cart = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="grid grid-cols-3 gap-2 sm:gap-4 mb-6"
+                  className="grid grid-cols-3 gap-1.5 sm:gap-4 mb-3 sm:mb-6"
                 >
-                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-zinc-700/50 text-center">
-                    <FaShieldAlt className="text-green-400 text-lg sm:text-xl mx-auto mb-1" />
-                    <p className="text-zinc-300 text-[10px] sm:text-xs font-semibold">Secure Payment</p>
+                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-1.5 sm:p-3 border border-zinc-700/50 text-center">
+                    <FaShieldAlt className="text-green-400 text-sm sm:text-xl mx-auto mb-0.5 sm:mb-1" />
+                    <p className="text-zinc-300 text-[9px] sm:text-xs font-semibold">Secure Payment</p>
                   </div>
-                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-zinc-700/50 text-center">
-                    <FaTruck className="text-blue-400 text-lg sm:text-xl mx-auto mb-1" />
-                    <p className="text-zinc-300 text-[10px] sm:text-xs font-semibold">Fast Delivery</p>
+                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-1.5 sm:p-3 border border-zinc-700/50 text-center">
+                    <FaTruck className="text-blue-400 text-sm sm:text-xl mx-auto mb-0.5 sm:mb-1" />
+                    <p className="text-zinc-300 text-[9px] sm:text-xs font-semibold">Fast Delivery</p>
                   </div>
-                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-zinc-700/50 text-center">
-                    <FaCheckCircle className="text-purple-400 text-lg sm:text-xl mx-auto mb-1" />
-                    <p className="text-zinc-300 text-[10px] sm:text-xs font-semibold">Quality Assured</p>
+                  <div className="bg-zinc-800/50 backdrop-blur-sm rounded-lg p-1.5 sm:p-3 border border-zinc-700/50 text-center">
+                    <FaCheckCircle className="text-purple-400 text-sm sm:text-xl mx-auto mb-0.5 sm:mb-1" />
+                    <p className="text-zinc-300 text-[9px] sm:text-xs font-semibold">Quality Assured</p>
                   </div>
                 </motion.div>
               )}
@@ -189,7 +189,7 @@ const Cart = () => {
             ) : (
               <>
                 {/* Cart Items */}
-                <div className="space-y-4 mb-6">
+                <div className="space-y-2.5 sm:space-y-4 mb-4 sm:mb-6">
                   <AnimatePresence>
                     {cart.map((item, i) => (
                       <motion.div
@@ -198,18 +198,18 @@ const Cart = () => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: i * 0.1 }}
-                        className="group relative bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 backdrop-blur-sm rounded-2xl border border-zinc-700/50 hover:border-yellow-400/30 transition-all duration-300 overflow-hidden"
+                        className="group relative bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-zinc-700/50 hover:border-yellow-400/30 transition-all duration-300 overflow-hidden"
                       >
                         {/* Hover Glow Effect */}
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/5 to-transparent" />
                         </div>
 
-                        <div className="relative p-4 sm:p-6">
-                          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                        <div className="relative p-2.5 sm:p-6">
+                          <div className="flex flex-row gap-2.5 sm:gap-6">
                             {/* Book Image */}
                             <div className="relative flex-shrink-0">
-                              <div className="relative w-24 h-32 sm:w-28 sm:h-36 rounded-xl overflow-hidden shadow-lg group-hover:shadow-yellow-400/20 transition-shadow duration-300">
+                              <div className="relative w-16 h-20 sm:w-28 sm:h-36 rounded-lg sm:rounded-xl overflow-hidden shadow-lg group-hover:shadow-yellow-400/20 transition-shadow duration-300">
                                 <img
                                   src={item.url}
                                   alt={item.title}
@@ -220,7 +220,7 @@ const Cart = () => {
                               
                               {/* Stock Badge */}
                               {item.stock && (
-                                <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-lg">
+                                <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-green-500 text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg">
                                   {item.stock} left
                                 </div>
                               )}
@@ -228,12 +228,12 @@ const Cart = () => {
 
                             {/* Book Details */}
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-4 mb-2">
+                              <div className="flex items-start justify-between gap-2 sm:gap-4 mb-1 sm:mb-2">
                                 <div className="flex-1">
-                                  <h2 className="text-lg sm:text-xl font-bold text-white group-hover:text-yellow-400 transition-colors duration-300 line-clamp-2">
+                                  <h2 className="text-sm sm:text-xl font-bold text-white group-hover:text-yellow-400 transition-colors duration-300 line-clamp-1 sm:line-clamp-2">
                                     {item.title}
                                   </h2>
-                                  <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+                                  <p className="text-[10px] sm:text-sm text-zinc-400 mt-0.5 sm:mt-1">
                                     by {item.author || 'Unknown Author'}
                                   </p>
                                 </div>
@@ -261,29 +261,29 @@ const Cart = () => {
                                 </motion.button>
                               </div>
 
-                              <p className="text-xs sm:text-sm text-zinc-400 mb-3 line-clamp-2 sm:line-clamp-3">
+                              <p className="text-[10px] sm:text-sm text-zinc-400 mb-1.5 sm:mb-3 line-clamp-1 sm:line-clamp-3">
                                 {item.desc || 'No description available'}
                               </p>
 
                               {/* Bottom Row - Price & Features */}
-                              <div className="flex flex-wrap items-center gap-3">
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
                                 {/* Price */}
-                                <div className="flex items-baseline gap-2">
-                                  <span className="text-2xl font-bold text-yellow-400">₹{item.price}</span>
+                                <div className="flex items-baseline gap-1 sm:gap-2">
+                                  <span className="text-base sm:text-2xl font-bold text-yellow-400">₹{item.price}</span>
                                   {item.discount > 0 && (
-                                    <span className="text-sm text-zinc-500 line-through">₹{item.price + item.discount}</span>
+                                    <span className="text-[10px] sm:text-sm text-zinc-500 line-through">₹{item.price + item.discount}</span>
                                   )}
                                 </div>
 
                                 {/* Rating */}
-                                <div className="flex items-center gap-1 bg-zinc-700/50 px-2 py-1 rounded-full">
-                                  <FaStar className="text-yellow-400 text-[10px]" />
-                                  <span className="text-xs text-zinc-300 font-semibold">4.8</span>
+                                <div className="flex items-center gap-0.5 sm:gap-1 bg-zinc-700/50 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
+                                  <FaStar className="text-yellow-400 text-[8px] sm:text-[10px]" />
+                                  <span className="text-[10px] sm:text-xs text-zinc-300 font-semibold">4.8</span>
                                 </div>
 
                                 {/* Category Badge */}
                                 {item.category && (
-                                  <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full border border-purple-500/30 font-semibold">
+                                  <span className="text-[8px] sm:text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full border border-purple-500/30 font-semibold">
                                     {item.category}
                                   </span>
                                 )}
@@ -294,7 +294,7 @@ const Cart = () => {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => removeFromCart(item._id)}
-                                className={`sm:hidden w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-300 ${
+                                className={`sm:hidden w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-[11px] transition-all duration-300 ${
                                   removingId === item._id
                                     ? "bg-red-400/50 text-white cursor-not-allowed"
                                     : "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white"
@@ -302,10 +302,10 @@ const Cart = () => {
                                 disabled={removingId === item._id}
                               >
                                 {removingId === item._id ? (
-                                  <span className="text-xs animate-pulse">Removing...</span>
+                                  <span className="text-[10px] animate-pulse">Removing...</span>
                                 ) : (
                                   <>
-                                    <FaTrashAlt className="text-xs" />
+                                    <FaTrashAlt className="text-[10px]" />
                                     Remove from Cart
                                   </>
                                 )}
@@ -323,15 +323,15 @@ const Cart = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm border border-purple-500/30 rounded-2xl p-4 mb-6"
+                  className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm border border-purple-500/30 rounded-xl sm:rounded-2xl p-2.5 sm:p-4 mb-4 sm:mb-6"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-500/20 rounded-full p-3">
-                      <FaBox className="text-purple-400 text-xl" />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="bg-purple-500/20 rounded-full p-2 sm:p-3">
+                      <FaBox className="text-purple-400 text-sm sm:text-xl" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-white font-semibold text-sm sm:text-base">Free Delivery on Orders Above ₹499</p>
-                      <p className="text-zinc-400 text-xs sm:text-sm">
+                      <p className="text-white font-semibold text-[11px] sm:text-base">Free Delivery on Orders Above ₹499</p>
+                      <p className="text-zinc-400 text-[10px] sm:text-sm">
                         {totalAmount >= 499 
                           ? '🎉 Congratulations! You qualify for free delivery'
                           : `Add ₹${499 - totalAmount} more to get free delivery`
@@ -345,18 +345,18 @@ const Cart = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-900 via-zinc-900/95 to-transparent backdrop-blur-lg border-t border-zinc-700/50 p-4 sm:p-6 z-50"
+                  className="fixed left-0 right-0 bg-gradient-to-t from-zinc-900 via-zinc-900/95 to-transparent backdrop-blur-lg border-t border-zinc-700/50 px-3 py-2 sm:p-6 z-40 bottom-[72px] lg:bottom-0"
                 >
                   <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
                       {/* Total Summary */}
-                      <div className="flex items-center gap-4 sm:gap-6">
+                      <div className="flex items-center gap-2 sm:gap-6">
                         <div>
-                          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Total Amount</p>
-                          <p className="text-2xl sm:text-3xl font-bold text-yellow-400 flex items-baseline gap-2">
+                          <p className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider mb-0.5 sm:mb-1">Total Amount</p>
+                          <p className="text-lg sm:text-3xl font-bold text-yellow-400 flex items-baseline gap-1 sm:gap-2">
                             ₹{totalAmount}
                             {savings > 0 && (
-                              <span className="text-sm text-green-400 font-normal">(-₹{savings})</span>
+                              <span className="text-[10px] sm:text-sm text-green-400 font-normal">(-₹{savings})</span>
                             )}
                           </p>
                         </div>
@@ -373,25 +373,25 @@ const Cart = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={placeOrdernew}
                         disabled={placingOrder}
-                        className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black px-8 py-4 rounded-xl font-bold text-base sm:text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-500/30 flex items-center justify-center gap-3"
+                        className="sm:w-auto bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black px-4 py-2.5 sm:px-8 sm:py-4 rounded-lg sm:rounded-xl font-bold text-xs sm:text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-500/30 flex items-center justify-center gap-2 sm:gap-3 whitespace-nowrap"
                       >
                         {placingOrder ? (
                           <>
-                            <div className="w-5 h-5 border-3 border-black border-t-transparent rounded-full animate-spin" />
-                            Processing...
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs sm:text-base">Processing...</span>
                           </>
                         ) : (
                           <>
-                            <FaLock className="text-sm" />
-                            Proceed to Checkout
-                            <FaArrowRight className="text-sm" />
+                            <FaLock className="text-[10px] sm:text-sm" />
+                            Checkout
+                            <FaArrowRight className="text-[10px] sm:text-sm" />
                           </>
                         )}
                       </motion.button>
                     </div>
 
-                    {/* Trust Line */}
-                    <div className="flex items-center justify-center gap-4 mt-3 text-[10px] sm:text-xs text-zinc-500">
+                    {/* Trust Line - hidden on mobile */}
+                    <div className="hidden sm:flex items-center justify-center gap-4 mt-3 text-xs text-zinc-500">
                       <div className="flex items-center gap-1">
                         <FaCheckCircle className="text-green-400" />
                         <span>SSL Encrypted</span>
