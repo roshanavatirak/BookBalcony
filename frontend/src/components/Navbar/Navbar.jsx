@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { useSelector, useDispatch } from 'react-redux';
@@ -100,7 +100,7 @@ function Navbar({ seller }) {
       }
 
       console.log('Extracted userData:', userData);
-      
+
       if (!userData) {
         console.error('âŒ No user data found in any expected location');
         console.groupEnd();
@@ -175,7 +175,7 @@ function Navbar({ seller }) {
     if (!isPolling) {
       console.log('ðŸš€ Starting fetchUserData (Navbar)...');
     }
-    
+
     if (!isLoggedIn) {
       if (!isPolling) console.log('âŒ User not logged in, skipping fetch');
       setLoading(false);
@@ -184,7 +184,7 @@ function Navbar({ seller }) {
 
     const token = localStorage.getItem('token');
     const id = localStorage.getItem('id');
-    
+
     if (!token || !id) {
       console.error('âŒ Missing token or ID');
       setError('Authentication data missing. Please log in again.');
@@ -195,22 +195,22 @@ function Navbar({ seller }) {
     try {
       setError(null);
       setSellerFetchError(null);
-      
-      const userRes = await axios.get(`http://localhost:3000/api/v1/get-user-information`, {
-        headers: { 
+
+      const userRes = await axios.get(`${API_URL}/get-user-information`, {
+        headers: {
           authorization: `Bearer ${token}`,
-          id: id 
+          id: id
         },
       });
-      
+
       const userData = extractUserData(userRes.data);
-      
+
       if (!userData) {
         throw new Error('Failed to extract user data from API response');
       }
 
       const hasChanged = JSON.stringify(userProfile) !== JSON.stringify(userData);
-      
+
       if (hasChanged || !userProfile) {
         setUserProfile(userData);
       }
@@ -219,10 +219,10 @@ function Navbar({ seller }) {
       const userIsSeller = userData.isSeller === true || userData.isSeller === 'true';
 
       const newIsSellerApproved = applicationStatus === 'Accepted' && userIsSeller;
-      
+
       if (newIsSellerApproved !== isSellerApproved) {
         setIsSellerApproved(newIsSellerApproved);
-        
+
         if (newIsSellerApproved) {
           const savedMode = localStorage.getItem('sellerMode') === 'true';
           setSellerMode(savedMode);
@@ -317,15 +317,15 @@ function Navbar({ seller }) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    
+
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('id');
     localStorage.removeItem('sellerMode');
-    
+
     const logoutEvent = new CustomEvent('userLoggedOut');
     window.dispatchEvent(logoutEvent);
-    
+
     setUserProfile(null);
     setSellerInfo(null);
     setIsSellerApproved(false);
@@ -333,7 +333,7 @@ function Navbar({ seller }) {
     setError(null);
     setSellerFetchError(null);
     setLoading(false);
-    
+
     dispatch(authActions.logout());
     navigate('/signin', { replace: true });
   };
@@ -380,7 +380,7 @@ function Navbar({ seller }) {
       if (isSeller && !sellerInfo && applicationStatus !== "Accepted") {
         return { type: 'inconsistent', status: 'Data Issue', applicationStatus, errorMessage: sellerFetchError || 'Your seller data is inconsistent. Contact support.', hasData: false };
       }
-      
+
       return { type: 'not_seller', status: 'Not a Seller', applicationStatus: applicationStatus || 'Available', hasData: false };
     } catch (error) {
       return { type: 'error', status: 'Error', applicationStatus: 'Unknown', errorMessage: 'Failed to determine seller status', hasData: false, error: true };
@@ -430,10 +430,10 @@ function Navbar({ seller }) {
             onClick={handleLinkClick}
           >
             <div className="relative">
-              <img 
-                className="h-10 sm:h-12 w-10 sm:w-12 rounded-xl shadow-lg group-hover:shadow-yellow-400/20 transition-all duration-300" 
-                src={logo} 
-                alt="logo" 
+              <img
+                className="h-10 sm:h-12 w-10 sm:w-12 rounded-xl shadow-lg group-hover:shadow-yellow-400/20 transition-all duration-300"
+                src={logo}
+                alt="logo"
               />
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-400/0 to-yellow-400/0 group-hover:from-yellow-400/20 group-hover:to-orange-400/20 transition-all duration-300"></div>
             </div>
@@ -450,29 +450,26 @@ function Navbar({ seller }) {
             <div className="hidden md:block">
               <div className="relative">
                 <div
-                  className={`flex items-center cursor-pointer w-36 h-12 rounded-full p-1 transition-all duration-500 ease-in-out transform hover:scale-105 ${
-                    sellerMode 
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30' 
+                  className={`flex items-center cursor-pointer w-36 h-12 rounded-full p-1 transition-all duration-500 ease-in-out transform hover:scale-105 ${sellerMode
+                      ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
                       : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
-                  }`}
+                    }`}
                   onClick={handleToggleMode}
                 >
                   <div
-                    className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${
-                      !sellerMode 
-                        ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105' 
+                    className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${!sellerMode
+                        ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
                         : 'text-white/80 translate-x-0'
-                    }`}
+                      }`}
                   >
                     <FaUser className="mr-1 text-xs" />
                     User
                   </div>
                   <div
-                    className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${
-                      sellerMode 
-                        ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105' 
+                    className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${sellerMode
+                        ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
                         : 'text-white/80 translate-x-0'
-                    }`}
+                      }`}
                   >
                     <FaStore className="mr-1 text-xs" />
                     Seller
@@ -493,11 +490,10 @@ function Navbar({ seller }) {
                     <Link
                       to={item.link}
                       onClick={handleLinkClick}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${
-                        isActive 
-                          ? 'text-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20' 
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${isActive
+                          ? 'text-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20'
                           : 'text-gray-300 hover:text-yellow-400 hover:bg-white/5'
-                      }`}
+                        }`}
                     >
                       <span className={`text-lg transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
                         {item.icon}
@@ -505,9 +501,8 @@ function Navbar({ seller }) {
                       <span className="font-medium">{item.title}</span>
                     </Link>
                     <div
-                      className={`absolute left-1/2 -bottom-1 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full transition-all duration-300 transform -translate-x-1/2 ${
-                        isActive ? 'w-full opacity-100' : 'w-0 opacity-0 group-hover:w-3/4 group-hover:opacity-100'
-                      }`}
+                      className={`absolute left-1/2 -bottom-1 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full transition-all duration-300 transform -translate-x-1/2 ${isActive ? 'w-full opacity-100' : 'w-0 opacity-0 group-hover:w-3/4 group-hover:opacity-100'
+                        }`}
                     ></div>
                   </div>
                 );
@@ -608,7 +603,7 @@ function Navbar({ seller }) {
                         <FaUser className="text-sm" />
                         <span className="text-sm">Profile</span>
                       </Link>
-                      
+
                       {!sellerMode && (
                         <>
                           <Link
@@ -764,25 +759,22 @@ function Navbar({ seller }) {
         {isLoggedIn && isSellerApproved && (
           <div className="md:hidden mt-4 flex justify-center">
             <div
-              className={`flex items-center cursor-pointer w-36 h-10 rounded-full p-1 transition-all duration-500 ease-in-out ${
-                sellerMode 
-                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30' 
+              className={`flex items-center cursor-pointer w-36 h-10 rounded-full p-1 transition-all duration-500 ease-in-out ${sellerMode
+                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
                   : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
-              }`}
+                }`}
               onClick={handleToggleMode}
             >
               <div
-                className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 ${
-                  !sellerMode ? 'bg-white text-gray-800 shadow-lg' : 'text-white/80'
-                }`}
+                className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 ${!sellerMode ? 'bg-white text-gray-800 shadow-lg' : 'text-white/80'
+                  }`}
               >
                 <FaUser className="mr-1 text-xs" />
                 User
               </div>
               <div
-                className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 ${
-                  sellerMode ? 'bg-white text-gray-800 shadow-lg' : 'text-white/80'
-                }`}
+                className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 ${sellerMode ? 'bg-white text-gray-800 shadow-lg' : 'text-white/80'
+                  }`}
               >
                 <FaStore className="mr-1 text-xs" />
                 Seller
@@ -799,7 +791,7 @@ function Navbar({ seller }) {
               <span>{error || sellerFetchError}</span>
             </div>
             {(error?.includes('Session expired') || error?.includes('User not found')) && (
-              <button 
+              <button
                 onClick={handleLogout}
                 className="mt-2 text-xs underline hover:no-underline text-red-300"
               >
@@ -819,7 +811,7 @@ function Navbar({ seller }) {
       {/* Mobile Navigation Overlay (Seller mode overflow / non-logged-in auth) */}
       {menuOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setMenuOpen(false)}>
-          <div 
+          <div
             className="absolute top-0 right-0 w-80 max-w-[90vw] h-full bg-gradient-to-b from-slate-900 to-gray-900 shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -880,11 +872,10 @@ function Navbar({ seller }) {
                     key={i}
                     to={item.link}
                     onClick={handleLinkClick}
-                    className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${
-                      currentPath === item.link 
-                        ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30' 
+                    className={`flex items-center gap-4 p-4 rounded-xl transition-all duration-300 ${currentPath === item.link
+                        ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/30'
                         : 'text-white hover:text-yellow-400 hover:bg-white/5'
-                    }`}
+                      }`}
                   >
                     <span className="text-lg">{item.icon}</span>
                     <span className="font-medium">{item.title}</span>
@@ -927,8 +918,8 @@ function Navbar({ seller }) {
 
       {/* Click outside to close dropdowns */}
       {profileDropdown && (
-        <div 
-          className="fixed inset-0 z-30" 
+        <div
+          className="fixed inset-0 z-30"
           onClick={() => setProfileDropdown(false)}
         ></div>
       )}
