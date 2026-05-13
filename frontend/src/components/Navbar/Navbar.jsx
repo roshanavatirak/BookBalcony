@@ -16,6 +16,7 @@ import {
   FaHome,
   FaInfoCircle,
   FaPlus,
+  FaPlusCircle,
   FaBoxOpen,
   FaUser,
   FaShoppingCart,
@@ -34,6 +35,8 @@ import {
   FaStar,
   FaBell,
   FaArrowRight,
+  FaWallet,
+  FaSearch,
 } from 'react-icons/fa';
 
 import {
@@ -43,9 +46,10 @@ import {
   FiBriefcase,
   FiShoppingCart,
   FiSearch,
+  FiPackage,
+  FiPlusCircle,
+  FiCreditCard,
 } from 'react-icons/fi';
-
-import { FaSearch } from 'react-icons/fa';
 
 // âœ… NOW ACCEPTS SELLER AS PROP - SAME AS SIDEBAR
 function Navbar({ seller }) {
@@ -60,6 +64,27 @@ function Navbar({ seller }) {
   const [sellerFetchError, setSellerFetchError] = useState(null);
   const [activeTab, setActiveTab] = useState('/');
   const [ripple, setRipple] = useState({ key: null, x: 0, y: 0 });
+
+  // Desktop search state
+  const [desktopSearchOpen, setDesktopSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [allBooks, setAllBooks] = useState([]);
+  const [phIdx, setPhIdx] = useState(0);
+  const [phFading, setPhFading] = useState(false);
+  const desktopSearchInputRef = useRef(null);
+
+  // Animated placeholder cycling (same as mobile)
+  const PLACEHOLDERS = [
+    'Search books...',
+    '"Harry Potter"',
+    '"Engineering"',
+    'Search services...',
+    '"UPSC Prep"',
+    '"Rich Dad Poor Dad"',
+    'Search by author...',
+    '"Atomic Habits"',
+  ];
 
   const location = useLocation();
   const currentPath = location.pathname;
@@ -141,6 +166,18 @@ function Navbar({ seller }) {
   useEffect(() => {
     setActiveTab(currentPath);
   }, [currentPath]);
+
+  // ✅ Placeholder cycling animation (same as mobile)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhFading(true);
+      setTimeout(() => {
+        setPhIdx((prev) => (prev + 1) % PLACEHOLDERS.length);
+        setPhFading(false);
+      }, 300);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // âœ… AUTOMATIC TOGGLE BASED ON ROUTE
   useEffect(() => {
@@ -388,25 +425,63 @@ function Navbar({ seller }) {
     }
   };
 
-  // Navigation links logic
+  // ✅ Fetch books for desktop search
+  useEffect(() => {
+    if (!desktopSearchOpen) return;
+    if (allBooks.length > 0) return;
+    axios.get(`${API_URL}/get-all-books`)
+      .then(res => setAllBooks(res.data.data || []))
+      .catch(() => {});
+  }, [desktopSearchOpen]);
+
+  // ✅ Filter desktop search results
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    const q = searchQuery.toLowerCase();
+    setSearchResults(
+      allBooks.filter(b =>
+        b.title?.toLowerCase().includes(q) ||
+        b.author?.toLowerCase().includes(q) ||
+        b.category?.toLowerCase().includes(q)
+      ).slice(0, 8)
+    );
+  }, [searchQuery, allBooks]);
+
+  const openDesktopSearch = useCallback(() => {
+    setDesktopSearchOpen(true);
+    setTimeout(() => desktopSearchInputRef.current?.focus(), 150);
+  }, []);
+
+  const closeDesktopSearch = useCallback(() => {
+    setDesktopSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  }, []);
+
+  const selectSearchResult = useCallback((id) => {
+    closeDesktopSearch();
+    navigate(`/view-book-details/${id}`);
+  }, [navigate, closeDesktopSearch]);
+
+  // Navigation links logic — icons synced with mobile (outline inactive / filled active)
   let links = [];
   if (isLoggedIn && sellerMode && isSellerApproved) {
     links = [
-      { title: 'Dashboard', link: '/seller/dashboard', icon: <FaHome /> },
-      { title: 'Add Product', link: '/seller/add-product', icon: <FaPlus /> },
-      { title: 'My Products', link: '/seller/myproducts', icon: <FaBoxOpen /> },
-      { title: 'Orders', link: '/seller/orders', icon: <FaShoppingCart /> },
-      { title: 'Wallet', link: '/seller/mywallet', icon: <FaShoppingCart /> },
+      { title: 'Dashboard', link: '/seller/dashboard', icon: <FiHome />, activeIcon: <FaHome /> },
+      { title: 'Add Product', link: '/seller/add-product', icon: <FiPlusCircle />, activeIcon: <FaPlusCircle /> },
+      { title: 'My Products', link: '/seller/myproducts', icon: <FiPackage />, activeIcon: <FaBoxOpen /> },
+      { title: 'Orders', link: '/seller/orders', icon: <FiShoppingCart />, activeIcon: <FaShoppingCart /> },
+      { title: 'Wallet', link: '/seller/mywallet', icon: <FiCreditCard />, activeIcon: <FaWallet /> },
     ];
   } else {
     links = [
-      { title: 'Home', link: '/', icon: <FaHome /> },
-      { title: 'About Us', link: '/about-us', icon: <FaInfoCircle /> },
-      { title: 'All Books', link: '/all-books', icon: <FaBoxOpen /> },
-      { title: 'Services', link: '/services', icon: <FaBriefcase /> }
+      { title: 'Home', link: '/', icon: <FiHome />, activeIcon: <FaHome /> },
+      { title: 'About Us', link: '/about-us', icon: <FiInfo />, activeIcon: <FaInfoCircle /> },
+      { title: 'All Books', link: '/all-books', icon: <FiBookOpen />, activeIcon: <FaBook /> },
+      { title: 'Services', link: '/services', icon: <FiBriefcase />, activeIcon: <FaBriefcase /> }
     ];
     if (isLoggedIn) {
-      links.push({ title: 'Cart', link: '/cart', icon: <FaShoppingCart /> });
+      links.push({ title: 'Cart', link: '/cart', icon: <FiShoppingCart />, activeIcon: <FaShoppingCart /> });
     }
   }
 
@@ -446,34 +521,28 @@ function Navbar({ seller }) {
             </div>
           </Link>
 
-          {/* Center - Seller Toggle */}
-          {isLoggedIn && isSellerApproved && (
-            <div className="hidden md:block">
-              <div className="relative">
-                <div
-                  className={`flex items-center cursor-pointer w-36 h-12 rounded-full p-1 transition-all duration-500 ease-in-out transform hover:scale-105 ${sellerMode
-                    ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
-                    : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
-                    }`}
-                  onClick={handleToggleMode}
-                >
-                  <div
-                    className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${!sellerMode
-                      ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
-                      : 'text-white/80 translate-x-0'
-                      }`}
-                  >
-                    <FaUser className="mr-1 text-xs" />
-                    User
-                  </div>
-                  <div
-                    className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 transform ${sellerMode
-                      ? 'bg-white text-gray-800 shadow-lg translate-x-0 scale-105'
-                      : 'text-white/80 translate-x-0'
-                      }`}
-                  >
-                    <FaStore className="mr-1 text-xs" />
-                    Seller
+          {/* Center - Desktop Search Bar (Buyer mode only) */}
+          {!(sellerMode && isSellerApproved) && (
+            <div className="hidden lg:block flex-1 max-w-xl mx-6">
+              <style>{`
+                .dsearch-ph-fade { transition: opacity 0.3s ease, transform 0.3s ease; }
+                .dsearch-ph-out  { opacity: 0; transform: translateY(-6px); }
+                .dsearch-ph-in   { opacity: 1; transform: translateY(0); }
+              `}</style>
+              <div
+                className="relative group cursor-pointer"
+                onClick={openDesktopSearch}
+              >
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-yellow-400/20 via-amber-400/10 to-yellow-400/20 blur-sm opacity-0 group-hover:opacity-60 transition-opacity duration-300" />
+                <div className="relative flex items-center bg-zinc-900/90 border border-zinc-700/60 rounded-2xl overflow-hidden group-hover:border-yellow-400/40 transition-colors duration-300">
+                  <FiSearch className="ml-4 text-yellow-400/70 text-lg flex-shrink-0" />
+                  <div className="w-full py-3 pl-3 pr-4 text-sm relative">
+                    <span
+                      className={`text-sm pointer-events-none select-none dsearch-ph-fade ${phFading ? 'dsearch-ph-out' : 'dsearch-ph-in'}`}
+                      style={{ color: 'rgba(161,161,170,0.6)' }}
+                    >
+                      {PLACEHOLDERS[phIdx]}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -497,7 +566,7 @@ function Navbar({ seller }) {
                         }`}
                     >
                       <span className={`text-lg transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
-                        {item.icon}
+                        {isActive ? item.activeIcon : item.icon}
                       </span>
                       <span className="font-medium">{item.title}</span>
                     </Link>
@@ -543,10 +612,10 @@ function Navbar({ seller }) {
                   </div>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-semibold text-white group-hover:text-yellow-400 transition-colors duration-300">
-                      {loading ? 'Loading...' : error ? 'Profile Error' : (userProfile?.username || 'User')}
+                      {loading ? 'Loading...' : error ? 'Profile Error' : (userProfile?.username || 'Buyer')}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {sellerMode && isSellerApproved ? 'Seller Mode' : 'Customer'}
+                      {sellerMode && isSellerApproved ? 'Seller Mode' : 'Buyer'}
                     </p>
                   </div>
                 </button>
@@ -567,7 +636,7 @@ function Navbar({ seller }) {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">
-                            {userProfile?.username || 'User'}
+                            {userProfile?.username || 'Buyer'}
                           </p>
                           <p className="text-xs text-gray-600 truncate">
                             {userProfile?.email || 'No email available'}
@@ -591,6 +660,57 @@ function Navbar({ seller }) {
                     {(error || sellerFetchError) && (
                       <div className="px-4 py-2 bg-red-50 border-l-4 border-red-400 m-2 rounded">
                         <p className="text-xs text-red-700">{error || sellerFetchError}</p>
+                      </div>
+                    )}
+
+                    {/* Mode Switcher */}
+                    {isSellerApproved && (
+                      <div className="px-4 py-3 border-b border-gray-200/20">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">Switch Mode</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              if (sellerMode) {
+                                setSellerMode(false);
+                                localStorage.setItem('sellerMode', 'false');
+                                navigate('/');
+                              }
+                              setProfileDropdown(false);
+                            }}
+                            className={`flex-1 relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.02] ${
+                              !sellerMode
+                                ? 'border-yellow-400 bg-gradient-to-b from-yellow-400/15 to-yellow-400/5 shadow-lg shadow-yellow-400/10'
+                                : 'border-gray-200/40 hover:border-gray-300/60 hover:bg-gray-50/80'
+                            }`}
+                          >
+                            {!sellerMode && (
+                              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-yellow-400" style={{ boxShadow: '0 0 6px 1px rgba(250,204,21,0.4)' }}></span>
+                            )}
+                            <FaShoppingCart className={`text-base transition-colors duration-300 ${!sellerMode ? 'text-yellow-500' : 'text-gray-400'}`} />
+                            <span className={`text-xs font-bold transition-colors duration-300 ${!sellerMode ? 'text-yellow-600' : 'text-gray-500'}`}>Buyer</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (!sellerMode) {
+                                setSellerMode(true);
+                                localStorage.setItem('sellerMode', 'true');
+                                navigate('/seller/dashboard');
+                              }
+                              setProfileDropdown(false);
+                            }}
+                            className={`flex-1 relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.02] ${
+                              sellerMode
+                                ? 'border-yellow-400 bg-gradient-to-b from-yellow-400/15 to-yellow-400/5 shadow-lg shadow-yellow-400/10'
+                                : 'border-gray-200/40 hover:border-gray-300/60 hover:bg-gray-50/80'
+                            }`}
+                          >
+                            {sellerMode && (
+                              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-yellow-400" style={{ boxShadow: '0 0 6px 1px rgba(250,204,21,0.4)' }}></span>
+                            )}
+                            <FaStore className={`text-base transition-colors duration-300 ${sellerMode ? 'text-yellow-500' : 'text-gray-400'}`} />
+                            <span className={`text-xs font-bold transition-colors duration-300 ${sellerMode ? 'text-yellow-600' : 'text-gray-500'}`}>Seller</span>
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -748,33 +868,7 @@ function Navbar({ seller }) {
           </div>
         </div>
 
-        {/* Mobile Seller Toggle */}
-        {isLoggedIn && isSellerApproved && (
-          <div className="md:hidden mt-4 flex justify-center">
-            <div
-              className={`flex items-center cursor-pointer w-36 h-10 rounded-full p-1 transition-all duration-500 ease-in-out ${sellerMode
-                ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-lg shadow-yellow-400/30'
-                : 'bg-gradient-to-r from-gray-700 to-gray-600 shadow-lg'
-                }`}
-              onClick={handleToggleMode}
-            >
-              <div
-                className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 ${!sellerMode ? 'bg-white text-gray-800 shadow-lg' : 'text-white/80'
-                  }`}
-              >
-                <FaUser className="mr-1 text-xs" />
-                User
-              </div>
-              <div
-                className={`w-1/2 h-full flex items-center justify-center text-sm font-semibold rounded-full transition-all duration-500 ${sellerMode ? 'bg-white text-gray-800 shadow-lg' : 'text-white/80'
-                  }`}
-              >
-                <FaStore className="mr-1 text-xs" />
-                Seller
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* Error Message Banner */}
         {(error || sellerFetchError) && (
@@ -794,6 +888,134 @@ function Navbar({ seller }) {
           </div>
         )}
       </nav>
+
+      {/* Desktop Search Overlay */}
+      {desktopSearchOpen && (
+        <div className="hidden lg:block fixed inset-0 z-[55]">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeDesktopSearch}></div>
+          {/* Search Panel */}
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4" style={{ animation: 'searchDropDown 0.25s ease forwards' }}>
+            <style>{`
+              @keyframes searchDropDown {
+                0% { opacity: 0; transform: translate(-50%, -12px); }
+                100% { opacity: 1; transform: translate(-50%, 0); }
+              }
+            `}</style>
+            <div style={{ background: 'linear-gradient(to bottom, rgba(9,9,11,0.99), rgba(15,15,20,0.99))' }} className="backdrop-blur-xl border border-zinc-700/60 rounded-2xl shadow-2xl shadow-black/40 overflow-hidden">
+              {/* Search Input — same as mobile */}
+              <div className="px-5 pt-5 pb-3">
+                <div className="relative flex items-center gap-2">
+                  <div className="flex-1 relative group">
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-yellow-400/20 via-amber-400/10 to-yellow-400/20 blur-sm opacity-60 group-focus-within:opacity-100 transition-opacity" />
+                    <div className="relative flex items-center bg-zinc-900/90 border border-zinc-700/60 rounded-2xl overflow-hidden group-focus-within:border-yellow-400/40 transition-colors">
+                      <FiSearch className="ml-4 text-yellow-400/70 text-lg flex-shrink-0" />
+                      <input
+                        ref={desktopSearchInputRef}
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-transparent py-3.5 pl-3 pr-4 text-white text-sm focus:outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') closeDesktopSearch();
+                        }}
+                      />
+                      {/* Animated placeholder (same as mobile) */}
+                      {!searchQuery && (
+                        <span
+                          className={`absolute left-11 text-sm pointer-events-none select-none dsearch-ph-fade ${phFading ? 'dsearch-ph-out' : 'dsearch-ph-in'}`}
+                          style={{ color: 'rgba(161,161,170,0.6)' }}
+                        >
+                          {PLACEHOLDERS[phIdx]}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={closeDesktopSearch}
+                    className="flex-shrink-0 px-3 py-2 text-yellow-400/80 text-sm font-medium hover:text-yellow-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                {/* Quick suggestion chips — same as mobile */}
+                {!searchQuery && (
+                  <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
+                    {['Engineering', 'Novel', 'UPSC', 'Science', 'Comics'].map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => setSearchQuery(tag)}
+                        className="flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium
+                          bg-zinc-800/70 text-zinc-300 border border-zinc-700/50
+                          hover:bg-yellow-400/10 hover:text-yellow-400 hover:border-yellow-400/30
+                          transition-all duration-200"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Results — same as mobile */}
+              <div className="flex-1 overflow-y-auto px-5 pb-6 max-h-[60vh]">
+                {searchQuery.trim() === '' ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center px-8">
+                    <div className="w-16 h-16 rounded-full bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center mb-4">
+                      <FiSearch className="text-2xl text-zinc-600" />
+                    </div>
+                    <p className="text-zinc-500 text-sm mb-1">Discover your next read</p>
+                    <p className="text-zinc-600 text-xs">Search by book name, author, or category</p>
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <p className="text-zinc-500 text-sm">No results for "<span className="text-zinc-300">{searchQuery}</span>"</p>
+                    <p className="text-zinc-600 text-xs mt-1">Try a different keyword</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-zinc-500 mb-2 px-0.5">
+                      {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                    </p>
+                    {searchResults.map((book) => (
+                      <button
+                        key={book._id}
+                        onClick={() => selectSearchResult(book._id)}
+                        className="w-full flex items-center gap-3 p-3 rounded-2xl text-left
+                          bg-zinc-800/40 border border-zinc-800/60
+                          hover:bg-zinc-800/80 hover:border-zinc-700/60
+                          active:scale-[0.98] transition-all duration-200"
+                      >
+                        <img
+                          src={book.url}
+                          alt={book.title}
+                          className="w-12 h-16 rounded-xl object-cover flex-shrink-0 shadow-lg"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm font-semibold truncate">{book.title}</p>
+                          <p className="text-zinc-400 text-[11px] truncate mt-0.5">
+                            {book.author || 'Unknown Author'}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-yellow-400 text-xs font-bold">₹{book.price}</span>
+                            {book.category && (
+                              <span className="text-[9px] bg-yellow-400/10 text-yellow-400/80 px-2 py-0.5 rounded-full border border-yellow-400/20">
+                                {book.category}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <FaArrowRight className="text-zinc-700 text-[10px] flex-shrink-0 mr-1" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Bottom Nav + Search (extracted component) */}
       {!(isLoggedIn && sellerMode && isSellerApproved) && (
@@ -844,10 +1066,10 @@ function Navbar({ seller }) {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-medium truncate">
-                        {loading ? 'Loading...' : error ? 'Error' : (userProfile?.username || 'User')}
+                        {loading ? 'Loading...' : error ? 'Error' : (userProfile?.username || 'Buyer')}
                       </p>
                       <p className="text-gray-400 text-sm">
-                        {sellerMode && isSellerApproved ? 'Seller Mode' : 'Customer'}
+                        {sellerMode && isSellerApproved ? 'Seller Mode' : 'Buyer'}
                       </p>
                       <p className="text-gray-400 text-xs truncate">
                         {userProfile?.email || 'No email'}
@@ -859,6 +1081,57 @@ function Navbar({ seller }) {
                       {error || sellerFetchError}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Mode Switcher - Mobile */}
+              {isSellerApproved && (
+                <div className="mb-6">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Switch Mode</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        if (sellerMode) {
+                          setSellerMode(false);
+                          localStorage.setItem('sellerMode', 'false');
+                          navigate('/');
+                        }
+                        setMenuOpen(false);
+                      }}
+                      className={`flex-1 relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.03] ${
+                        !sellerMode
+                          ? 'border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/10'
+                          : 'border-gray-700 hover:border-gray-600 bg-white/5'
+                      }`}
+                    >
+                      {!sellerMode && (
+                        <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-yellow-400" style={{ boxShadow: '0 0 8px 2px rgba(250,204,21,0.4)' }}></span>
+                      )}
+                      <FaShoppingCart className={`text-xl transition-colors duration-300 ${!sellerMode ? 'text-yellow-400' : 'text-gray-500'}`} />
+                      <span className={`text-sm font-bold transition-colors duration-300 ${!sellerMode ? 'text-yellow-400' : 'text-gray-400'}`}>Buyer</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!sellerMode) {
+                          setSellerMode(true);
+                          localStorage.setItem('sellerMode', 'true');
+                          navigate('/seller/dashboard');
+                        }
+                        setMenuOpen(false);
+                      }}
+                      className={`flex-1 relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-[1.03] ${
+                        sellerMode
+                          ? 'border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/10'
+                          : 'border-gray-700 hover:border-gray-600 bg-white/5'
+                      }`}
+                    >
+                      {sellerMode && (
+                        <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-yellow-400" style={{ boxShadow: '0 0 8px 2px rgba(250,204,21,0.4)' }}></span>
+                      )}
+                      <FaStore className={`text-xl transition-colors duration-300 ${sellerMode ? 'text-yellow-400' : 'text-gray-500'}`} />
+                      <span className={`text-sm font-bold transition-colors duration-300 ${sellerMode ? 'text-yellow-400' : 'text-gray-400'}`}>Seller</span>
+                    </button>
+                  </div>
                 </div>
               )}
 

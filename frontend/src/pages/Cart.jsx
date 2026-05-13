@@ -350,7 +350,7 @@ const Cart = () => {
                   <div className="max-w-7xl mx-auto">
                     <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
                       {/* Total Summary */}
-                      <div className="flex items-center gap-2 sm:gap-6">
+                      <div className="flex items-center gap-3 sm:gap-6">
                         <div>
                           <p className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider mb-0.5 sm:mb-1">Total Amount</p>
                           <p className="text-lg sm:text-3xl font-bold text-yellow-400 flex items-baseline gap-1 sm:gap-2">
@@ -361,8 +361,8 @@ const Cart = () => {
                           </p>
                         </div>
 
-                        <div className="hidden sm:flex items-center gap-2 text-xs text-zinc-400">
-                          <FaLock className="text-green-400" />
+                        <div className="flex items-center gap-1 sm:gap-1.5 text-[8px] sm:text-xs text-zinc-400 bg-zinc-800/60 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border border-zinc-700/40">
+                          <FaLock className="text-green-400 text-[8px] sm:text-[10px]" />
                           <span>Secure checkout</span>
                         </div>
                       </div>
@@ -391,19 +391,19 @@ const Cart = () => {
                     </div>
 
                     {/* Trust Line - hidden on mobile */}
-                    <div className="hidden sm:flex items-center justify-center gap-4 mt-3 text-xs text-zinc-500">
-                      <div className="flex items-center gap-1">
-                        <FaCheckCircle className="text-green-400" />
+                    <div className="hidden sm:flex items-center justify-center gap-6 mt-3 pt-3 border-t border-zinc-800/60 text-xs text-zinc-500">
+                      <div className="flex items-center gap-1.5">
+                        <FaCheckCircle className="text-green-400 text-[10px]" />
                         <span>SSL Encrypted</span>
                       </div>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <FaShieldAlt className="text-blue-400" />
+                      <span className="text-zinc-700">•</span>
+                      <div className="flex items-center gap-1.5">
+                        <FaShieldAlt className="text-blue-400 text-[10px]" />
                         <span>Safe Payments</span>
                       </div>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <FaTruck className="text-purple-400" />
+                      <span className="text-zinc-700">•</span>
+                      <div className="flex items-center gap-1.5">
+                        <FaTruck className="text-purple-400 text-[10px]" />
                         <span>Fast Shipping</span>
                       </div>
                     </div>

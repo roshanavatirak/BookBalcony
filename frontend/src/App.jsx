@@ -213,6 +213,72 @@ import EditBook from './components/Seller/EditBook';
 import SellerProduct from './components/Admin/Seller/SellerProduct';
 
 
+// ✅ RBAC: Seller Route Guard — blocks Buyer-only users from seller pages
+const SellerRouteGuard = ({ children }) => {
+  const [checking, setChecking] = React.useState(true);
+  const [allowed, setAllowed] = React.useState(false);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    const id = localStorage.getItem('id');
+    if (!token || !id) {
+      setChecking(false);
+      setAllowed(false);
+      return;
+    }
+    const API = `${import.meta.env.VITE_API_URL}/api/v1`;
+    import('axios').then(({ default: ax }) => {
+      ax.get(`${API}/get-user-information`, {
+        headers: { authorization: `Bearer ${token}`, id }
+      }).then(res => {
+        const u = res.data?.data || res.data;
+        const isSeller = u?.isSeller === true || u?.isSeller === 'true';
+        const isApproved = u?.sellerApplicationStatus === 'Accepted';
+        setAllowed(isSeller && isApproved);
+      }).catch(() => setAllowed(false))
+        .finally(() => setChecking(false));
+    });
+  }, []);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-3 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-400 text-sm">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!allowed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-gray-800/60 border border-red-500/30 rounded-2xl p-8 text-center shadow-2xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Access Restricted</h2>
+          <p className="text-gray-400 text-sm mb-1">You don't have Seller access.</p>
+          <p className="text-gray-500 text-xs mb-6">Only approved Sellers can access this area. Please apply to become a Seller first.</p>
+          <div className="flex flex-col gap-2">
+            <a href="/" className="w-full py-2.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-black rounded-xl font-semibold text-sm hover:from-yellow-300 hover:to-orange-300 transition-all duration-300">
+              Go to Home
+            </a>
+            <a href="/profile/become-seller" className="w-full py-2.5 border border-yellow-400/40 text-yellow-400 rounded-xl font-medium text-sm hover:bg-yellow-400/10 transition-all duration-300">
+              Apply as Seller
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+};
+
 
 
 const App=()=> {
@@ -287,25 +353,22 @@ const App=()=> {
 
 
 
-        {/* REDIRECT LEGACY ROUTES TO NEW STRUCTURE WITH SIDEBAR */}
-        {/* <Route path="/seller/add-book" element={<Navigate to="/seller/add-book" replace />}/> */}
-        {/* <Route path="/seller/myproducts" element={<Navigate to="/seller/profile/my-products" replace />}/> */}
-
-        <Route path="/seller/myproducts" element={<MyProducts/>}/>
-        <Route path="/seller/add-product" element={<SellerAddBook/>}/>
-        <Route path="/seller/dashboard" element={<SellerDashboard/>}/>
-        <Route path="/seller/mywallet" element={<SellerWallet/>}/>
+        {/* Seller Routes — RBAC Protected */}
+        <Route path="/seller/myproducts" element={<SellerRouteGuard><MyProducts/></SellerRouteGuard>}/>
+        <Route path="/seller/add-product" element={<SellerRouteGuard><SellerAddBook/></SellerRouteGuard>}/>
+        <Route path="/seller/dashboard" element={<SellerRouteGuard><SellerDashboard/></SellerRouteGuard>}/>
+        <Route path="/seller/mywallet" element={<SellerRouteGuard><SellerWallet/></SellerRouteGuard>}/>
         
-        {/* Seller Profile Routes - WITH SIDEBAR */}
-        <Route path="/seller/profile" element={<SellerProfile1 />}>
+        {/* Seller Profile Routes - WITH SIDEBAR — RBAC Protected */}
+        <Route path="/seller/profile" element={<SellerRouteGuard><SellerProfile1 /></SellerRouteGuard>}>
           <Route index element={<SellerAccountInfo />} />
           <Route path="bank-info" element={<SellerBankInfo />} />
           <Route path="add-book" element={<SellerAddBook/>} />
           <Route path="my-products" element={<MyProducts/>} />
         </Route>
 
-        {/* Individual Seller Routes that don't need sidebar */}
-        <Route path="/seller/viewproduct/:id" element={<SellerViewBookDetails/>}/>
+        {/* Individual Seller Routes that don't need sidebar — RBAC Protected */}
+        <Route path="/seller/viewproduct/:id" element={<SellerRouteGuard><SellerViewBookDetails/></SellerRouteGuard>}/>
         
         <Route  path="/signin" element={<Login/>}/>
         <Route  path="/Signup" element={<SignUp/>}/>
@@ -327,7 +390,7 @@ const App=()=> {
         <Route path="/seller/pickup-address" element={<SellerAddressForm />} />
         <Route path="/seller/form-preview" element={<SellerPreview />} />
         <Route path="/profile/Submitted" element={<SubmittedPop />} />
-        <Route path="/seller/edit-product/:id" element={<EditBook />} />
+        <Route path="/seller/edit-product/:id" element={<SellerRouteGuard><EditBook /></SellerRouteGuard>} />
 
         {/* Checkout Routes */}
         <Route path="/checkout/:id" element={<CheckoutLayout />} />
@@ -336,8 +399,8 @@ const App=()=> {
         {/* PremiumPage */}
         <Route path="/premium" element={<PremiumPage />} />
 
-        {/* SellerOrdersDashboard */}
-        <Route path="/seller/orders" element={<SellerOrdersDashboard />} />
+        {/* SellerOrdersDashboard — RBAC Protected */}
+        <Route path="/seller/orders" element={<SellerRouteGuard><SellerOrdersDashboard /></SellerRouteGuard>} />
 
       </Routes>
       <Footer/>
