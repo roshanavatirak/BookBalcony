@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getBookDetailPath } from '../../utils/bookSlug';
 import { 
   ArrowLeft, 
   Package, 
@@ -908,7 +909,7 @@ const OrderDetailsPage = () => {
                 
                 {order.book && (
                   <button
-                    onClick={() => navigate(`/view-book-details/${order.book._id}`)}
+                    onClick={() => navigate(getBookDetailPath(order.book.title, order.book._id))}
                     className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-black font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-yellow-500/50 flex items-center justify-center gap-2"
                   >
                     <Package size={16} />

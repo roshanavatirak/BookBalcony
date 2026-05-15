@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import Loader from '../Loader/Loader';
 import { Link } from 'react-router-dom';
+import { getBookDetailPath } from '../../utils/bookSlug';
 import { FaBookOpen, FaShoppingBag, FaTruck, FaBox, FaCheckCircle, FaClock, FaEye } from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -106,7 +107,7 @@ const UserOrderHistory = () => {
             </div>
 
             {/* Book Image and Info */}
-            <Link to={`/view-book-details/${order.book?._id}`} className="mb-4">
+            <Link to={getBookDetailPath(order.book?.title, order.book?._id)} className="mb-4">
               <div className="flex items-start gap-4">
                 <div className="relative">
                   <img
@@ -211,7 +212,7 @@ const UserOrderHistory = () => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {group.orders.map((order) => (
               <div key={order._id} className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-600 hover:border-yellow-400/50 transition-all">
-                <Link to={`/view-book-details/${order.book?._id}`} className="block mb-3">
+                <Link to={getBookDetailPath(order.book?.title, order.book?._id)} className="block mb-3">
                   <div className="flex gap-3">
                     <img
                       src={order.book?.url || "https://via.placeholder.com/60x80?text=Book"}

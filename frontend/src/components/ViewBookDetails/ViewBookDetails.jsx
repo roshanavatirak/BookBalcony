@@ -1,9 +1,10 @@
 
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import Loader from '../Loader/Loader';
 import { useParams, Link } from 'react-router-dom';
+import { extractIdFromSlug } from '../../utils/bookSlug';
 import { GrLanguage } from "react-icons/gr";
 import { motion, AnimatePresence } from 'framer-motion';
 import BookCard from '../BookCard/BookCard';
@@ -21,7 +22,8 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
 const ViewBookDetails = () => {
-  const { id } = useParams();
+  const { id: rawParam } = useParams();
+  const id = extractIdFromSlug(rawParam);
   const [Data, setData] = useState();
   const [SimilarBooks, setSimilarBooks] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -35,6 +37,9 @@ const ViewBookDetails = () => {
   const [isInCart, setIsInCart] = useState(false);
   const [checkingCart, setCheckingCart] = useState(true);
   const [removingFromCart, setRemovingFromCart] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [isDescClamped, setIsDescClamped] = useState(false);
+  const descRef = useRef(null);
 
   const { alert, showAlert, hideAlert, success, error, warning, info } = useAlert();
 
@@ -590,9 +595,28 @@ const ViewBookDetails = () => {
                   About This Book
                 </h3>
                 <div className="bg-zinc-800/50 backdrop-blur-sm rounded-xl p-3 border border-zinc-700/50">
-                  <p className="text-zinc-300 leading-relaxed text-sm line-clamp-4">
+                  <p
+                    ref={(el) => {
+                      descRef.current = el;
+                      if (el && !descExpanded) {
+                        // Check if the text is actually overflowing
+                        requestAnimationFrame(() => {
+                          setIsDescClamped(el.scrollHeight > el.clientHeight);
+                        });
+                      }
+                    }}
+                    className={`text-zinc-300 leading-relaxed text-sm ${descExpanded ? '' : 'line-clamp-4'}`}
+                  >
                     {Data?.desc}
                   </p>
+                  {(isDescClamped || descExpanded) && (
+                    <button
+                      onClick={() => setDescExpanded(!descExpanded)}
+                      className="mt-2 text-yellow-400 hover:text-yellow-300 text-xs font-semibold tracking-wide transition-colors duration-200"
+                    >
+                      {descExpanded ? '▲ Read Less' : '▼ Read More'}
+                    </button>
+                  )}
                 </div>
               </motion.div>
 

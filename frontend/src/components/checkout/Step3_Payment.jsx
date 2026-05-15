@@ -347,12 +347,12 @@ export default function Step3_Payment({ address, order, onBack }) {
   const displayBooks = booksWithSellers.length > 0 ? booksWithSellers : order.items;
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-xl max-w-3xl mx-auto text-black relative">
+    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl max-w-3xl mx-auto text-black relative">
       {showCancelPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-lg max-w-sm w-full text-center">
-            <h2 className="text-lg font-bold mb-4">❓ Cancel Payment?</h2>
-            <p className="mb-6 text-gray-600">Cancel payment process?</p>
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg max-w-sm w-full text-center mx-4">
+            <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">❓ Cancel Payment?</h2>
+            <p className="mb-4 sm:mb-6 text-gray-600 text-sm sm:text-base">Cancel payment process?</p>
             <div className="flex justify-center gap-4">
               <button onClick={() => setShowCancelPopup(false)} className="bg-gray-300 px-4 py-2 rounded-lg">
                 No, Continue
@@ -365,11 +365,11 @@ export default function Step3_Payment({ address, order, onBack }) {
         </div>
       )}
 
-      <button onClick={() => setShowCancelPopup(true)} className="text-blue-600 underline text-sm mt-2">
+      <button onClick={() => setShowCancelPopup(true)} className="text-blue-600 underline text-xs sm:text-sm mt-1 sm:mt-2">
         ← Back to Summary
       </button>
 
-      <h2 className="text-2xl font-bold mb-4 text-center text-blue-800">💳 Payment Options</h2>
+      <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center text-blue-800">💳 Payment Options</h2>
 
       {/* ✅ FIXED: Show individual book pricing */}
       {displayBooks.map((book, idx) => {
@@ -377,34 +377,34 @@ export default function Step3_Payment({ address, order, onBack }) {
         const pricingInfo = pricingPreview.find(p => p.book._id === book._id);
         
         return (
-          <div key={idx} className="flex gap-4 border p-4 rounded-lg bg-zinc-50 mb-4 items-center">
-            <img src={book.url} alt={book.title} className="w-20 h-28 object-cover rounded" />
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold">{book.title}</h3>
-              <p className="text-gray-600 text-sm">
+          <div key={idx} className="flex gap-3 sm:gap-4 border p-3 sm:p-4 rounded-lg bg-zinc-50 mb-3 sm:mb-4 items-center">
+            <img src={book.url} alt={book.title} className="w-16 h-22 sm:w-20 sm:h-28 object-cover rounded" />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold truncate">{book.title}</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">
                 To: {address.fullName || "Customer"}, {address.city || "City"}
               </p>
               
               {/* ✅ Show pricing breakdown */}
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center gap-2 text-sm">
+              <div className="mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1">
+                <div className="flex items-center gap-2 text-xs sm:text-sm">
                   <span className="text-gray-500 line-through">MRP: ₹{book.price}</span>
                 </div>
                 
                 {pricingInfo && pricingInfo.discount > 0 && (
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
                     <span className="text-green-600 font-medium">
                       Discount: -₹{pricingInfo.discount}
                     </span>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-green-600">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-base sm:text-lg font-bold text-green-600">
                     ₹{pricingInfo ? pricingInfo.amountPayable : book.price}
                   </span>
                   {pricingInfo && pricingInfo.discount > 0 && (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                    <span className="text-[10px] sm:text-xs bg-green-100 text-green-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                       {Math.round((pricingInfo.discount / book.price) * 100)}% off
                     </span>
                   )}
@@ -416,70 +416,70 @@ export default function Step3_Payment({ address, order, onBack }) {
       })}
 
       {/* Total Payable */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl mb-4">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 sm:p-4 rounded-xl mb-3 sm:mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-gray-700 font-medium">Total Payable:</span>
-          <span className="text-2xl font-bold text-green-600 flex items-center gap-1">
-            <FaRupeeSign className="text-xl" />
+          <span className="text-gray-700 font-medium text-sm sm:text-base">Total Payable:</span>
+          <span className="text-xl sm:text-2xl font-bold text-green-600 flex items-center gap-1">
+            <FaRupeeSign className="text-lg sm:text-xl" />
             {order.payable - discountApplied}
           </span>
         </div>
         {discountApplied > 0 && (
-          <p className="text-sm text-green-600 text-right mt-1">
+          <p className="text-xs sm:text-sm text-green-600 text-right mt-1">
             (Coupon discount: ₹{discountApplied})
           </p>
         )}
       </div>
 
-      <div className="mb-4 mt-4">
-        <label className="font-medium text-sm flex items-center gap-1 mb-1">
+      <div className="mb-3 sm:mb-4 mt-3 sm:mt-4">
+        <label className="font-medium text-xs sm:text-sm flex items-center gap-1 mb-1">
           <MdDiscount /> Apply Coupon
         </label>
         <div className="flex gap-2">
           <input
             type="text"
             placeholder="Coupon code"
-            className="flex-1 border p-2 rounded"
+            className="flex-1 border p-2 rounded text-sm sm:text-base"
             value={coupon}
             onChange={(e) => setCoupon(e.target.value)}
           />
-          <button onClick={applyCoupon} className="bg-yellow-400 px-4 py-2 rounded font-medium">
+          <button onClick={applyCoupon} className="bg-yellow-400 px-3 sm:px-4 py-2 rounded font-medium text-sm sm:text-base">
             Apply
           </button>
         </div>
         {couponMessage && (
-          <p className={`text-sm mt-1 ${couponMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
+          <p className={`text-xs sm:text-sm mt-1 ${couponMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
             {couponMessage}
           </p>
         )}
       </div>
 
-      <div className="space-y-3 mt-6">
+      <div className="space-y-2 sm:space-y-3 mt-4 sm:mt-6">
         <button
           onClick={handleOnlinePayment}
           disabled={isProcessing}
-          className={`font-semibold py-3 rounded-xl w-full flex items-center justify-center gap-2 ${
+          className={`font-semibold py-2.5 sm:py-3 rounded-xl w-full flex items-center justify-center gap-2 text-sm sm:text-base ${
             isProcessing ? "bg-gray-400 cursor-not-allowed" : "bg-yellow-400 hover:bg-yellow-300"
           }`}
         >
-          <GiReceiveMoney size={20} /> 
+          <GiReceiveMoney size={18} /> 
           {isProcessing ? "Processing..." : "Pay Online"}
         </button>
 
         <button
           onClick={handleCODClick}
-          className="bg-white border text-gray-800 font-medium py-3 rounded-xl w-full flex items-center justify-center gap-2 hover:bg-gray-100"
+          className="bg-white border text-gray-800 font-medium py-2.5 sm:py-3 rounded-xl w-full flex items-center justify-center gap-2 hover:bg-gray-100 text-sm sm:text-base"
         >
-          <FaMoneyBillAlt size={18} /> COD (₹{order.payable - discountApplied} + 9 )
+          <FaMoneyBillAlt size={16} /> COD (₹{order.payable - discountApplied} + 9 )
         </button>
 
         <button
           disabled={!isPremium}
-          className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl ${
+          className={`w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base ${
             isPremium ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500 cursor-not-allowed"
           }`}
         >
-          <FaUserShield size={18} /> Meet in Person (Premium)
+          <FaUserShield size={16} /> Meet in Person (Premium)
         </button>
       </div>
 

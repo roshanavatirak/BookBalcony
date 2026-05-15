@@ -149,43 +149,43 @@ export default function Step1_Address({ onNext }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-xl p-10 max-w-3xl mx-auto mt-10">
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-zinc-600">Loading addresses...</p>
+      <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-10 max-w-3xl mx-auto mt-6 sm:mt-10">
+        <div className="flex flex-col items-center justify-center py-8 sm:py-12">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-zinc-600 text-sm sm:text-base">Loading addresses...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-white to-zinc-50 rounded-2xl shadow-xl p-8 max-w-3xl mx-auto mt-10 border border-zinc-200">
+    <div className="bg-gradient-to-br from-white to-zinc-50 rounded-2xl shadow-xl p-4 sm:p-8 max-w-3xl mx-auto mt-6 sm:mt-10 border border-zinc-200">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full mb-4 shadow-lg">
-          <span className="text-3xl">📦</span>
+      <div className="text-center mb-5 sm:mb-8">
+        <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full mb-3 sm:mb-4 shadow-lg">
+          <span className="text-2xl sm:text-3xl">📦</span>
         </div>
-        <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+        <h2 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
           Delivery Address
         </h2>
-        <p className="text-zinc-600 text-sm">
+        <p className="text-zinc-600 text-xs sm:text-sm">
           {isAddingNew ? "Enter new delivery address" : "Select or add a delivery address"}
         </p>
       </div>
 
       {/* Existing Addresses */}
       {!isAddingNew && addresses.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-zinc-800 flex items-center gap-2">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-bold text-zinc-800 flex items-center gap-1.5 sm:gap-2">
               <span>📍</span> Saved Addresses
             </h3>
             {addresses.length < 3 && (
               <button
                 onClick={handleAddNew}
-                className="text-sm text-yellow-600 hover:text-yellow-700 font-semibold flex items-center gap-1"
+                className="text-xs sm:text-sm text-yellow-600 hover:text-yellow-700 font-semibold flex items-center gap-1"
               >
-                <span className="text-lg">+</span> Add New
+                <span className="text-base sm:text-lg">+</span> Add New
               </button>
             )}
           </div>
@@ -196,7 +196,7 @@ export default function Step1_Address({ onNext }) {
                 key={addr._id}
                 whileHover={{ scale: 1.01 }}
                 onClick={() => handleSelectAddress(addr._id)}
-                className={`p-5 rounded-xl cursor-pointer transition-all border-2 ${
+                className={`p-3 sm:p-5 rounded-xl cursor-pointer transition-all border-2 ${
                   selectedAddressId === addr._id
                     ? 'border-yellow-400 bg-yellow-50 shadow-md'
                     : 'border-zinc-200 bg-white hover:border-yellow-300'
@@ -204,19 +204,19 @@ export default function Step1_Address({ onNext }) {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
                       {selectedAddressId === addr._id && (
-                        <span className="px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold rounded-full">
+                        <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-[10px] sm:text-xs font-bold rounded-full">
                           SELECTED
                         </span>
                       )}
                       {addr.isPrimary && (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                        <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold rounded-full">
                           PRIMARY
                         </span>
                       )}
                     </div>
-                    <div className="text-sm text-zinc-700 space-y-1">
+                    <div className="text-xs sm:text-sm text-zinc-700 space-y-0.5 sm:space-y-1">
                       <p className="font-bold text-zinc-900">{addr.fullName}</p>
                       <p>{addr.addressLine1}</p>
                       {addr.addressLine2 && <p className="text-zinc-600">📍 {addr.addressLine2}</p>}
@@ -245,24 +245,24 @@ export default function Step1_Address({ onNext }) {
 
       {/* Add New Address Form */}
       {(isAddingNew || addresses.length === 0) && (
-        <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-zinc-200 shadow-sm">
           {addresses.length > 0 && (
             <button
               onClick={() => setIsAddingNew(false)}
-              className="text-yellow-600 hover:text-yellow-700 font-semibold flex items-center gap-2 mb-6"
+              className="text-yellow-600 hover:text-yellow-700 font-semibold flex items-center gap-2 mb-4 sm:mb-6 text-sm sm:text-base"
             >
               <span>←</span> Back to Saved Addresses
             </button>
           )}
 
-          <h3 className="text-lg font-bold text-zinc-800 mb-5">
+          <h3 className="text-base sm:text-lg font-bold text-zinc-800 mb-3 sm:mb-5">
             {addresses.length === 0 ? "Enter Delivery Address" : "Add New Address"}
           </h3>
 
           <div className="space-y-4">
             {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-zinc-700 mb-1 sm:mb-2">
                 Full Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -270,7 +270,7 @@ export default function Step1_Address({ onNext }) {
                 placeholder="Enter full name"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="w-full p-3 rounded-lg bg-zinc-50 border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                className="w-full p-2.5 sm:p-3 rounded-lg bg-zinc-50 border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm sm:text-base"
               />
             </div>
 
@@ -384,10 +384,10 @@ export default function Step1_Address({ onNext }) {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleSubmit}
-        className="w-full mt-6 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg flex items-center justify-center gap-2"
+        className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
       >
         <span>Proceed to Order Summary</span>
-        <span className="text-xl">→</span>
+        <span className="text-lg sm:text-xl">→</span>
       </motion.button>
 
       {isAddingNew && (

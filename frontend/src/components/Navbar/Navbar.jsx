@@ -4,6 +4,7 @@ import logo from '../../assets/logo.png';
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../../store/auth';
 import axios from 'axios';
+import { getBookDetailPath } from '../../utils/bookSlug';
 import MobileBottomNav from './MobileBottomNav';
 import SellerMobileBottomNav from './SellerMobileBottomNav';
 
@@ -458,9 +459,9 @@ function Navbar({ seller }) {
     setSearchResults([]);
   }, []);
 
-  const selectSearchResult = useCallback((id) => {
+  const selectSearchResult = useCallback((book) => {
     closeDesktopSearch();
-    navigate(`/view-book-details/${id}`);
+    navigate(getBookDetailPath(book.title, book._id));
   }, [navigate, closeDesktopSearch]);
 
   // Navigation links logic — icons synced with mobile (outline inactive / filled active)
@@ -981,7 +982,7 @@ function Navbar({ seller }) {
                     {searchResults.map((book) => (
                       <button
                         key={book._id}
-                        onClick={() => selectSearchResult(book._id)}
+                        onClick={() => selectSearchResult(book)}
                         className="w-full flex items-center gap-3 p-3 rounded-2xl text-left
                           bg-zinc-800/40 border border-zinc-800/60
                           hover:bg-zinc-800/80 hover:border-zinc-700/60

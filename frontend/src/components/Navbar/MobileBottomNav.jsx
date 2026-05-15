@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import { getBookDetailPath } from '../../utils/bookSlug';
 
 import {
   FaHome, FaBook, FaBriefcase, FaShoppingCart,
@@ -102,9 +103,9 @@ function MobileBottomNav() {
     setSearchResults([]);
   }, []);
 
-  const selectResult = useCallback((id) => {
+  const selectResult = useCallback((book) => {
     closeSearch();
-    navigate(`/view-book-details/${id}`);
+    navigate(getBookDetailPath(book.title, book._id));
   }, [navigate, closeSearch]);
 
   const handleRipple = (e, key) => {
@@ -263,7 +264,7 @@ function MobileBottomNav() {
                 {searchResults.map((book) => (
                   <button
                     key={book._id}
-                    onClick={() => selectResult(book._id)}
+                    onClick={() => selectResult(book)}
                     className="w-full flex items-center gap-3 p-3 rounded-2xl text-left
                       bg-zinc-800/40 border border-zinc-800/60
                       hover:bg-zinc-800/80 hover:border-zinc-700/60

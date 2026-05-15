@@ -5,6 +5,7 @@ import { FaHeart, FaRegHeart, FaEye, FaFireAlt, FaStar, FaShoppingCart, FaClock,
 import { useFavourites } from '../../context/FavouriteContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import { getBookDetailPath } from '../../utils/bookSlug';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -123,7 +124,7 @@ function BookCard({ data, onRemove }) {
   const HoverIcon = stockStatus.hoverIcon;
 
   return (
-    <Link to={`/view-book-details/${data._id}`} className="group block">
+    <Link to={getBookDetailPath(data.title, data._id)} className="group block">
       <motion.div
         whileHover={{ y: -6, scale: 1.02 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
