@@ -36,20 +36,26 @@ const Favourites = () => {
   };
 
   return (
-    <div className="bg-zinc-900/50 rounded-3xl min-h-screen px-8 py-10 shadow-xl border border-zinc-700">
-    <h1 className="text-3xl sm:text-4xl font-extrabold text-center text-yellow-400 mb-2">
-  Your Favourite Books
-</h1>
-<p className="text-center italic text-zinc-300 text-sm sm:text-base mb-8">
-  Curated just for you — your personal collection of literary treasures ✨
-</p>
+    <div className="md:bg-zinc-900/50 md:rounded-3xl min-h-screen px-1 sm:px-4 md:px-8 py-4 md:py-10 md:shadow-xl md:border md:border-zinc-700">
+      <h1 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-center text-yellow-400 mb-1 md:mb-2">
+        Your Favourite Books
+      </h1>
+      <p className="text-center italic text-zinc-400 md:text-zinc-300 text-xs md:text-base mb-4 md:mb-8">
+        Curated just for you — your personal collection ✨
+      </p>
 
       {loading ? (
-        <p className="text-center text-zinc-400">Loading favourites...</p>
+        <p className="text-center text-zinc-400 py-10">Loading favourites...</p>
       ) : favouriteBooks.length === 0 ? (
-        <p className="text-center text-zinc-500">No books in your favourites yet.</p>
+        <div className="flex flex-col items-center justify-center py-16 md:py-20">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+            <span className="text-3xl md:text-4xl">💔</span>
+          </div>
+          <p className="text-zinc-400 text-sm md:text-base font-medium">No books in your favourites yet.</p>
+          <p className="text-zinc-500 text-xs mt-1">Start browsing and tap ❤️ to save books</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-6">
           {favouriteBooks.map((item) => (
             <BookCard
               key={item._id}

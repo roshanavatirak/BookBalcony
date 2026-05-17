@@ -260,7 +260,7 @@ const MySubscriptions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900/50 rounded-3xl p-4 sm:p-8 text-white shadow-xl border border-zinc-700">
+    <div className="min-h-screen md:bg-zinc-900/50 md:rounded-3xl p-1 sm:p-4 md:p-8 text-white md:shadow-xl md:border md:border-zinc-700">
       {alert && (
         <Alert
           type={alert.type}
@@ -281,26 +281,26 @@ const MySubscriptions = () => {
           className="mb-8"
         >
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
-                <FaBell className="text-2xl text-black" />
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-9 h-9 md:w-12 md:h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg">
+                <FaBell className="text-lg md:text-2xl text-black" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+                <h1 className="text-xl md:text-4xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
                   My Subscriptions
                 </h1>
-                <p className="text-zinc-400 text-sm mt-1">
-                  Manage all your email subscriptions
+                <p className="text-zinc-400 text-xs md:text-sm mt-0.5 md:mt-1">
+                  Manage your email subscriptions
                 </p>
               </div>
             </div>
             
             <button
               onClick={fetchSubscriptions}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-all flex items-center gap-2 border border-zinc-700"
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-all flex items-center gap-1.5 md:gap-2 border border-zinc-700"
             >
-              <FaSync className="text-sm" />
-              <span className="text-sm font-medium">Refresh</span>
+              <FaSync className="text-xs" />
+              <span className="text-xs md:text-sm font-medium">Refresh</span>
             </button>
           </div>
 
@@ -335,38 +335,38 @@ const MySubscriptions = () => {
 
         {/* Stats */}
         {subscriptions.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-zinc-800/60 backdrop-blur-xl p-4 rounded-xl border border-zinc-700/50">
+          <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
+            <div className="bg-zinc-800/60 backdrop-blur-xl p-3 md:p-4 rounded-xl border border-zinc-700/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-zinc-400 text-xs mb-1">Total</p>
-                  <p className="text-2xl font-black text-white">{subscriptions.length}</p>
+                  <p className="text-zinc-400 text-[10px] md:text-xs mb-0.5 md:mb-1">Total</p>
+                  <p className="text-lg md:text-2xl font-black text-white">{subscriptions.length}</p>
                 </div>
-                <FaEnvelope className="text-3xl text-yellow-400 opacity-50" />
+                <FaEnvelope className="text-xl md:text-3xl text-yellow-400 opacity-50" />
               </div>
             </div>
 
-            <div className="bg-zinc-800/60 backdrop-blur-xl p-4 rounded-xl border border-zinc-700/50">
+            <div className="bg-zinc-800/60 backdrop-blur-xl p-3 md:p-4 rounded-xl border border-zinc-700/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-zinc-400 text-xs mb-1">Active</p>
-                  <p className="text-2xl font-black text-green-400">
+                  <p className="text-zinc-400 text-[10px] md:text-xs mb-0.5 md:mb-1">Active</p>
+                  <p className="text-lg md:text-2xl font-black text-green-400">
                     {subscriptions.filter((s) => s.status === 'active').length}
                   </p>
                 </div>
-                <FaCheckCircle className="text-3xl text-green-400 opacity-50" />
+                <FaCheckCircle className="text-xl md:text-3xl text-green-400 opacity-50" />
               </div>
             </div>
 
-            <div className="bg-zinc-800/60 backdrop-blur-xl p-4 rounded-xl border border-zinc-700/50">
+            <div className="bg-zinc-800/60 backdrop-blur-xl p-3 md:p-4 rounded-xl border border-zinc-700/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-zinc-400 text-xs mb-1">Unsubscribed</p>
-                  <p className="text-2xl font-black text-red-400">
+                  <p className="text-zinc-400 text-[10px] md:text-xs mb-0.5 md:mb-1">Inactive</p>
+                  <p className="text-lg md:text-2xl font-black text-red-400">
                     {subscriptions.filter((s) => s.status === 'unsubscribed').length}
                   </p>
                 </div>
-                <FaTimesCircle className="text-3xl text-red-400 opacity-50" />
+                <FaTimesCircle className="text-xl md:text-3xl text-red-400 opacity-50" />
               </div>
             </div>
           </div>
@@ -414,7 +414,7 @@ const MySubscriptions = () => {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ delay: index * 0.1 }}
-                    className={`bg-zinc-800/60 backdrop-blur-xl rounded-2xl p-6 border transition-all ${
+                    className={`bg-zinc-800/60 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border transition-all ${
                       isActive
                         ? 'border-green-500/30 shadow-lg shadow-green-500/10'
                         : 'border-zinc-700/30 opacity-75'

@@ -77,7 +77,7 @@ const UserOrderHistory = () => {
   };
 
   const renderIndividualOrders = () => (
-    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 md:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
       {orderHistory.map((order, index) => {
         const deliveryDate = new Date(order.deliveryDate || order.createdAt);
         if (!order.deliveryDate) {
@@ -89,20 +89,20 @@ const UserOrderHistory = () => {
         return (
           <div
             key={order._id}
-            className="relative bg-zinc-800 border border-zinc-700 rounded-2xl shadow-lg hover:shadow-yellow-300/10 transition-all duration-300 p-6 flex flex-col group hover:scale-[1.02]"
+            className="relative bg-zinc-800 border border-zinc-700 rounded-xl md:rounded-2xl shadow-lg hover:shadow-yellow-300/10 transition-all duration-300 p-3 md:p-6 flex flex-col group hover:scale-[1.02]"
           >
             {/* Status Badge */}
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-zinc-900/80 px-3 py-1 rounded-full">
+            <div className="absolute top-2 right-2 md:top-4 md:right-4 flex items-center gap-1.5 md:gap-2 bg-zinc-900/80 px-2 md:px-3 py-0.5 md:py-1 rounded-full">
               {getStatusIcon(order.orderStatus)}
-              <span className="text-xs font-semibold text-zinc-200">
+              <span className="text-[10px] md:text-xs font-semibold text-zinc-200">
                 {order.orderStatus}
               </span>
             </div>
 
             {/* Delivery ETA */}
-            <div className="mb-4">
-              <div className="bg-gradient-to-r from-yellow-400/20 to-orange-300/20 border border-yellow-400/30 text-yellow-300 text-xs font-bold px-3 py-2 rounded-lg">
-                📦 Expected delivery: {deliveryLabel}
+            <div className="mb-2 md:mb-4 mt-6 md:mt-0">
+              <div className="bg-gradient-to-r from-yellow-400/20 to-orange-300/20 border border-yellow-400/30 text-yellow-300 text-[10px] md:text-xs font-bold px-2 md:px-3 py-1.5 md:py-2 rounded-lg">
+                📦 Delivery: {deliveryLabel}
               </div>
             </div>
 
@@ -113,20 +113,20 @@ const UserOrderHistory = () => {
                   <img
                     src={order.book?.url || "https://via.placeholder.com/80x120?text=Book"}
                     alt="Book Cover"
-                    className="w-20 h-28 object-cover rounded-lg border border-zinc-600 shadow-md"
+                    className="w-14 h-20 md:w-20 md:h-28 object-cover rounded-lg border border-zinc-600 shadow-md"
                   />
                   <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                     {index + 1}
                   </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-yellow-300 mb-2 line-clamp-2 group-hover:text-yellow-200 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm md:text-lg font-bold text-yellow-300 mb-1 md:mb-2 line-clamp-2 group-hover:text-yellow-200 transition-colors">
                     {order.book?.title || "Unknown Title"}
                   </h3>
-                  <p className="text-sm text-zinc-400 line-clamp-2 mb-2">
+                  <p className="text-xs md:text-sm text-zinc-400 line-clamp-1 md:line-clamp-2 mb-1 md:mb-2 hidden sm:block">
                     {order.book?.desc?.slice(0, 100) || "No description available."}
                   </p>
-                  <div className="text-lg font-bold text-green-400">
+                  <div className="text-sm md:text-lg font-bold text-green-400">
                     ₹{order.amountPayable || order.book?.price}
                   </div>
                 </div>
@@ -134,7 +134,7 @@ const UserOrderHistory = () => {
             </Link>
 
             {/* Order Details Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+            <div className="grid grid-cols-2 gap-2 md:gap-3 mb-2 md:mb-4 text-xs md:text-sm">
               <div className="bg-zinc-900/50 p-3 rounded-lg">
                 <span className="text-zinc-500 block mb-1">Payment</span>
                 <span className={`px-2 py-1 rounded text-xs font-bold ${
@@ -165,9 +165,9 @@ const UserOrderHistory = () => {
             <div className="flex gap-2 mt-auto">
               <Link
                 to={`/profile/orderHistory/order-details/${order._id}`}
-                className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-300 text-black font-bold py-2 px-4 rounded-lg hover:from-yellow-300 hover:to-orange-200 transition duration-300 text-center flex items-center justify-center gap-2"
+                className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-300 text-black font-bold py-2 px-3 md:px-4 rounded-lg hover:from-yellow-300 hover:to-orange-200 transition duration-300 text-center flex items-center justify-center gap-1.5 md:gap-2 text-xs md:text-base"
               >
-                <FaEye className="text-sm" />
+                <FaEye className="text-xs md:text-sm" />
                 View Details
               </Link>
             </div>
@@ -258,54 +258,54 @@ const UserOrderHistory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900/50 rounded-3xl p-4 sm:p-8 text-white shadow-xl border border-zinc-700">
+    <div className="min-h-screen md:bg-zinc-900/50 md:rounded-3xl p-1 sm:p-4 md:p-8 text-white md:shadow-xl md:border md:border-zinc-700">
       {/* Header */}
-      <div className="mb-10 text-center">
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-300 to-yellow-500 drop-shadow-lg flex justify-center items-center gap-3 mb-4">
-          <FaShoppingBag className="text-yellow-300 sm:text-5xl text-3xl" />
+      <div className="mb-4 md:mb-10 text-center">
+        <h1 className="text-xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-300 to-yellow-500 flex justify-center items-center gap-2 md:gap-3 mb-1 md:mb-4">
+          <FaShoppingBag className="text-yellow-300 text-xl md:text-5xl" />
           Your Orders
         </h1>
-        <p className="text-sm sm:text-base text-zinc-300 italic tracking-wide mb-6">
-          Track your orders, manage returns & view purchase history
+        <p className="text-xs md:text-base text-zinc-400 md:text-zinc-300 italic tracking-wide mb-3 md:mb-6">
+          Track orders & view purchase history
         </p>
         
         {/* View Toggle */}
         {orderHistory.length > 0 && (
-          <div className="flex justify-center gap-2 mb-6">
+          <div className="flex justify-center gap-1.5 md:gap-2 mb-3 md:mb-6">
             <button
               onClick={() => setViewMode('individual')}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              className={`px-3 md:px-6 py-1.5 md:py-2 rounded-lg font-semibold text-xs md:text-base transition-all ${
                 viewMode === 'individual' 
                   ? 'bg-yellow-400 text-black' 
                   : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
               }`}
             >
-              Individual Orders
+              Individual
             </button>
             <button
               onClick={() => setViewMode('grouped')}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              className={`px-3 md:px-6 py-1.5 md:py-2 rounded-lg font-semibold text-xs md:text-base transition-all ${
                 viewMode === 'grouped' 
                   ? 'bg-yellow-400 text-black' 
                   : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
               }`}
             >
-              Grouped Orders
+              Grouped
             </button>
           </div>
         )}
       </div>
 
       {orderHistory.length === 0 ? (
-        <div className="h-[60vh] flex flex-col items-center justify-center text-center">
-          <div className="bg-zinc-800 p-8 rounded-full mb-6">
-            <FaBookOpen className="text-6xl text-zinc-500" />
+        <div className="h-[50vh] md:h-[60vh] flex flex-col items-center justify-center text-center px-4">
+          <div className="bg-zinc-800 p-5 md:p-8 rounded-full mb-4 md:mb-6">
+            <FaBookOpen className="text-4xl md:text-6xl text-zinc-500" />
           </div>
-          <h2 className="text-3xl font-bold text-zinc-400 mb-4">No Orders Yet</h2>
-          <p className="text-zinc-500 text-lg mb-6">Start shopping to see your orders here!</p>
+          <h2 className="text-xl md:text-3xl font-bold text-zinc-400 mb-2 md:mb-4">No Orders Yet</h2>
+          <p className="text-zinc-500 text-sm md:text-lg mb-4 md:mb-6">Start shopping to see your orders here!</p>
           <Link 
             to="/all-books" 
-            className="bg-gradient-to-r from-yellow-400 to-orange-300 text-black font-bold py-3 px-8 rounded-lg hover:from-yellow-300 hover:to-orange-200 transition duration-300"
+            className="bg-gradient-to-r from-yellow-400 to-orange-300 text-black font-bold py-2.5 md:py-3 px-6 md:px-8 rounded-lg text-sm md:text-base hover:from-yellow-300 hover:to-orange-200 transition duration-300 w-full sm:w-auto text-center"
           >
             Browse Books
           </Link>

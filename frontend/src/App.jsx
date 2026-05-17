@@ -211,6 +211,7 @@ import PremiumPage from './components/Premium/PremiumPage';
 import SellerOrdersDashboard from './components/SellerOrder/SellerOrdersDashboard';
 import EditBook from './components/Seller/EditBook';
 import SellerProduct from './components/Admin/Seller/SellerProduct';
+import ChatbotManager from './components/ChatbotManager/ChatbotManager';
 
 
 // ✅ RBAC: Seller Route Guard — blocks Buyer-only users from seller pages
@@ -321,6 +322,7 @@ const App=()=> {
 
   return (
     <div>
+      <ChatbotManager />
       <ScrollToTop/>
       {role === "admin" ? <Admin /> : <Navbar />}
 
