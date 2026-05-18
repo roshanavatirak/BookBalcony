@@ -6,7 +6,8 @@ import { useDispatch } from "react-redux";
 import { authActions } from "../store/auth";
 import Alert from "../components/Alert/Alert";
 import { useAlert } from "../components/Alert/useAlert";
-import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
+import { FcGoogle } from 'react-icons/fc';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -22,7 +23,7 @@ const Login = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  
+
   // Google Auth states
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [googleToken, setGoogleToken] = useState("");
@@ -118,47 +119,50 @@ const Login = () => {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      setLoading(true);
-      info("Authenticating with Google...", "Please Wait");
-      
-      const response = await axios.post(`${API_URL}/google-auth`, {
-        token: credentialResponse.credential,
-      });
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        info("Authenticating with Google...", "Please Wait");
 
-      if (response.data.isNewUser) {
-        // Need phone number
-        setGoogleToken(credentialResponse.credential);
-        setShowPhoneModal(true);
-        hideAlert();
-      } else {
-        // Normal login success
-        const { token, role, id } = response.data;
-        localStorage.setItem("token", token);
-        localStorage.setItem("role", role);
-        localStorage.setItem("id", id);
-        dispatch(authActions.login());
-        dispatch(authActions.changeRole(role));
-
-        const loginEvent = new CustomEvent('userLoggedIn', {
-          detail: { email: response.data.email, userId: id, role: role }
+        const response = await axios.post(`${API_URL}/google-auth`, {
+          token: tokenResponse.access_token,
         });
-        window.dispatchEvent(loginEvent);
 
-        success(`Welcome back! Redirecting...`, "Login Successful");
-        setTimeout(() => {
-          if (role === "admin") navigate("/Admin/profile", { replace: true });
-          else navigate("/", { replace: true });
-        }, 1500);
+        if (response.data.isNewUser) {
+          // Need phone number
+          setGoogleToken(tokenResponse.access_token);
+          setShowPhoneModal(true);
+          hideAlert();
+        } else {
+          // Normal login success
+          const { token, role, id } = response.data;
+          localStorage.setItem("token", token);
+          localStorage.setItem("role", role);
+          localStorage.setItem("id", id);
+          dispatch(authActions.login());
+          dispatch(authActions.changeRole(role));
+
+          const loginEvent = new CustomEvent('userLoggedIn', {
+            detail: { email: response.data.email, userId: id, role: role }
+          });
+          window.dispatchEvent(loginEvent);
+
+          success(`Welcome back! Redirecting...`, "Login Successful");
+          setTimeout(() => {
+            if (role === "admin") navigate("/Admin/profile", { replace: true });
+            else navigate("/", { replace: true });
+          }, 1500);
+        }
+      } catch (err) {
+        console.error("Google Auth Error:", err);
+        error("Google Sign-In failed.", "Error");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Google Auth Error:", err);
-      error("Google Sign-In failed.", "Error");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    onError: () => error("Google Sign-In failed", "Error")
+  });
 
   const handleGoogleSignupSubmit = async (e) => {
     e.preventDefault();
@@ -211,10 +215,10 @@ const Login = () => {
       console.log("✅ Session found, user already logged in");
       dispatch(authActions.login());
       dispatch(authActions.changeRole(role));
-      
+
       // Redirect if already logged in
       info("You're already logged in. Redirecting...", "Session Active");
-      
+
       setTimeout(() => {
         if (role === "admin") {
           navigate("/Admin/profile", { replace: true });
@@ -270,8 +274,8 @@ const Login = () => {
 
             {/* Forgot Password Link */}
             <div className="text-right">
-              <Link 
-                to="/forgot-password" 
+              <Link
+                to="/forgot-password"
                 className="text-yellow-400 hover:underline text-xs sm:text-sm transition-all duration-300 hover:text-yellow-300"
               >
                 Forgot Password?
@@ -295,21 +299,20 @@ const Login = () => {
                 "Login"
               )}
             </button>
-            
+
             <div className="flex items-center my-4 before:flex-1 before:border-t before:border-zinc-700 before:mt-0.5 after:flex-1 after:border-t after:border-zinc-700 after:mt-0.5">
               <p className="text-center text-sm text-zinc-400 mx-4 mb-0">OR</p>
             </div>
 
-            <div className="flex justify-center w-full">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => error("Google Sign-In failed", "Error")}
-                theme="filled_black"
-                shape="rectangular"
-                width="100%"
-                text="continue_with"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => loginWithGoogle()}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 bg-zinc-800 border border-zinc-700 hover:border-yellow-400/50 hover:bg-zinc-700/50 text-white font-medium py-2.5 sm:py-3 rounded-md transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_20px_rgba(250,204,21,0.15)] group"
+            >
+              <FcGoogle className="text-xl sm:text-2xl transition-transform group-hover:scale-110" />
+              <span className="text-sm sm:text-base">Continue with Google</span>
+            </button>
           </form>
 
           <p className="mt-5 sm:mt-6 text-center text-sm sm:text-base text-zinc-400">

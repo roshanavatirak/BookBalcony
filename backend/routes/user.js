@@ -84,9 +84,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {authenticateToken} = require("./userAuth");
-const { OAuth2Client } = require("google-auth-library");
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const axios = require("axios"); // Used for Google Access Token verification
 
 // ==========================================
 // Sign-Up Route (Updated)
@@ -278,12 +276,12 @@ router.post("/google-auth", async (req, res) => {
       return res.status(400).json({ success: false, message: "Token is required" });
     }
 
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    // Verify access token by fetching user profile from Google
+    const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
     });
-    const payload = ticket.getPayload();
-    const { email, name, picture, sub } = payload;
+    
+    const { email, name, picture, sub } = googleRes.data;
 
     // Check if user exists
     let existingUser = await User.findOne({ email });
@@ -358,12 +356,12 @@ router.post("/google-signup", async (req, res) => {
       return res.status(400).json({ success: false, message: "Phone number already exists" });
     }
 
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    // Verify access token by fetching user profile from Google
+    const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
     });
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
+    
+    const { email, name, picture } = googleRes.data;
 
     // Double check email isn't in use (race condition)
     if (await User.findOne({ email })) {
