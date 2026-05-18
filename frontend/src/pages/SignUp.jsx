@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { authActions } from "../store/auth";
+import { GoogleLogin } from '@react-oauth/google';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -19,6 +22,12 @@ const SignUp = () => {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Google Auth states
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [googleToken, setGoogleToken] = useState("");
+  const [googlePhone, setGooglePhone] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -91,6 +100,94 @@ const SignUp = () => {
       console.error("❌ Signup error:", err);
       const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
       setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      setError("");
+      setSuccess("Authenticating with Google...");
+      
+      const response = await axios.post(`${API_URL}/google-auth`, {
+        token: credentialResponse.credential,
+      });
+
+      if (response.data.isNewUser) {
+        // Need phone number
+        setGoogleToken(credentialResponse.credential);
+        setSuccess("");
+        setShowPhoneModal(true);
+      } else {
+        // Normal login success
+        const { token, role, id } = response.data;
+        localStorage.setItem("token", token);
+        localStorage.setItem("role", role);
+        localStorage.setItem("id", id);
+        dispatch(authActions.login());
+        dispatch(authActions.changeRole(role));
+
+        const loginEvent = new CustomEvent('userLoggedIn', {
+          detail: { email: response.data.email, userId: id, role: role }
+        });
+        window.dispatchEvent(loginEvent);
+
+        setSuccess(`Welcome back! Redirecting...`);
+        setTimeout(() => {
+          if (role === "admin") navigate("/Admin/profile", { replace: true });
+          else navigate("/", { replace: true });
+        }, 1500);
+      }
+    } catch (err) {
+      console.error("Google Auth Error:", err);
+      setError("Google Sign-In failed.");
+      setSuccess("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignupSubmit = async (e) => {
+    e.preventDefault();
+    if (!googlePhone) {
+      return setError("Please enter your phone number");
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      setSuccess("Creating account...");
+
+      const response = await axios.post(`${API_URL}/google-signup`, {
+        token: googleToken,
+        phone: googlePhone,
+      });
+
+      const { token, role, id, email } = response.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+      localStorage.setItem("id", id);
+      dispatch(authActions.login());
+      dispatch(authActions.changeRole(role));
+
+      // Dispatch signup event
+      const signupEvent = new CustomEvent('userSignedUp', {
+        detail: { email: email }
+      });
+      window.dispatchEvent(signupEvent);
+
+      setSuccess(`Account created successfully!`);
+      setShowPhoneModal(false);
+
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 1500);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Sign up failed.";
+      setError(errorMessage);
+      setSuccess("");
     } finally {
       setLoading(false);
     }
@@ -188,6 +285,21 @@ const SignUp = () => {
               "Sign Up"
             )}
           </button>
+          
+          <div className="flex items-center my-4 before:flex-1 before:border-t before:border-zinc-700 before:mt-0.5 after:flex-1 after:border-t after:border-zinc-700 after:mt-0.5">
+            <p className="text-center text-sm text-zinc-400 mx-4 mb-0">OR</p>
+          </div>
+
+          <div className="flex justify-center w-full">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Google Sign-In failed")}
+              theme="filled_black"
+              shape="rectangular"
+              width="100%"
+              text="signup_with"
+            />
+          </div>
         </form>
 
         <p className="text-xs sm:text-sm text-zinc-400 text-center mt-5 sm:mt-6">
@@ -197,6 +309,45 @@ const SignUp = () => {
           </Link>
         </p>
       </div>
+      
+      {/* Phone Number Modal for Google Sign-Up */}
+      {showPhoneModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-sm w-full">
+            <h3 className="text-xl font-bold text-yellow-400 mb-2">Almost there!</h3>
+            <p className="text-zinc-400 text-sm mb-6">
+              Please provide your mobile number to complete your registration.
+            </p>
+            <form onSubmit={handleGoogleSignupSubmit} className="space-y-4">
+              <input
+                type="tel"
+                placeholder="Mobile Number (10 digits)"
+                value={googlePhone}
+                onChange={(e) => setGooglePhone(e.target.value)}
+                disabled={loading}
+                className="w-full p-3 rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPhoneModal(false)}
+                  disabled={loading}
+                  className="flex-1 py-2.5 rounded-md text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-2.5 rounded-md bg-yellow-400 text-black font-semibold hover:bg-yellow-300 transition-colors disabled:opacity-50"
+                >
+                  {loading ? "Saving..." : "Complete"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

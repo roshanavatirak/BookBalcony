@@ -84,6 +84,9 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {authenticateToken} = require("./userAuth");
+const { OAuth2Client } = require("google-auth-library");
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ==========================================
 // Sign-Up Route (Updated)
@@ -261,6 +264,175 @@ router.post("/sign-in", async (req, res) => {
       success: false,
       message: "Internal server error" 
     });
+  }
+});
+
+// ==========================================
+// Google Auth Route (Login or Check User)
+// ==========================================
+router.post("/google-auth", async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub } = payload;
+
+    // Check if user exists
+    let existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      // User exists, log them in
+      const isPremiumActive = existingUser.isPremiumActive ? existingUser.isPremiumActive() : false;
+
+      const jwtToken = jwt.sign(
+        {
+          id: existingUser._id,
+          role: existingUser.role,
+          name: existingUser.username,
+          isPremium: isPremiumActive,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+
+      return res.status(200).json({
+        success: true,
+        isNewUser: false,
+        id: existingUser._id,
+        role: existingUser.role,
+        isSeller: existingUser.isSeller,
+        token: jwtToken,
+        isPremium: isPremiumActive,
+        premiumType: existingUser.premium?.membershipType || "free",
+        premiumExpiry: existingUser.premium?.expiryDate || null,
+        premiumFeatures: existingUser.premium?.features || {},
+        message: "Sign in successful"
+      });
+    } else {
+      // User does not exist, inform frontend to ask for phone number
+      return res.status(200).json({
+        success: true,
+        isNewUser: true,
+        googleData: {
+          email,
+          name,
+          picture,
+          sub
+        },
+        message: "Please provide a phone number to complete sign up."
+      });
+    }
+  } catch (error) {
+    console.error("Error in Google Auth:", error);
+    res.status(500).json({ success: false, message: "Google authentication failed" });
+  }
+});
+
+// ==========================================
+// Google Sign-Up Route (With Phone)
+// ==========================================
+router.post("/google-signup", async (req, res) => {
+  try {
+    const { token, phone } = req.body;
+
+    if (!token || !phone) {
+      return res.status(400).json({ success: false, message: "Token and phone number are required" });
+    }
+
+    // Validate phone
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({ success: false, message: "Invalid phone number format. Must be 10 digits" });
+    }
+
+    // Check if phone already in use
+    if (await User.findOne({ phone })) {
+      return res.status(400).json({ success: false, message: "Phone number already exists" });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Double check email isn't in use (race condition)
+    if (await User.findOne({ email })) {
+      return res.status(400).json({ success: false, message: "Email already exists" });
+    }
+
+    // Check if username exists, if so append random digits
+    let username = name.replace(/\s+/g, '').toLowerCase();
+    if (await User.findOne({ username })) {
+      username = username + Math.floor(Math.random() * 10000);
+    }
+
+    // Create strong random password
+    const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+    const salt = await bcrypt.genSalt(12);
+    const hashPass = await bcrypt.hash(randomPassword, salt);
+
+    // Create New User
+    const newUser = new User({
+      username,
+      email,
+      password: hashPass,
+      phone,
+      avatar: picture,
+      premium: {
+        isPremium: false,
+        membershipType: "free",
+        features: {
+          canSeeSellers: false,
+          prioritySupport: false,
+          earlyAccess: false,
+          exclusiveDeals: false,
+          adFree: false,
+        },
+      },
+    });
+
+    await newUser.save();
+
+    // Log them in
+    const isPremiumActive = false; // Default for new user
+
+    const jwtToken = jwt.sign(
+      {
+        id: newUser._id,
+        role: newUser.role,
+        name: newUser.username,
+        isPremium: isPremiumActive,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    return res.status(201).json({
+      success: true,
+      id: newUser._id,
+      role: newUser.role,
+      isSeller: newUser.isSeller,
+      token: jwtToken,
+      isPremium: isPremiumActive,
+      premiumType: newUser.premium?.membershipType || "free",
+      premiumExpiry: newUser.premium?.expiryDate || null,
+      premiumFeatures: newUser.premium?.features || {},
+      message: "Signup successful! Welcome to Book Balcony."
+    });
+
+  } catch (error) {
+    console.error("Error in Google Signup:", error);
+    res.status(500).json({ success: false, message: "Google signup failed" });
   }
 });
 // // Sign-Up
