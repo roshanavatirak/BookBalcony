@@ -290,6 +290,12 @@ router.post("/google-auth", async (req, res) => {
       // User exists, log them in
       const isPremiumActive = existingUser.isPremiumActive ? existingUser.isPremiumActive() : false;
 
+      // Update avatar if it's the default one
+      if (picture && (!existingUser.avatar || existingUser.avatar.includes("freepik.com"))) {
+        existingUser.avatar = picture;
+        await existingUser.save();
+      }
+
       const jwtToken = jwt.sign(
         {
           id: existingUser._id,

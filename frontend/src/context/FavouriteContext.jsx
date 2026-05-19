@@ -13,23 +13,12 @@ export const useFavourites = () => useContext(FavouriteContext);
 export const FavouriteProvider = ({ children }) => {
   const [favouriteIds, setFavouriteIds] = useState([]);
 
-  const getHeaders = (bookId = null) => {
-    const token = localStorage.getItem("token");
-    const id = localStorage.getItem("id");
-    if (!token || !id) return null;
-    
-    const headers = {
-      id,
-      authorization: `Bearer ${token}`,
-    };
-    if (bookId) headers.bookid = bookId;
-    return headers;
+  const headers = {
+    id: localStorage.getItem("id"),
+    authorization: `Bearer ${localStorage.getItem("token")}`,
   };
 
   const fetchFavourites = async () => {
-    const headers = getHeaders();
-    if (!headers) return; // Stop if not logged in
-    
     try {
       const response = await axios.get(`${API_URL}/get-favourite-books`, {
         headers,
@@ -42,14 +31,13 @@ export const FavouriteProvider = ({ children }) => {
   };
 
   const addToFavourites = async (bookId) => {
-    const headers = getHeaders(bookId);
-    if (!headers) return alert("Please log in first");
-    
     try {
       await axios.put(
         `${API_URL}/add-book-to-favourite`,
         {},
-        { headers }
+        {
+          headers: { ...headers, bookid: bookId },
+        }
       );
       setFavouriteIds(prev => [...prev, bookId]);
     } catch (err) {
@@ -59,14 +47,13 @@ export const FavouriteProvider = ({ children }) => {
   };
 
   const removeFromFavourites = async (bookId) => {
-    const headers = getHeaders(bookId);
-    if (!headers) return alert("Please log in first");
-    
     try {
       await axios.put(
         `${API_URL}/remove-book-from-favourite`,
         {},
-        { headers }
+        {
+          headers: { ...headers, bookid: bookId },
+        }
       );
       setFavouriteIds(prev => prev.filter(id => id !== bookId));
     } catch (err) {

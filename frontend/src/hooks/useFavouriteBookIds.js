@@ -10,13 +10,9 @@ export default function useFavouriteBookIds() {
   useEffect(() => {
     const fetchFavourites = async () => {
       try {
-        const id = localStorage.getItem("id");
-        const token = localStorage.getItem("token");
-        if (!id || !token) return;
-
         const headers = {
-          id,
-          authorization: `Bearer ${token}`,
+          id: localStorage.getItem("id"),
+          authorization: `Bearer ${localStorage.getItem("token")}`,
         };
         const response = await axios.get(`${API_URL}/get-favourite-books`, { headers });
         const favs = response.data.data || [];
