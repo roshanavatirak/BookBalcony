@@ -212,6 +212,7 @@ import SellerOrdersDashboard from './components/SellerOrder/SellerOrdersDashboar
 import EditBook from './components/Seller/EditBook';
 import SellerProduct from './components/Admin/Seller/SellerProduct';
 import ChatbotManager from './components/ChatbotManager/ChatbotManager';
+import Loader from './components/Loader/Loader';
 
 
 // ✅ RBAC: Seller Route Guard — blocks Buyer-only users from seller pages
@@ -242,14 +243,7 @@ const SellerRouteGuard = ({ children }) => {
   }, []);
 
   if (checking) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-900 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-400 text-sm">Verifying access...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullPage text="Verifying access..." />;
   }
 
   if (!allowed) {

@@ -23,6 +23,7 @@ const Login = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Google Auth states
   const [showPhoneModal, setShowPhoneModal] = useState(false);
@@ -53,6 +54,7 @@ const Login = () => {
       const response = await axios.post(`${API_URL}/sign-in`, {
         emailOrMobile,
         password,
+        rememberMe,
       });
 
       console.log("📥 Login response:", response.data);
@@ -127,6 +129,7 @@ const Login = () => {
 
         const response = await axios.post(`${API_URL}/google-auth`, {
           token: tokenResponse.access_token,
+          rememberMe,
         });
 
         if (response.data.isNewUser) {
@@ -177,6 +180,7 @@ const Login = () => {
       const response = await axios.post(`${API_URL}/google-signup`, {
         token: googleToken,
         phone: phone,
+        rememberMe,
       });
 
       const { token, role, id } = response.data;
@@ -272,8 +276,18 @@ const Login = () => {
               className="w-full p-2.5 sm:p-3 text-sm sm:text-base rounded-md bg-transparent border border-zinc-700 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50 transition-all duration-300"
             />
 
-            {/* Forgot Password Link */}
-            <div className="text-right">
+            {/* Remember Me and Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-400 hover:text-zinc-300 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 accent-yellow-400 focus:ring-yellow-400 focus:ring-offset-zinc-900 cursor-pointer transition-colors"
+                />
+                Remember me
+              </label>
+
               <Link
                 to="/forgot-password"
                 className="text-yellow-400 hover:underline text-xs sm:text-sm transition-all duration-300 hover:text-yellow-300"

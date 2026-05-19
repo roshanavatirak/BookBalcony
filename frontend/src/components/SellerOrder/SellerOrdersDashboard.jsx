@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Package, TrendingUp, Clock, CheckCircle, XCircle, Bell, AlertCircle, RefreshCw, Trash2, Eye, MapPin, User, Phone, Mail, Calendar, DollarSign, CreditCard, Truck, Box, Activity, ChevronDown, Filter, Search, Plus, Send } from "lucide-react";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import Loader from "../Loader/Loader";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -200,14 +201,7 @@ export default function SellerOrdersDashboard() {
   });
 
   if (loading && !stats) {
-    return (
-      <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-300 text-lg">Loading orders...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullPage text="Loading orders..." />;
   }
 
   return (
@@ -337,8 +331,8 @@ export default function SellerOrdersDashboard() {
         {/* Orders Grid */}
         {loading ? (
           <div className="bg-zinc-800/40 rounded-lg border border-zinc-700 p-12 text-center">
-            <div className="w-12 h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading orders...</p>
+            <Loader size="md" />
+            <p className="text-gray-400 mt-4">Loading orders...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="bg-zinc-800/40 rounded-lg border border-zinc-700 p-12 text-center">

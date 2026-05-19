@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Loader from "../Loader/Loader";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -151,8 +152,8 @@ export default function Step1_Address({ onNext }) {
     return (
       <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-10 max-w-3xl mx-auto mt-6 sm:mt-10">
         <div className="flex flex-col items-center justify-center py-8 sm:py-12">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-zinc-600 text-sm sm:text-base">Loading addresses...</p>
+          <Loader size="md" />
+          <p className="text-zinc-600 text-sm sm:text-base mt-4">Loading addresses...</p>
         </div>
       </div>
     );

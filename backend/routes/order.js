@@ -4,6 +4,7 @@ const Order = require("../models/order");
 const User = require("../models/user");
 const Book = require("../models/book");
 const mongoose = require("mongoose");
+const { sendOrderStatusEmail } = require("../services/emailService");
 // // 📌 Place an order
 // router.post("/place-order", authenticateToken, async (req, res) => {
 //   try {
@@ -305,13 +306,21 @@ router.put("/update-status/:id", authenticateToken, async (req, res) => {
       id,
       { orderStatus },
       { new: true }
-    );
+    ).populate('user').populate('book');
 
     if (!updatedOrder) {
       return res.status(404).json({
         status: "Error",
         message: "Order not found.",
       });
+    }
+
+    // Send email notification for important statuses
+    if (orderStatus === 'Out for Delivery' || orderStatus === 'Delivered') {
+      // Async so it doesn't block the response
+      sendOrderStatusEmail(updatedOrder, orderStatus).catch(err => 
+        console.error("Failed to send status email in admin route:", err)
+      );
     }
 
     return res.status(200).json({

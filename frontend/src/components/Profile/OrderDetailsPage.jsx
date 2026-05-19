@@ -31,18 +31,12 @@ import {
 import Alert from '../Alert/Alert';
 import { useAlert } from '../Alert/useAlert';
 import { generateInvoicePDF, isInvoiceAvailable } from '../../utils/Invoicegenerator';
+import Loader from '../Loader/Loader';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
-const Loader = () => (
-  <div className="flex items-center justify-center p-8">
-    <div className="relative">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400"></div>
-      <Package className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-yellow-400" size={24} />
-    </div>
-  </div>
-);
+
 
 const ErrorDisplay = ({ error, onRetry }) => (
   <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 rounded-3xl p-8 text-white flex items-center justify-center">
@@ -448,14 +442,7 @@ const OrderDetailsPage = () => {
   );
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 rounded-3xl flex items-center justify-center">
-        <div className="text-center">
-          <Loader />
-          <p className="text-zinc-400 mt-4 animate-pulse">Loading order details...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullPage text="Loading order details..." />;
   }
 
   if (error) {

@@ -194,7 +194,7 @@ router.post("/sign-up", async (req, res) => {
 // ==========================================
 router.post("/sign-in", async (req, res) => {
   try {
-    const { emailOrMobile, password } = req.body;
+    const { emailOrMobile, password, rememberMe } = req.body;
 
     // Validate input
     if (!emailOrMobile || !password) {
@@ -239,7 +239,7 @@ router.post("/sign-in", async (req, res) => {
         isPremium: isPremiumActive, // ✅ Include premium status in token
       },
       process.env.JWT_SECRET,
-      { expiresIn: "30d" }
+      { expiresIn: rememberMe ? "30d" : "7d" }
     );
 
     // ✅ Return response with premium information
@@ -270,7 +270,7 @@ router.post("/sign-in", async (req, res) => {
 // ==========================================
 router.post("/google-auth", async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, rememberMe } = req.body;
     
     if (!token) {
       return res.status(400).json({ success: false, message: "Token is required" });
@@ -304,7 +304,7 @@ router.post("/google-auth", async (req, res) => {
           isPremium: isPremiumActive,
         },
         process.env.JWT_SECRET,
-        { expiresIn: "30d" }
+        { expiresIn: rememberMe ? "30d" : "7d" }
       );
 
       return res.status(200).json({
@@ -345,7 +345,7 @@ router.post("/google-auth", async (req, res) => {
 // ==========================================
 router.post("/google-signup", async (req, res) => {
   try {
-    const { token, phone } = req.body;
+    const { token, phone, rememberMe } = req.body;
 
     if (!token || !phone) {
       return res.status(400).json({ success: false, message: "Token and phone number are required" });
@@ -418,7 +418,7 @@ router.post("/google-signup", async (req, res) => {
         isPremium: isPremiumActive,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "30d" }
+      { expiresIn: rememberMe ? "30d" : "7d" }
     );
 
     return res.status(201).json({

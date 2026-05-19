@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import SellerSidebar from '../components/SellerProfile/SellerSidebar';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import Loader from '../components/Loader/Loader';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -68,14 +69,7 @@ const SellerProfile = () => {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="bg-zinc-900 px-2 md:px-12 py-8 min-h-screen flex items-center justify-center text-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-          <p className="text-lg">Loading seller profile...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullPage text="Loading seller profile..." />;
   }
 
   // Error state

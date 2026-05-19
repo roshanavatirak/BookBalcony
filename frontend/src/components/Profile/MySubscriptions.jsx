@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import Alert from '../Alert/Alert';
 import { useAlert } from '../Alert/useAlert';
+import Loader from '../Loader/Loader';
 import {
   FaEnvelope,
   FaBell,
@@ -252,8 +253,8 @@ const MySubscriptions = () => {
           />
         )}
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading your subscriptions...</p>
+          <Loader size="md" />
+          <p className="text-white text-lg mt-4">Loading your subscriptions...</p>
         </div>
       </div>
     );

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import Loader from "../Loader/Loader";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -314,8 +315,8 @@ const SellerAddBook = () => {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="bg-zinc-900/90 backdrop-blur-xl p-6 rounded-2xl border border-yellow-500/50 shadow-2xl max-w-md w-full mx-4">
             <div className="text-center">
-              <Loader2 className="w-12 h-12 text-yellow-400 animate-spin mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Uploading Product</h3>
+              <Loader size="md" />
+              <h3 className="text-xl font-bold text-white mb-2 mt-4">Uploading Product</h3>
               <p className="text-zinc-400 mb-4 text-sm">Please wait...</p>
               
               <div className="relative w-full h-2 bg-zinc-700 rounded-full overflow-hidden mb-3">

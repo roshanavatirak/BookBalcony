@@ -1934,6 +1934,7 @@ const {authenticateToken} = require("./userAuth");
 const Book = require("../models/book"); 
 const User = require("../models/user");
 const Order = require("../models/order");
+const { sendOrderStatusEmail } = require("../services/emailService");
 
 // ==========================================
 // TEST ROUTE
@@ -2419,6 +2420,14 @@ router.put("/orders/:orderId/status", authenticateToken, async (req, res) => {
     const updatedOrder = await Order.findById(orderId)
       .populate('user', 'username email avatar')
       .populate('book', 'title url price language');
+
+    // Send email notification for important statuses
+    if (status === 'Out for Delivery' || status === 'Delivered') {
+      // Async so it doesn't block the response
+      sendOrderStatusEmail(updatedOrder, status).catch(err => 
+        console.error("Failed to send status email in seller route:", err)
+      );
+    }
 
     res.status(200).json({
       success: true,

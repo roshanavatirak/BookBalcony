@@ -5,6 +5,8 @@ import { Eye, EyeOff, Copy, CheckCircle, AlertTriangle, User, CreditCard, Buildi
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
+import Loader from "../Loader/Loader";
+
 const SellerBankInfo = ({ user, onEdit, initialSeller = null, headers: propHeaders = {} }) => {
   const [showAccountNumber, setShowAccountNumber] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
@@ -231,8 +233,8 @@ const SellerBankInfo = ({ user, onEdit, initialSeller = null, headers: propHeade
     return (
       <div className="bg-zinc-900 shadow-xl rounded-2xl p-6 text-white">
         <div className="flex flex-col items-center justify-center py-12">
-          <RefreshCw className="w-12 h-12 text-yellow-400 animate-spin mb-4" />
-          <p className="text-zinc-300">Loading bank information...</p>
+          <Loader size="md" />
+          <p className="text-zinc-300 mt-4">Loading bank information...</p>
         </div>
       </div>
     );

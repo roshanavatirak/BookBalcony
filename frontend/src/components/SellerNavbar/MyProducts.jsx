@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import Loader from "../Loader/Loader";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -249,14 +250,7 @@ const MyProducts = () => {
   const availableProducts = books.filter(b => b.productStatus === "Available" && b.stock > 0).length;
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-300 text-lg">Loading products...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullPage text="Loading products..." />;
   }
 
   return (

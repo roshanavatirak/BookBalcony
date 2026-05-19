@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Alert from '../../Alert/Alert';
 import { useAlert } from '../../Alert/useAlert';
+import Loader from '../../Loader/Loader';
 
 const SellerProduct = () => {
   const [books, setBooks] = useState([]);
@@ -316,18 +317,7 @@ const BASE_URL = import.meta.env.VITE_API_URL
   const totalStock = books.reduce((sum, book) => sum + (book.stock || 0), 0);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-zinc-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative w-24 h-24 mx-auto mb-6">
-            <div className="absolute inset-0 border-4 border-purple-400/30 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
-            <div className="absolute inset-3 border-4 border-purple-500/50 border-b-transparent rounded-full animate-spin-slow"></div>
-          </div>
-          <p className="text-gray-300 text-lg font-medium animate-pulse">Loading books...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullPage text="Loading books..." />;
   }
 
   return (

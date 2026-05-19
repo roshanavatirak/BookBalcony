@@ -1019,10 +1019,205 @@ const sendSellerDeletionEmail = async (sellerData, reason) => {
   }
 };
 
+/**
+ * Send order status update email to user (Out for Delivery / Delivered)
+ */
+const sendOrderStatusEmail = async (orderData, status) => {
+  const currentYear = new Date().getFullYear();
+  
+  // orderData should have populated user and book
+  if (!orderData || !orderData.user || !orderData.user.email) {
+    console.error("❌ Failed to send order status email: Missing user email");
+    return false;
+  }
+  
+  const email = orderData.user.email;
+  const username = orderData.user.username || "Book Lover";
+  const bookTitle = orderData.book?.title || "Your Book";
+  const amount = orderData.amountPayable || 0;
+  const orderId = orderData._id.toString();
+  const shortOrderId = orderId.substring(orderId.length - 8).toUpperCase();
+  
+  let subject = "";
+  let icon = "";
+  let title = "";
+  let message = "";
+  let colorFrom = "";
+  let colorTo = "";
+  let colorBorder = "";
+  let colorText = "";
+  let colorBg = "";
+  
+  if (status === "Out for Delivery") {
+    subject = `🚚 Your order is out for delivery! (#${shortOrderId})`;
+    icon = "🚚";
+    title = "Out for Delivery";
+    message = `Great news! Your order for <strong>${bookTitle}</strong> is out for delivery and should arrive today.`;
+    colorFrom = "#3b82f6"; // blue-500
+    colorTo = "#2563eb"; // blue-600
+    colorBorder = "#3b82f6";
+    colorText = "#1e40af"; // blue-800
+    colorBg = "#eff6ff"; // blue-50
+  } else if (status === "Delivered") {
+    subject = `📦 Your order has been delivered! (#${shortOrderId})`;
+    icon = "📦";
+    title = "Order Delivered";
+    message = `Your order for <strong>${bookTitle}</strong> has been successfully delivered. We hope you enjoy reading it!`;
+    colorFrom = "#10b981"; // green-500
+    colorTo = "#059669"; // green-600
+    colorBorder = "#10b981";
+    colorText = "#065f46"; // green-800
+    colorBg = "#d1fae5"; // green-100
+  } else {
+    // We only care about these two statuses for this email
+    return false;
+  }
+
+  const mailOptions = {
+    from: `"BookBalcony Team" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: subject,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f3f4f6;">
+          <tr>
+            <td style="padding: 40px 20px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, ${colorFrom} 0%, ${colorTo} 100%); padding: 48px 40px; text-align: center; border-radius: 16px 16px 0 0;">
+                    <div style="font-size: 64px; margin-bottom: 16px;">${icon}</div>
+                    <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">${title}</h1>
+                  </td>
+                </tr>
+
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 48px 40px;">
+                    
+                    <!-- Greeting -->
+                    <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #111827;">Dear ${username},</h2>
+                    
+                    <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                      ${message}
+                    </p>
+
+                    <!-- Order Details Box -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${colorBg}; border: 2px solid ${colorBorder}; border-radius: 12px; margin-bottom: 32px;">
+                      <tr>
+                        <td style="padding: 24px;">
+                          <p style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: ${colorText}; border-bottom: 1px solid ${colorBorder}; padding-bottom: 12px;">Order Summary</p>
+                          
+                          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                              <td style="padding-bottom: 12px; width: 40%;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${colorText};">Order ID:</p>
+                              </td>
+                              <td style="padding-bottom: 12px; width: 60%;">
+                                <p style="margin: 0; font-size: 14px; color: ${colorText};">#${shortOrderId}</p>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding-bottom: 12px;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${colorText};">Book Title:</p>
+                              </td>
+                              <td style="padding-bottom: 12px;">
+                                <p style="margin: 0; font-size: 14px; color: ${colorText};">${bookTitle}</p>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding-bottom: 12px;">
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${colorText};">Amount:</p>
+                              </td>
+                              <td style="padding-bottom: 12px;">
+                                <p style="margin: 0; font-size: 14px; color: ${colorText}; font-weight: 600;">₹${amount}</p>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <p style="margin: 0; font-size: 14px; font-weight: 600; color: ${colorText};">Payment:</p>
+                              </td>
+                              <td>
+                                <p style="margin: 0; font-size: 14px; color: ${colorText};">${orderData.paymentMethod} - ${orderData.paymentStatus}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- CTA Button -->
+                    <div style="text-align: center; margin: 40px 0;">
+                      <a href="http://localhost:5173/profile/orderHistory" style="display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #1a1a1a; text-decoration: none; border-radius: 12px; font-size: 16px; font-weight: 700; box-shadow: 0 4px 6px rgba(251, 191, 36, 0.3);">
+                        View Order Details
+                      </a>
+                    </div>
+
+                    <!-- Divider -->
+                    <div style="margin: 32px 0; border-top: 1px solid #e5e7eb;"></div>
+
+                    <!-- Thank You -->
+                    <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #4b5563;">
+                      Thank you for shopping with BookBalcony! We appreciate your business.
+                    </p>
+                    
+                    <p style="margin: 24px 0 0 0; font-size: 16px; color: #111827;">
+                      <strong>Happy Reading! 📚</strong><br>
+                      <span style="color: #6b7280;">The BookBalcony Team</span>
+                    </p>
+
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #111827; padding: 40px; text-align: center; border-radius: 0 0 16px 16px;">
+                    <p style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #fbbf24;">BookBalcony</p>
+                    <p style="margin: 0 0 24px 0; font-size: 13px; color: #9ca3af;">Discover, Read, and Explore</p>
+                    <div style="margin-bottom: 24px;">
+                      <a href="#" style="color: #9ca3af; text-decoration: none; font-size: 12px; padding: 0 12px; border-right: 1px solid #4b5563;">Your Orders</a>
+                      <a href="#" style="color: #9ca3af; text-decoration: none; font-size: 12px; padding: 0 12px; border-right: 1px solid #4b5563;">Help Center</a>
+                      <a href="#" style="color: #9ca3af; text-decoration: none; font-size: 12px; padding: 0 12px;">Contact Support</a>
+                    </div>
+                    <p style="margin: 0; font-size: 11px; color: #4b5563;">
+                      © ${currentYear} BookBalcony. All Rights Reserved.<br>
+                      Developed with ❤️ by <span style="color: #fbbf24; font-weight: 600;">RAO DevStudios</span>
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Order status email (${status}) sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to send order status email:`, error.message);
+    // Don't throw, just log so it doesn't break the main flow
+    return false;
+  }
+};
+
 module.exports = { 
   sendEmailOTP,
   sendSellerApprovalEmail,
   sendSellerRejectionEmail,
   sendSellerBanEmail,
-  sendSellerDeletionEmail
+  sendSellerDeletionEmail,
+  sendOrderStatusEmail
 };

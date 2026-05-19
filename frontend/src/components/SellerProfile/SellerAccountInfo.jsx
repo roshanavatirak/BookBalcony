@@ -4,11 +4,7 @@ import axios from 'axios';
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
-const Loader = () => (
-  <div className="flex justify-center items-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400"></div>
-  </div>
-);
+import Loader from '../Loader/Loader';
 
 const SellerAccountInfo = () => {
   const [seller, setSeller] = useState(null);
@@ -130,14 +126,7 @@ const SellerAccountInfo = () => {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900">
-        <div className="text-center">
-          <Loader />
-          <p className="text-white mt-4">Loading seller information...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullPage text="Loading seller information..." />;
   }
 
   // Error state

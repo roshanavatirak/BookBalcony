@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
+import Loader from "../Loader/Loader";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -43,8 +44,8 @@ export default function Step2_Summary({ address, onBack, onNext, book, isMultipl
     return (
       <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-10 max-w-3xl mx-auto mt-4 sm:mt-10">
         <div className="flex flex-col items-center justify-center py-8 sm:py-12">
-          <div className="w-9 h-9 sm:w-12 sm:h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-3"></div>
-          <p className="text-zinc-500 text-xs sm:text-base">Loading order details...</p>
+          <Loader size="md" />
+          <p className="text-zinc-500 text-xs sm:text-base mt-4">Loading order details...</p>
         </div>
       </div>
     );

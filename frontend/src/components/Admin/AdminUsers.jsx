@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaUserCircle, FaTimes, FaShoppingCart, FaHeart, FaBox, FaMapMarkerAlt, FaCrown, FaCalendar, FaEnvelope, FaPhone, FaStore } from "react-icons/fa";
+import Loader from "../Loader/Loader";
 import Alert from "../Alert/Alert"; // Import Alert component
 import { useAlert } from "../Alert/useAlert"; // Import useAlert hook
 import "../Alert/Alert.css"; // Import Alert styles
@@ -299,7 +300,7 @@ const AdminUsers = () => {
 
         {/* User List */}
         {loading ? (
-          <p className="text-yellow-300 text-center py-8">Loading users...</p>
+          <div className="flex justify-center py-12"><Loader size="md" /></div>
         ) : filteredUsers.length === 0 ? (
           <p className="text-zinc-400 text-center py-8">No users found.</p>
         ) : (
@@ -399,8 +400,8 @@ const AdminUsers = () => {
             {/* Modal Body */}
             <div className="p-6">
               {loadingDetails ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto"></div>
+                <div className="text-center py-12 flex flex-col items-center">
+                  <Loader size="md" />
                   <p className="text-zinc-400 mt-4">Loading details...</p>
                 </div>
               ) : userDetails ? (
