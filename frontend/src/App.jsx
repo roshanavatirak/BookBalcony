@@ -56,7 +56,7 @@
 //       localStorage.getItem("id")&&
 //       localStorage.getItem("token")&&
 //       localStorage.getItem("role")
-    
+
 //     ){
 //       dispatch(authActions.login());
 //       dispatch(authActions.changeRole(localStorage.getItem("role")));
@@ -64,7 +64,7 @@
 //   },[]);
 //   return (
 //     <div>
-     
+
 //         <ScrollToTop/>
 //         {role === "admin" ? <Admin /> : <Navbar />}
 
@@ -73,7 +73,7 @@
 //           <Route  path="/all-books" element={<AllBooks/>}/>
 //           <Route  path="/cart" element={<Cart/>}/>
 //           <Route  path="/about-us" element={<AboutUs/>}/>
-          
+
 //           {/* Profile Routes - Fixed nested routing */}
 //           <Route  path="/profile" element={<Profile/>}>
 //             <Route index element={<Favourites/>}/>
@@ -91,7 +91,7 @@
 
 //           <Route path="/seller/myproducts" element={<MyProducts/>}/>
 //           <Route path="/seller/add-book" element={<SellerAddBook/>}/>
-          
+
 //           {/* Seller Profile Routes - WITH SIDEBAR */}
 //           <Route path="/seller/profile" element={<SellerProfile1 />}>
 //             <Route index element={<SellerAccountInfo />} />
@@ -102,13 +102,13 @@
 
 //           {/* Individual Seller Routes that don't need sidebar */}
 //           <Route path="/seller/viewproduct/:id" element={<SellerViewBookDetails/>}/>
-          
-         
-          
+
+
+
 //           <Route  path="/signin" element={<Login/>}/>
 //           <Route  path="/Signup" element={<SignUp/>}/>
 //           <Route  path="/view-book-details/:id" element={<ViewBookDetails/>}/>
-         
+
 //           {/* Admin Routes */}
 //           <Route path="/Admin/profile" element={<AdminProfile />} />
 //           <Route path="/Admin/AddBook" element={<AddBook />} />
@@ -126,7 +126,7 @@
 //           {/* Checkout Routes */}
 //           <Route path="/checkout/:id" element={<CheckoutLayout />} />
 //           <Route path="/cod-confirmation" element={<COD_Page />} />
-           
+
 //            //PremiumPage
 //           <Route path="/premium" element={<PremiumPage />} />
 
@@ -137,7 +137,7 @@
 
 //         </Routes>
 //         <Footer/>
-      
+
 //     </div>
 //   )
 // }
@@ -276,23 +276,23 @@ const SellerRouteGuard = ({ children }) => {
 
 
 
-const App=()=> {
-  const dispatch=useDispatch();
-  const role= useSelector((state)=>state.auth.role);
-  
-  useEffect(()=>{
+const App = () => {
+  const dispatch = useDispatch();
+  const role = useSelector((state) => state.auth.role);
+
+  useEffect(() => {
     // ✅ CRITICAL FIX: Check localStorage and update Redux on mount
     const storedRole = localStorage.getItem("role");
     const storedId = localStorage.getItem("id");
     const storedToken = localStorage.getItem("token");
-    
+
     console.log("🔍 App mounted - checking localStorage...");
     console.log("Stored role:", storedRole);
     console.log("Stored ID:", storedId);
     console.log("Has token:", !!storedToken);
     console.log("Current Redux role:", role);
-    
-    if(storedId && storedToken && storedRole){
+
+    if (storedId && storedToken && storedRole) {
       console.log("✅ Restoring session from localStorage");
       // Dispatch in correct order: login first, then role
       dispatch(authActions.login());
@@ -304,8 +304,8 @@ const App=()=> {
     } else {
       console.log("❌ No valid session found in localStorage");
     }
-  },[dispatch]); // ✅ Only run on mount, removed 'role' from dependencies
-  
+  }, [dispatch]); // ✅ Only run on mount, removed 'role' from dependencies
+
   // ✅ Log whenever role changes
   useEffect(() => {
     console.log("🔄 Role changed in Redux:", role);
@@ -317,68 +317,68 @@ const App=()=> {
   return (
     <div>
       <ChatbotManager />
-      <ScrollToTop/>
+      <ScrollToTop />
       {role === "admin" ? <Admin /> : <Navbar />}
 
       <Routes>
-        <Route exact path="/" element={<Home/>}/>
-        <Route  path="/all-books" element={<AllBooks/>}/>
-        <Route  path="/cart" element={<Cart/>}/>
-        <Route  path="/about-us" element={<AboutUs/>}/>
-        <Route  path="/services" element={<ServicesComingSoon/>}/>
-        
+        <Route exact path="/" element={<Home />} />
+        <Route path="/all-books" element={<AllBooks />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/services" element={<ServicesComingSoon />} />
+
         {/* Profile Routes - Fixed nested routing */}
-        <Route  path="/profile" element={<Profile/>}>
-          <Route index element={<Favourites/>}/>
-          <Route path="orderHistory" element={<UserOrderHistory/>}/>
+        <Route path="/profile" element={<Profile />}>
+          <Route index element={<Favourites />} />
+          <Route path="orderHistory" element={<UserOrderHistory />} />
           <Route path="orderHistory/order-details/:orderId" element={<OrderDetailsPage />} />
-          <Route path="become-seller" element={<BecomeSeller/>}/>
-           <Route path="my-subscriptions" element={<MySubscriptions/>}/>
-          <Route path="settings" element={<Settings/>}/>
+          <Route path="become-seller" element={<BecomeSeller />} />
+          <Route path="my-subscriptions" element={<MySubscriptions />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="verified-seller-info" element={<VerifiedSeller />} />
           <Route path="seller-application-submitted" element={<SellerApplicationSubmitted />} />
         </Route>
 
 
 //footer
-{/* footer */}
-<Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
-<Route path="/terms-of-service" element={<TermsOfService/>}/>
-<Route path="/refund-policy" element={<RefundPolicy/>}/>
-<Route path="/support" element={<Support/>}/>
+        {/* footer */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/support" element={<Support />} />
 
 
 
         {/* Seller Routes — RBAC Protected */}
-        <Route path="/seller/myproducts" element={<SellerRouteGuard><MyProducts/></SellerRouteGuard>}/>
-        <Route path="/seller/add-product" element={<SellerRouteGuard><SellerAddBook/></SellerRouteGuard>}/>
-        <Route path="/seller/dashboard" element={<SellerRouteGuard><SellerDashboard/></SellerRouteGuard>}/>
-        <Route path="/seller/mywallet" element={<SellerRouteGuard><SellerWallet/></SellerRouteGuard>}/>
-        
+        <Route path="/seller/myproducts" element={<SellerRouteGuard><MyProducts /></SellerRouteGuard>} />
+        <Route path="/seller/add-product" element={<SellerRouteGuard><SellerAddBook /></SellerRouteGuard>} />
+        <Route path="/seller/dashboard" element={<SellerRouteGuard><SellerDashboard /></SellerRouteGuard>} />
+        <Route path="/seller/mywallet" element={<SellerRouteGuard><SellerWallet /></SellerRouteGuard>} />
+
         {/* Seller Profile Routes - WITH SIDEBAR — RBAC Protected */}
         <Route path="/seller/profile" element={<SellerRouteGuard><SellerProfile1 /></SellerRouteGuard>}>
           <Route index element={<SellerAccountInfo />} />
           <Route path="bank-info" element={<SellerBankInfo />} />
-          <Route path="add-book" element={<SellerAddBook/>} />
-          <Route path="my-products" element={<MyProducts/>} />
+          <Route path="add-book" element={<SellerAddBook />} />
+          <Route path="my-products" element={<MyProducts />} />
         </Route>
 
         {/* Individual Seller Routes that don't need sidebar — RBAC Protected */}
-        <Route path="/seller/viewproduct/:id" element={<SellerRouteGuard><SellerViewBookDetails/></SellerRouteGuard>}/>
-        
-        <Route  path="/signin" element={<Login/>}/>
-        <Route  path="/Signup" element={<SignUp/>}/>
+        <Route path="/seller/viewproduct/:id" element={<SellerRouteGuard><SellerViewBookDetails /></SellerRouteGuard>} />
+
+        <Route path="/signin" element={<Login />} />
+        <Route path="/Signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route  path="/view-book-details/:id" element={<ViewBookDetails/>}/>
-       
+        <Route path="/view-book-details/:id" element={<ViewBookDetails />} />
+
         {/* Admin Routes */}
         <Route path="/Admin/profile" element={<AdminProfile />} />
         <Route path="/Admin/AddBook" element={<AddBook />} />
-        <Route path="/Admin/Users-List" element={<AdminUsers/>} />
-        <Route path="/Admin/Sellers-List" element={<AdminSellers/>} />
-        <Route path="/Admin/Seller-Products" element={<SellerProduct/>} />
+        <Route path="/Admin/Users-List" element={<AdminUsers />} />
+        <Route path="/Admin/Sellers-List" element={<AdminSellers />} />
+        <Route path="/Admin/Seller-Products" element={<SellerProduct />} />
 
-        <Route path="/Admin/books" element={<AllBooks/>} />
+        <Route path="/Admin/books" element={<AllBooks />} />
 
         {/* Seller Form Routes */}
         <Route path="/seller/form" element={<SellerForm />} />
@@ -391,7 +391,7 @@ const App=()=> {
         {/* Checkout Routes */}
         <Route path="/checkout/:id" element={<CheckoutLayout />} />
         <Route path="/cod-confirmation" element={<COD_Page />} />
-         
+
         {/* PremiumPage */}
         <Route path="/premium" element={<PremiumPage />} />
 
@@ -399,7 +399,7 @@ const App=()=> {
         <Route path="/seller/orders" element={<SellerRouteGuard><SellerOrdersDashboard /></SellerRouteGuard>} />
 
       </Routes>
-      <Footer/>
+      <Footer />
     </div>
   )
 }

@@ -39,22 +39,22 @@ const API_URL = `${BASE_URL}/api/v1`;
 
 
 const ErrorDisplay = ({ error, onRetry }) => (
-  <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 rounded-3xl p-8 text-white flex items-center justify-center">
-    <div className="text-center max-w-md bg-zinc-900/50 p-8 rounded-2xl border border-zinc-700">
-      <AlertTriangle className="text-red-400 mb-4 mx-auto" size={64} />
-      <h2 className="text-2xl font-bold text-red-400 mb-4">Unable to Load Order</h2>
-      <p className="text-zinc-400 mb-6">{error}</p>
+  <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 rounded-3xl p-4 sm:p-8 text-white flex items-center justify-center">
+    <div className="text-center max-w-md w-full bg-zinc-900/50 p-6 sm:p-8 rounded-2xl border border-zinc-700">
+      <AlertTriangle className="text-red-400 mb-4 mx-auto" size={56} />
+      <h2 className="text-xl sm:text-2xl font-bold text-red-400 mb-3 sm:mb-4">Unable to Load Order</h2>
+      <p className="text-sm sm:text-base text-zinc-400 mb-6">{error}</p>
       <div className="space-y-3">
         <button 
           onClick={onRetry}
-          className="flex items-center gap-2 bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors mx-auto"
+          className="w-full flex justify-center items-center gap-2 bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors mx-auto"
         >
           <RefreshCw size={16} />
           Try Again
         </button>
         <button 
           onClick={() => window.history.back()} 
-          className="block text-zinc-400 hover:text-white mx-auto"
+          className="w-full block text-zinc-400 hover:text-white mx-auto py-2 text-sm"
         >
           ← Back to Order History
         </button>
@@ -67,60 +67,60 @@ const ErrorDisplay = ({ error, onRetry }) => (
 const TrackingDetailsModal = ({ order, onClose, formatDate }) => {
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-2xl border border-zinc-700 max-w-3xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
-        <div className="p-6 border-b border-zinc-700 flex items-center justify-between sticky top-0 bg-zinc-900 z-10">
+      <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-2xl border border-zinc-700 max-w-3xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+        <div className="p-4 sm:p-6 border-b border-zinc-700 flex items-center justify-between sticky top-0 bg-zinc-900 z-10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-yellow-400/20 rounded-lg">
               <Clock className="text-yellow-400" size={24} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
+              <h2 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
                 Detailed Tracking History
               </h2>
-              <p className="text-sm text-zinc-400">Complete timeline of your order</p>
+              <p className="text-xs sm:text-sm text-zinc-400">Complete timeline of your order</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-200 transition-colors p-2 hover:bg-zinc-800 rounded-lg"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(80vh-100px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {order.trackingHistory && order.trackingHistory.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {order.trackingHistory.slice().reverse().map((track, index) => (
-                <div key={index} className="bg-zinc-800/50 p-5 rounded-xl border border-zinc-700/50 hover:border-yellow-400/30 transition-all shadow-lg">
-                  <div className="flex items-start gap-4">
+                <div key={index} className="bg-zinc-800/50 p-4 sm:p-5 rounded-xl border border-zinc-700/50 hover:border-yellow-400/30 transition-all shadow-lg">
+                  <div className="flex items-start gap-3 sm:gap-4">
                     <div className="flex-shrink-0">
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                      <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center ${
                         index === 0 ? 'bg-green-500/20 text-green-400 ring-2 ring-green-500/50' : 'bg-blue-500/20 text-blue-400'
                       }`}>
-                        {index === 0 ? <CheckCircle size={24} /> : <MapPin size={24} />}
+                        {index === 0 ? <CheckCircle size={20} className="sm:w-6 sm:h-6" /> : <MapPin size={20} className="sm:w-6 sm:h-6" />}
                       </div>
                     </div>
                     
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-bold text-white text-base">{track.status}</h3>
-                        <span className="text-xs text-zinc-500 bg-zinc-900/50 px-3 py-1 rounded-full">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-2 sm:mb-3 gap-1.5 sm:gap-0">
+                        <h3 className="font-bold text-white text-sm sm:text-base truncate">{track.status}</h3>
+                        <span className="text-[10px] sm:text-xs text-zinc-500 bg-zinc-900/50 px-2 sm:px-3 py-1 rounded-full w-fit">
                           {formatDate(track.date)}
                         </span>
                       </div>
                       
-                      <div className="flex items-center gap-2 text-sm text-zinc-300 mb-3 bg-zinc-900/30 p-3 rounded-lg">
-                        <MapPin size={16} className="text-yellow-400 flex-shrink-0" />
-                        <span className="font-medium">{track.location}</span>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-300 mb-2 sm:mb-3 bg-zinc-900/30 p-2 sm:p-3 rounded-lg">
+                        <MapPin size={14} className="text-yellow-400 flex-shrink-0" />
+                        <span className="font-medium truncate">{track.location}</span>
                       </div>
                       
                       {track.notes && (
-                        <div className="mt-3 pt-3 border-t border-zinc-700/50">
-                          <div className="flex items-start gap-3 text-sm text-zinc-300 bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg">
-                            <MessageSquare size={16} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-zinc-700/50">
+                          <div className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm text-zinc-300 bg-blue-500/10 border border-blue-500/20 p-3 sm:p-4 rounded-lg">
+                            <MessageSquare size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
                             <div>
-                              <p className="text-xs text-blue-400 font-semibold mb-1">Note from seller:</p>
+                              <p className="text-[10px] sm:text-xs text-blue-400 font-semibold mb-0.5 sm:mb-1">Note from seller:</p>
                               <p className="italic leading-relaxed">{track.notes}</p>
                             </div>
                           </div>
@@ -132,9 +132,9 @@ const TrackingDetailsModal = ({ order, onClose, formatDate }) => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-zinc-800/30 rounded-xl">
-              <Clock className="text-zinc-600 mb-3 mx-auto" size={56} />
-              <p className="text-zinc-500 text-lg">No tracking updates available yet</p>
+            <div className="text-center py-10 sm:py-12 bg-zinc-800/30 rounded-xl">
+              <Clock className="text-zinc-600 mb-3 mx-auto" size={48} />
+              <p className="text-zinc-500 text-sm sm:text-lg">No tracking updates available yet</p>
             </div>
           )}
         </div>
@@ -149,65 +149,65 @@ const CancelOrderModal = ({ order, onClose, onConfirm, isLoading }) => {
   
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-      <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-2xl border border-zinc-700 max-w-md w-full shadow-2xl">
-        <div className="p-6 border-b border-zinc-700">
-          <div className="flex items-center gap-3 mb-2">
+      <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 rounded-2xl border border-zinc-700 max-w-md w-full shadow-2xl flex flex-col">
+        <div className="p-5 sm:p-6 border-b border-zinc-700 shrink-0">
+          <div className="flex items-center gap-3 mb-1 sm:mb-2">
             <div className="p-2 bg-red-400/20 rounded-lg">
-              <AlertTriangle className="text-red-400" size={24} />
+              <AlertTriangle className="text-red-400" size={20} className="sm:w-6 sm:h-6" />
             </div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
+            <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
               Cancel Order?
             </h2>
           </div>
-          <p className="text-sm text-zinc-400">This action cannot be undone</p>
+          <p className="text-xs sm:text-sm text-zinc-400">This action cannot be undone</p>
         </div>
 
-        <div className="p-6">
-          <p className="text-zinc-300 mb-4">
+        <div className="p-5 sm:p-6 overflow-y-auto">
+          <p className="text-sm sm:text-base text-zinc-300 mb-4 sm:mb-5">
             Are you sure you want to cancel this order?
             {!isCOD && ' Your refund will be processed within 48 hours.'}
           </p>
           
-          <div className="bg-zinc-800/50 p-4 rounded-lg mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <Package size={16} className="text-yellow-400" />
-              <span className="font-semibold text-white">Order ID:</span>
+          <div className="bg-zinc-800/50 p-3 sm:p-4 rounded-lg mb-4">
+            <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+              <Package size={14} className="text-yellow-400 sm:w-4 sm:h-4" />
+              <span className="font-semibold text-white text-xs sm:text-sm">Order ID:</span>
             </div>
-            <p className="text-sm text-zinc-400 font-mono">{order._id.slice(0, 16)}...</p>
+            <p className="text-xs sm:text-sm text-zinc-400 font-mono break-all">{order._id}</p>
           </div>
 
           {!isCOD && (
-            <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded-lg mb-4">
+            <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded-lg mb-5 sm:mb-6">
               <div className="flex items-start gap-2">
-                <Info className="text-blue-400 mt-0.5 flex-shrink-0" size={16} />
-                <p className="text-xs text-blue-300">
+                <Info className="text-blue-400 mt-0.5 flex-shrink-0" size={14} className="sm:w-4 sm:h-4" />
+                <p className="text-[10px] sm:text-xs text-blue-300">
                   Refund will be credited to your original payment method within 48 hours of cancellation.
                 </p>
               </div>
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50"
+              className="w-full sm:flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 text-sm"
             >
               Keep Order
             </button>
             <button
               onClick={onConfirm}
               disabled={isLoading}
-              className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-500/50 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full sm:flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-2.5 sm:py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-500/50 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
             >
               {isLoading ? (
                 <>
-                  <RefreshCw size={16} className="animate-spin" />
+                  <RefreshCw size={14} className="animate-spin sm:w-4 sm:h-4" />
                   Cancelling...
                 </>
               ) : (
                 <>
-                  <X size={16} />
+                  <X size={14} className="sm:w-4 sm:h-4" />
                   Yes, Cancel Order
                 </>
               )}
@@ -416,26 +416,26 @@ const OrderDetailsPage = () => {
   const AnimatedCircle = ({ isActive, isCompleted, step, isCustom }) => (
     <div className="relative">
       <div className={`
-        w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-500 shadow-lg
+        w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-sm sm:text-lg font-bold transition-all duration-500 shadow-lg
         ${isCustom ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white scale-110 ring-2 ring-blue-400/50' :
           isCompleted ? 'bg-gradient-to-br from-green-500 to-green-600 text-white scale-110' : 
           isActive ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-black scale-110 animate-pulse' : 
           'bg-zinc-700 text-zinc-400 scale-90'}
       `}>
-        {trackingSteps[step].icon}
+        {React.cloneElement(trackingSteps[step].icon, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}
       </div>
       
       {isActive && !isCustom && (
-        <div className="absolute inset-0 w-14 h-14 bg-yellow-400 rounded-full animate-ping opacity-30"></div>
+        <div className="absolute inset-0 w-10 h-10 sm:w-14 sm:h-14 bg-yellow-400 rounded-full animate-ping opacity-30"></div>
       )}
       
       {isCustom && (
-        <div className="absolute inset-0 w-14 h-14 bg-blue-400 rounded-full animate-pulse opacity-30"></div>
+        <div className="absolute inset-0 w-10 h-10 sm:w-14 sm:h-14 bg-blue-400 rounded-full animate-pulse opacity-30"></div>
       )}
       
       {isCompleted && !isCustom && (
-        <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full w-5 h-5 flex items-center justify-center">
-          <CheckCircle size={12} />
+        <div className="absolute -top-1 -right-1 bg-green-600 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+          <CheckCircle size={10} className="sm:w-3 sm:h-3" />
         </div>
       )}
     </div>
@@ -451,14 +451,14 @@ const OrderDetailsPage = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 rounded-3xl p-8 text-white flex items-center justify-center">
-        <div className="text-center bg-zinc-900/50 p-8 rounded-2xl border border-zinc-700">
-          <Package className="text-zinc-600 mb-4 mx-auto" size={64} />
-          <h2 className="text-2xl font-bold text-red-400 mb-4">Order Not Found</h2>
-          <p className="text-zinc-400 mb-6">The requested order could not be found.</p>
+      <div className="min-h-[70vh] bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 rounded-3xl p-4 sm:p-8 text-white flex items-center justify-center">
+        <div className="text-center w-full max-w-md bg-zinc-900/50 p-6 sm:p-8 rounded-2xl border border-zinc-700">
+          <Package className="text-zinc-600 mb-4 mx-auto" size={56} />
+          <h2 className="text-xl sm:text-2xl font-bold text-red-400 mb-3 sm:mb-4">Order Not Found</h2>
+          <p className="text-sm sm:text-base text-zinc-400 mb-6">The requested order could not be found.</p>
           <button 
             onClick={() => navigate('/profile/orderHistory')}
-            className="text-yellow-300 hover:text-yellow-200 flex items-center gap-2 mx-auto"
+            className="text-yellow-300 hover:text-yellow-200 flex items-center justify-center gap-2 mx-auto text-sm sm:text-base"
           >
             <ArrowLeft size={16} />
             Back to Order History
@@ -487,8 +487,8 @@ const OrderDetailsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 text-white px-4 sm:px-8 py-10 flex justify-center">
-      <div className="w-full max-w-7xl bg-zinc-900/50 rounded-3xl px-6 sm:px-12 py-10 shadow-2xl border border-zinc-700">
+    <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 text-white px-2 sm:px-8 py-6 sm:py-10 flex justify-center">
+      <div className="w-full max-w-7xl bg-zinc-900/50 rounded-2xl sm:rounded-3xl px-4 sm:px-12 py-6 sm:py-10 shadow-2xl border border-zinc-700">
         {alert && (
           <Alert
             type={alert.type}
@@ -519,22 +519,22 @@ const OrderDetailsPage = () => {
         )}
 
         {/* Header Section */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <button 
             onClick={() => navigate('/profile/orderHistory')}
-            className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-6 group transition-all"
+            className="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 mb-4 sm:mb-6 group transition-all text-sm sm:text-base"
           >
-            <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={18} />
+            <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={16} className="sm:w-[18px] sm:h-[18px]" />
             <span className="font-medium">Back to Orders</span>
           </button>
           
           {/* Title Section with Theme Matching AllBooks */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent drop-shadow-md mb-2">
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent drop-shadow-md mb-2">
               Order Details
             </h1>
-            <div className="flex items-center justify-center gap-3 text-sm text-zinc-400">
-              <span className="font-mono">Order ID: {orderId.slice(0, 12)}...</span>
+            <div className="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-zinc-400">
+              <span className="font-mono">Order ID: {orderId.slice(0, 10)}...</span>
               <button 
                 onClick={copyOrderId}
                 className="text-yellow-300 hover:text-yellow-200 p-1.5 rounded-lg hover:bg-zinc-700 transition-all"
@@ -543,12 +543,12 @@ const OrderDetailsPage = () => {
                 <Copy size={14} />
               </button>
             </div>
-            <hr className="mt-6 border-zinc-700 w-3/4 mx-auto rounded-full" />
+            <hr className="mt-5 sm:mt-6 border-zinc-700 w-full sm:w-3/4 mx-auto rounded-full" />
           </div>
           
           {/* Status Badge */}
-          <div className="flex justify-center mb-6">
-            <div className={`px-6 py-3 rounded-xl font-bold text-sm shadow-lg ${
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <div className={`px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg ${
               order.orderStatus === 'Delivered' ? 'bg-gradient-to-r from-green-600 to-green-700 text-green-50' :
               order.orderStatus === 'Out for Delivery' ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white' :
               order.orderStatus === 'Shipped' ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-purple-50' :
@@ -560,96 +560,100 @@ const OrderDetailsPage = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-8">
             {/* Order Tracking Section */}
-            <div className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-yellow-400 flex items-center gap-3">
+            <div className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-yellow-400 flex items-center gap-2 sm:gap-3">
                   <div className="p-2 bg-yellow-400/20 rounded-lg">
-                    <Truck size={24} />
+                    <Truck size={20} className="sm:w-6 sm:h-6" />
                   </div>
                   Order Tracking
                 </h2>
                 
                 <button
                   onClick={() => setShowTrackingModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-semibold text-sm shadow-lg"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-semibold text-xs sm:text-sm shadow-lg w-full sm:w-auto"
                 >
-                  <Eye size={16} />
+                  <Eye size={14} className="sm:w-4 sm:h-4" />
                   View Details
                 </button>
               </div>
               
               {order.orderStatus === 'Cancelled' ? (
-                <div className="text-center py-12 bg-zinc-900/50 rounded-xl border border-red-500/30">
-                  <div className="text-red-400 text-6xl mb-4">✕</div>
-                  <h3 className="text-xl font-bold text-red-400 mb-2">Order Cancelled</h3>
-                  <p className="text-zinc-400">This order has been cancelled and cannot be delivered</p>
+                <div className="text-center py-8 sm:py-12 bg-zinc-900/50 rounded-xl border border-red-500/30">
+                  <div className="text-red-400 text-5xl sm:text-6xl mb-3 sm:mb-4">✕</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-red-400 mb-1 sm:mb-2">Order Cancelled</h3>
+                  <p className="text-xs sm:text-base text-zinc-400">This order has been cancelled and cannot be delivered</p>
                 </div>
               ) : (
-                <div className="relative">
-                  <div className="absolute top-7 left-7 right-7 h-2 bg-zinc-700 rounded-full">
-                    <div 
-                      className="h-full bg-gradient-to-r from-yellow-400 via-purple-400 to-green-500 rounded-full transition-all duration-1000 shadow-lg"
-                      style={{ width: `${(activeStep / (trackingSteps.length - 1)) * 100}%` }}
-                    ></div>
-                  </div>
-                  
-                  <div className="relative flex justify-between">
-                    {trackingSteps.map((step, index) => (
-                      <div key={index} className={`flex flex-col items-center text-center ${
-                        step.isCustom ? 'max-w-[100px]' : 'max-w-[90px]'
-                      }`}>
-                        <AnimatedCircle 
-                          isActive={index === activeStep} 
-                          isCompleted={index < activeStep} 
-                          step={index}
-                          isCustom={step.isCustom}
-                        />
-                        
-                        <div className="mt-5">
-                          <h3 className={`font-bold text-xs mb-1 transition-colors ${
-                            step.isCustom ? 'text-blue-300' :
-                            index <= activeStep ? 'text-yellow-300' : 'text-zinc-500'
-                          }`}>
-                            {step.title}
-                          </h3>
-                          <p className="text-xs text-zinc-500 mb-2 leading-tight line-clamp-2">{step.description}</p>
-                          
-                          <div className={`flex items-center justify-center gap-1 text-xs transition-all duration-500 ${
-                            step.isCustom ? 'text-blue-300 font-semibold' :
-                            index === activeStep ? 'text-yellow-300 font-semibold' : 
-                            index < activeStep ? 'text-green-400' : 'text-zinc-600'
-                          }`}>
-                            <MapPin size={12} />
-                            <span className="break-words line-clamp-1">
-                              {step.location}
-                            </span>
-                          </div>
-                        </div>
+                <div className="relative overflow-x-auto pb-4 hide-scrollbar">
+                  <div className="min-w-[450px]">
+                    <div className="relative">
+                      <div className="absolute top-5 sm:top-7 left-5 sm:left-7 right-5 sm:right-7 h-1.5 sm:h-2 bg-zinc-700 rounded-full">
+                        <div 
+                          className="h-full bg-gradient-to-r from-yellow-400 via-purple-400 to-green-500 rounded-full transition-all duration-1000 shadow-lg"
+                          style={{ width: `${(activeStep / (trackingSteps.length - 1)) * 100}%` }}
+                        ></div>
                       </div>
-                    ))}
+                      
+                      <div className="relative flex justify-between">
+                        {trackingSteps.map((step, index) => (
+                          <div key={index} className={`flex flex-col items-center text-center ${
+                            step.isCustom ? 'max-w-[70px] sm:max-w-[100px]' : 'max-w-[60px] sm:max-w-[90px]'
+                          }`}>
+                            <AnimatedCircle 
+                              isActive={index === activeStep} 
+                              isCompleted={index < activeStep} 
+                              step={index}
+                              isCustom={step.isCustom}
+                            />
+                            
+                            <div className="mt-3 sm:mt-5">
+                              <h3 className={`font-bold text-[10px] sm:text-xs mb-1 transition-colors ${
+                                step.isCustom ? 'text-blue-300' :
+                                index <= activeStep ? 'text-yellow-300' : 'text-zinc-500'
+                              }`}>
+                                {step.title}
+                              </h3>
+                              <p className="text-[9px] sm:text-xs text-zinc-500 mb-1.5 sm:mb-2 leading-tight line-clamp-2 hidden sm:block">{step.description}</p>
+                              
+                              <div className={`flex items-center justify-center gap-1 text-[9px] sm:text-xs transition-all duration-500 ${
+                                step.isCustom ? 'text-blue-300 font-semibold' :
+                                index === activeStep ? 'text-yellow-300 font-semibold' : 
+                                index < activeStep ? 'text-green-400' : 'text-zinc-600'
+                              }`}>
+                                <MapPin size={10} className="sm:w-3 sm:h-3" />
+                                <span className="break-words line-clamp-1">
+                                  {step.location}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
               
               {order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Delivered' && (
-                <div className="mt-8 pt-6 border-t border-zinc-700">
-                  <div className="flex items-center justify-between bg-zinc-900/50 p-4 rounded-xl">
+                <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-zinc-700">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-zinc-900/50 p-3 sm:p-4 rounded-xl gap-4 sm:gap-0">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-500/20 rounded-lg">
-                        <MapPin className="text-blue-400" size={20} />
+                      <div className="p-2 bg-blue-500/20 rounded-lg shrink-0">
+                        <MapPin className="text-blue-400" size={18} className="sm:w-5 sm:h-5" />
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-500">Current Location</p>
-                        <p className="text-sm font-bold text-white">{order.currentLocation || 'In Transit'}</p>
+                        <p className="text-[10px] sm:text-xs text-zinc-500">Current Location</p>
+                        <p className="text-xs sm:text-sm font-bold text-white">{order.currentLocation || 'In Transit'}</p>
                       </div>
                     </div>
                     {order.trackingHistory && order.trackingHistory.length > 0 && (
-                      <div className="text-right">
-                        <p className="text-xs text-zinc-500">Last Updated</p>
-                        <p className="text-xs text-white font-medium">
+                      <div className="w-full sm:w-auto text-left sm:text-right border-t sm:border-0 border-zinc-700/50 pt-3 sm:pt-0">
+                        <p className="text-[10px] sm:text-xs text-zinc-500">Last Updated</p>
+                        <p className="text-[10px] sm:text-xs text-white font-medium">
                           {formatDate(order.trackingHistory[order.trackingHistory.length - 1].date)}
                         </p>
                       </div>
@@ -660,65 +664,66 @@ const OrderDetailsPage = () => {
             </div>
 
             {/* Item Details Section */}
-            <div className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700 rounded-2xl p-6 shadow-xl">
-              <h2 className="text-2xl font-bold text-yellow-400 mb-6 flex items-center gap-3">
+            <div className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl">
+              <h2 className="text-xl sm:text-2xl font-bold text-yellow-400 mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3">
                 <div className="p-2 bg-yellow-400/20 rounded-lg">
-                  <ShoppingBag size={24} />
+                  <ShoppingBag size={20} className="sm:w-6 sm:h-6" />
                 </div>
                 Item Details
               </h2>
               
-              <div className="flex gap-6 bg-zinc-900/50 p-5 rounded-xl border border-zinc-700/50">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-zinc-900/50 p-4 sm:p-5 rounded-xl border border-zinc-700/50">
                 {order.book && (
-                  <div className="relative group cursor-pointer">
+                  <div className="relative group cursor-pointer self-center sm:self-start shrink-0">
                     <img
                       src={order.book.url || "https://via.placeholder.com/150x200?text=Book"}
                       alt={order.book.title}
-                      className="w-36 h-48 object-cover rounded-xl border-2 border-zinc-600 shadow-xl group-hover:scale-105 transition-transform duration-300"
+                      className="w-32 h-48 sm:w-36 sm:h-48 object-cover rounded-xl border-2 border-zinc-600 shadow-xl group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                      <span className="text-white text-sm font-semibold">View Book</span>
+                      <span className="text-white text-xs sm:text-sm font-semibold border border-white/30 px-3 py-1.5 rounded-full bg-black/50">View Book</span>
                     </div>
                   </div>
                 )}
                 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   {order.book ? (
                     <>
-                      <h3 className="text-2xl font-bold text-yellow-300 hover:text-yellow-200 mb-3 cursor-pointer transition-colors leading-tight">
+                      <h3 className="text-lg sm:text-2xl font-bold text-yellow-300 hover:text-yellow-200 mb-2 sm:mb-3 cursor-pointer transition-colors leading-tight line-clamp-2">
                         {order.book.title}
                       </h3>
-                      <p className="text-zinc-400 mb-4 leading-relaxed text-sm">
-                        {order.book.desc?.slice(0, 250) || "No description available."}
-                        {order.book.desc?.length > 250 && "..."}
+                      <p className="text-zinc-400 mb-3 sm:mb-4 leading-relaxed text-xs sm:text-sm line-clamp-3">
+                        {order.book.desc || "No description available."}
                       </p>
                     </>
                   ) : (
-                    <h3 className="text-2xl font-bold text-zinc-400 mb-3">Book Information Unavailable</h3>
+                    <h3 className="text-lg sm:text-2xl font-bold text-zinc-400 mb-2 sm:mb-3">Book Information Unavailable</h3>
                   )}
                   
-                  <div className="grid grid-cols-2 gap-4 text-sm mb-5 bg-zinc-800/50 p-4 rounded-lg">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm mb-4 sm:mb-5 bg-zinc-800/50 p-3 sm:p-4 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <User className="text-yellow-400" size={16} />
-                      <div>
-                        <span className="text-zinc-500 block text-xs">Author</span>
-                        <div className="font-semibold text-white">{order.book?.author || "Unknown"}</div>
+                      <User className="text-yellow-400 shrink-0" size={14} className="sm:w-4 sm:h-4" />
+                      <div className="min-w-0">
+                        <span className="text-zinc-500 block text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Author</span>
+                        <div className="font-semibold text-white truncate">{order.book?.author || "Unknown"}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <FileText className="text-yellow-400" size={16} />
-                      <div>
-                        <span className="text-zinc-500 block text-xs">Language</span>
-                        <div className="font-semibold text-white">{order.book?.language || "English"}</div>
+                      <FileText className="text-yellow-400 shrink-0" size={14} className="sm:w-4 sm:h-4" />
+                      <div className="min-w-0">
+                        <span className="text-zinc-500 block text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Language</span>
+                        <div className="font-semibold text-white truncate">{order.book?.language || "English"}</div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 bg-gradient-to-r from-green-600/20 to-green-700/20 border border-green-500/30 rounded-lg p-4">
-                    <IndianRupee className="text-green-400" size={28} />
+                  <div className="flex items-center gap-3 bg-gradient-to-r from-green-600/20 to-green-700/20 border border-green-500/30 rounded-lg p-3 sm:p-4 mt-auto">
+                    <div className="p-1.5 sm:p-2 bg-green-500/20 rounded-lg">
+                      <IndianRupee className="text-green-400" size={20} className="sm:w-[28px] sm:h-[28px]" />
+                    </div>
                     <div>
-                      <div className="text-xs text-zinc-400">Total Amount</div>
-                      <div className="text-3xl font-bold text-green-400">
+                      <div className="text-[10px] sm:text-xs text-zinc-400 uppercase font-semibold tracking-wider">Total Amount</div>
+                      <div className="text-xl sm:text-3xl font-bold text-green-400 leading-none">
                         {formatCurrency(order.amountPayable)}
                       </div>
                     </div>

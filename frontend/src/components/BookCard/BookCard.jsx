@@ -124,14 +124,14 @@ function BookCard({ data, onRemove }) {
   const HoverIcon = stockStatus.hoverIcon;
 
   return (
-    <Link to={getBookDetailPath(data.title, data._id)} className="group block">
+    <Link to={getBookDetailPath(data.title, data._id)} className="group block h-full">
       <motion.div
         whileHover={{ y: -6, scale: 1.02 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="relative bg-gradient-to-br from-zinc-800/90 to-zinc-900/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-yellow-400/20 transition-all duration-300 border border-zinc-700/50 hover:border-yellow-400/30"
+        className="relative h-full flex flex-col bg-gradient-to-br from-zinc-800/90 to-zinc-900/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-yellow-400/20 transition-all duration-300 border border-zinc-700/50 hover:border-yellow-400/30"
       >
         {/* Image Section */}
-        <div className="relative bg-zinc-900/50 overflow-hidden h-[220px] flex items-center justify-center">
+        <div className="relative bg-zinc-900/50 overflow-hidden h-[220px] shrink-0 flex items-center justify-center">
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
           
           <motion.img
@@ -212,61 +212,67 @@ function BookCard({ data, onRemove }) {
         </div>
 
         {/* Content Section */}
-        <div className="p-3">
-          {/* Category Tag */}
-          {data.category && (
-            <span className="inline-block px-1.5 py-0.5 bg-purple-500/20 text-purple-300 text-[9px] font-semibold rounded border border-purple-500/30 mb-1.5">
-              {data.category}
-            </span>
-          )}
-
-          {/* Title */}
-          <h2 className="text-sm font-bold text-white mb-1 line-clamp-2 group-hover:text-yellow-400 transition-colors duration-300 leading-snug">
-            {data.title}
-          </h2>
-
-          {/* Author */}
-          <p className="text-[10px] text-zinc-400 mb-2 truncate">
-            by <span className="text-zinc-300 font-medium">{data.author}</span>
-          </p>
-
-          {/* Rating & Stock */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <FaStar key={star} className="text-yellow-400 text-[9px]" />
-              ))}
+        <div className="p-3 flex flex-col flex-grow">
+          <div className="flex-grow">
+            {/* Category Tag Container */}
+            <div className="h-[22px] mb-1.5">
+              {data.category && (
+                <span className="inline-block px-1.5 py-0.5 bg-purple-500/20 text-purple-300 text-[9px] font-semibold rounded border border-purple-500/30">
+                  {data.category}
+                </span>
+              )}
             </div>
-            {stockStatus.available && data.stock && (
-              <span className="text-zinc-500 text-[9px]">
-                {data.stock} left
-              </span>
-            )}
+
+            {/* Title */}
+            <h2 className="text-sm font-bold text-white mb-1 line-clamp-2 group-hover:text-yellow-400 transition-colors duration-300 leading-snug min-h-[38px]">
+              {data.title}
+            </h2>
+
+            {/* Author */}
+            <p className="text-[10px] text-zinc-400 mb-2 truncate">
+              by <span className="text-zinc-300 font-medium">{data.author}</span>
+            </p>
           </div>
 
-          {/* Price & Language */}
-          <div className="flex items-center justify-between">
-            <span className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent">
-              ₹{data.price}
-            </span>
-            {data.language && (
-              <span className="text-[9px] text-zinc-500 uppercase tracking-wider">
-                {data.language}
+          <div className="mt-auto">
+            {/* Rating & Stock */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FaStar key={star} className="text-yellow-400 text-[9px]" />
+                ))}
+              </div>
+              {stockStatus.available && data.stock && (
+                <span className="text-zinc-500 text-[9px]">
+                  {data.stock} left
+                </span>
+              )}
+            </div>
+
+            {/* Price & Language */}
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent">
+                ₹{data.price}
               </span>
+              {data.language && (
+                <span className="text-[9px] text-zinc-500 uppercase tracking-wider">
+                  {data.language}
+                </span>
+              )}
+            </div>
+
+            {/* Remove button on Favourites page */}
+            {location.pathname.toLowerCase().includes("/profile/favourites") && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleRemoveFromFavourites}
+                className="mt-2 w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-1.5 rounded-lg transition-all duration-300 text-xs shadow-lg"
+              >
+                Remove
+              </motion.button>
             )}
           </div>
-
-          {/* Remove button on Favourites page */}
-          {location.pathname.toLowerCase().includes("/profile/favourites") && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleRemoveFromFavourites}
-              className="mt-2 w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-1.5 rounded-lg transition-all duration-300 text-xs shadow-lg"
-            >
-              Remove
-            </motion.button>
-          )}
         </div>
 
         {/* Shine Effect */}
