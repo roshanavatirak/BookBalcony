@@ -328,6 +328,7 @@ const { authenticateToken, authenticateSeller } = require("./userAuth");
 const Order = require("../models/order");
 const Book = require("../models/book");
 const mongoose = require("mongoose");
+const { sendOrderStatusEmail } = require("../services/emailService");
 
 // Get all orders for a specific seller
 router.get("/seller/orders", authenticateToken, async (req, res) => {
@@ -456,11 +457,19 @@ router.put("/seller/order/:orderId/status", authenticateToken, async (req, res) 
     const order = await Order.findOne({ 
       _id: orderId, 
       seller: id 
-    }).populate('book');
+    }).populate('book').populate('user', 'username email phone avatar');
 
     if (!order) {
       return res.status(404).json({ 
         message: "Order not found or you don't have access to this order" 
+      });
+    }
+
+    // Prevent modifying status if order is already Delivered or Cancelled
+    if (order.orderStatus === 'Delivered' || order.orderStatus === 'Cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot update order that is already ${order.orderStatus.toLowerCase()}`
       });
     }
 
@@ -487,6 +496,13 @@ router.put("/seller/order/:orderId/status", authenticateToken, async (req, res) 
     }
 
     await order.save();
+
+    // Send email notification for important statuses
+    if (orderStatus === 'Out for Delivery' || orderStatus === 'Delivered') {
+      sendOrderStatusEmail(order, orderStatus).catch(err => 
+        console.error("Failed to send status email in sellerOrder route:", err)
+      );
+    }
 
     return res.json({
       status: "Success",
