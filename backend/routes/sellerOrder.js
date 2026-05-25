@@ -334,10 +334,19 @@ const { sendOrderStatusEmail } = require("../services/emailService");
 router.get("/seller/orders", authenticateToken, async (req, res) => {
   try {
     const { id } = req.headers;
-    const { status, paymentStatus, page = 1, limit = 10 } = req.query;
+    const { status, paymentStatus, page = 1, limit = 10, sellerId: querySellerId } = req.query;
+
+    let sellerId = id;
+    if (req.user && req.user.role === "admin") {
+      if (querySellerId) {
+        sellerId = querySellerId;
+      } else if (req.headers.sellerid) {
+        sellerId = req.headers.sellerid;
+      }
+    }
 
     // Build filter query
-    const filter = { seller: id };
+    const filter = { seller: sellerId };
     
     if (status && status !== "all") {
       filter.orderStatus = status;
@@ -365,10 +374,39 @@ router.get("/seller/orders", authenticateToken, async (req, res) => {
 
     const totalOrders = await Order.countDocuments(filter);
 
+    // Calculate dynamic stats
+    const statsArray = await Order.aggregate([
+      { $match: { seller: new mongoose.Types.ObjectId(sellerId) } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          pending: {
+            $sum: {
+              $cond: [{ $in: ["$orderStatus", ["Order Placed", "Processing"]] }, 1, 0]
+            }
+          },
+          shipped: {
+            $sum: {
+              $cond: [{ $in: ["$orderStatus", ["Shipped", "Out for Delivery"]] }, 1, 0]
+            }
+          },
+          delivered: {
+            $sum: {
+              $cond: [{ $eq: ["$orderStatus", "Delivered"] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]);
+
+    const stats = statsArray[0] || { total: 0, pending: 0, shipped: 0, delivered: 0 };
+
     return res.json({
       status: "Success",
       data: {
         orders: orders,
+        stats: stats,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.ceil(totalOrders / parseInt(limit)),
@@ -399,10 +437,12 @@ router.get("/seller/order/:orderId", authenticateToken, async (req, res) => {
       });
     }
 
-    const order = await Order.findOne({ 
-      _id: orderId, 
-      seller: id 
-    })
+    const queryFilter = { _id: orderId };
+    if (req.user && req.user.role !== "admin") {
+      queryFilter.seller = id;
+    }
+
+    const order = await Order.findOne(queryFilter)
       .populate({
         path: "book",
         select: "title desc price url author language category"
@@ -454,10 +494,12 @@ router.put("/seller/order/:orderId/status", authenticateToken, async (req, res) 
       });
     }
 
-    const order = await Order.findOne({ 
-      _id: orderId, 
-      seller: id 
-    }).populate('book').populate('user', 'username email phone avatar');
+    const queryFilter = { _id: orderId };
+    if (req.user && req.user.role !== "admin") {
+      queryFilter.seller = id;
+    }
+
+    const order = await Order.findOne(queryFilter).populate('book').populate('user', 'username email phone avatar');
 
     if (!order) {
       return res.status(404).json({ 
@@ -532,10 +574,12 @@ router.post("/seller/order/:orderId/tracking", authenticateToken, async (req, re
       });
     }
 
-    const order = await Order.findOne({ 
-      _id: orderId, 
-      seller: id 
-    }).populate('book');
+    const queryFilter = { _id: orderId };
+    if (req.user && req.user.role !== "admin") {
+      queryFilter.seller = id;
+    }
+
+    const order = await Order.findOne(queryFilter).populate('book');
 
     if (!order) {
       return res.status(404).json({ 
@@ -576,9 +620,19 @@ router.post("/seller/order/:orderId/tracking", authenticateToken, async (req, re
 router.get("/seller/dashboard-stats", authenticateToken, async (req, res) => {
   try {
     const { id } = req.headers;
+    const { sellerId: querySellerId } = req.query;
+
+    let sellerId = id;
+    if (req.user && req.user.role === "admin") {
+      if (querySellerId) {
+        sellerId = querySellerId;
+      } else if (req.headers.sellerid) {
+        sellerId = req.headers.sellerid;
+      }
+    }
 
     const stats = await Order.aggregate([
-      { $match: { seller: new mongoose.Types.ObjectId(id) } },
+      { $match: { seller: new mongoose.Types.ObjectId(sellerId) } },
       {
         $facet: {
           overview: [
@@ -677,16 +731,37 @@ router.get("/seller/dashboard-stats", authenticateToken, async (req, res) => {
   }
 });
 
-// Get new order notifications for seller
 router.get("/seller/new-order-notifications", authenticateToken, async (req, res) => {
   try {
     const { id } = req.headers;
+    const { sellerId: querySellerId } = req.query;
+
+    let sellerId = id;
+    if (req.user && req.user.role === "admin") {
+      if (querySellerId) {
+        sellerId = querySellerId;
+      } else if (req.headers.sellerid) {
+        sellerId = req.headers.sellerid;
+      }
+    }
+
+    // Find seller record to get their seller ID if target is user ID
+    const SellerObj = require("../models/seller");
+    let sellerObj = await SellerObj.findOne({ user: sellerId });
+    if (!sellerObj && req.user && req.user.role === "admin") {
+      sellerObj = await SellerObj.findOne({ status: "Approved" });
+      if (!sellerObj) {
+        sellerObj = await SellerObj.findOne();
+      }
+    }
+
+    const targetSellerId = sellerObj ? sellerObj._id : sellerId;
 
     // Find orders from last 24 hours that seller hasn't acknowledged
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const newOrders = await Order.find({
-      seller: id,
+      seller: targetSellerId,
       createdAt: { $gte: twentyFourHoursAgo },
       sellerNotified: true,
       sellerAcknowledged: { $ne: true }

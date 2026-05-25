@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Package, TrendingUp, DollarSign, Eye, ShoppingCart, Activity, 
   AlertCircle, Clock, CheckCircle2, Boxes, Users, Star,
@@ -16,6 +16,7 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
 const SellerDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
@@ -25,29 +26,96 @@ const SellerDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const { alert, hideAlert, success, error } = useAlert();
 
+  // Admin Mode States
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [adminSellerId, setAdminSellerId] = useState(null);
+  const [adminSellerName, setAdminSellerName] = useState("");
+  const [approvedSellers, setApprovedSellers] = useState([]);
+
   const headers = {
     id: localStorage.getItem("id"),
     authorization: `Bearer ${localStorage.getItem("token")}`,
   };
 
+  // Fetch approved sellers list for admin view switcher
+  const fetchApprovedSellers = async () => {
+    try {
+      const response = await fetch(`${API_URL}/admin/sellers`, {
+        headers: {
+          id: localStorage.getItem("id"),
+          authorization: `Bearer ${localStorage.getItem("token")}`,
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        const approved = data.data.filter(s => s.status === "Approved");
+        setApprovedSellers(approved);
+        
+        // If query parameters don't contain a sellerId, select the first one
+        const params = new URLSearchParams(window.location.search);
+        const qSellerId = params.get("sellerId");
+        if (!qSellerId && approved.length > 0) {
+          const firstSeller = approved[0];
+          setAdminSellerId(firstSeller.user?._id || firstSeller.user);
+          setAdminSellerName(firstSeller.fullName);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch approved sellers:", err);
+    }
+  };
+
+  // Check admin role and extract URL parameters on mount
   useEffect(() => {
-    fetchDashboardData();
-    const interval = setInterval(() => {
-      fetchDashboardData(true);
-    }, 30000);
-    return () => clearInterval(interval);
+    const params = new URLSearchParams(window.location.search);
+    const qSellerId = params.get("sellerId");
+    const qSellerName = params.get("sellerName");
+    const storedRole = localStorage.getItem("role");
+
+    if (storedRole === "admin") {
+      setIsAdminMode(true);
+      if (qSellerId) {
+        setAdminSellerId(qSellerId);
+        setAdminSellerName(qSellerName || "Seller");
+      }
+      fetchApprovedSellers();
+    }
   }, []);
 
+  // Fetch data on mount and when filters or seller context change
+  useEffect(() => {
+    const isUserAdmin = localStorage.getItem("role") === "admin";
+    if (!isUserAdmin || adminSellerId) {
+      fetchDashboardData();
+    }
+  }, [adminSellerId]);
+
   const fetchDashboardData = async (isAutoRefresh = false) => {
+    const isUserAdmin = localStorage.getItem("role") === "admin";
+    if (isUserAdmin && !adminSellerId) {
+      setLoading(false);
+      return;
+    }
+
     if (!isAutoRefresh) setLoading(true);
     else setRefreshing(true);
 
     try {
+      const requestHeaders = { ...headers };
+      if (isUserAdmin && adminSellerId) {
+        requestHeaders.sellerid = adminSellerId;
+      }
+      
+      const queryParams = new URLSearchParams();
+      if (isUserAdmin && adminSellerId) {
+        queryParams.append("sellerId", adminSellerId);
+      }
+
       const [statsRes, ordersRes, productsRes, notificationsRes] = await Promise.all([
-        axios.get(`${API_URL}/seller/dashboard-stats`, { headers }),
-        axios.get(`${API_URL}/seller/orders?page=1&limit=5`, { headers }),
-        axios.get(`${API_URL}/seller/myproducts`, { headers }),
-        axios.get(`${API_URL}/seller/new-order-notifications`, { headers })
+        axios.get(`${API_URL}/seller/dashboard-stats?${queryParams}`, { headers: requestHeaders }),
+        axios.get(`${API_URL}/seller/orders?page=1&limit=5&${queryParams}`, { headers: requestHeaders }),
+        axios.get(`${API_URL}/seller/myproducts?${queryParams}`, { headers: requestHeaders }),
+        axios.get(`${API_URL}/seller/new-order-notifications?${queryParams}`, { headers: requestHeaders })
       ]);
 
       setStats(statsRes.data?.data);
@@ -98,6 +166,23 @@ const SellerDashboard = () => {
     return colors[status] || "bg-gray-500/20 text-gray-300 border-gray-500/50";
   };
 
+  // Dynamic Navigation Links
+  const ordersLink = isAdminMode 
+    ? `/Admin/Seller-Orders?sellerId=${adminSellerId}&sellerName=${encodeURIComponent(adminSellerName)}` 
+    : "/seller/orders";
+    
+  const productsLink = isAdminMode 
+    ? `/Admin/Seller-Products?sellerId=${adminSellerId}&sellerName=${encodeURIComponent(adminSellerName)}` 
+    : "/seller/myproducts";
+    
+  const addProductLink = isAdminMode 
+    ? "/Admin/Seller-AddProduct" 
+    : "/seller/add-product";
+    
+  const profileLink = isAdminMode 
+    ? "/Admin/profile" 
+    : "/seller/profile";
+
   if (loading) {
     return <Loader fullPage text="Loading dashboard..." />;
   }
@@ -121,12 +206,12 @@ const SellerDashboard = () => {
         <div className="mb-6 text-center">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent mb-2">
-                Seller Dashboard
+              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent mb-2 animate-none">
+                {isAdminMode ? `Seller Stats: ${adminSellerName}` : "Seller Dashboard"}
               </h1>
               <p className="text-zinc-400 text-sm italic flex items-center justify-center gap-2">
                 <Activity className="w-4 h-4 text-yellow-400 animate-pulse" />
-                Overview of your store performance
+                {isAdminMode ? `Auditing store performance for ${adminSellerName}` : "Overview of your store performance"}
               </p>
             </div>
             <button
@@ -140,6 +225,45 @@ const SellerDashboard = () => {
           </div>
           <hr className="border-zinc-700 rounded-full mx-auto w-1/2" />
         </div>
+
+        {/* Admin Header Controls */}
+        {isAdminMode && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-6 p-4 bg-zinc-800/40 border border-zinc-700 rounded-xl animate-in slide-in-from-top-4 duration-300">
+            <Link
+              to="/Admin/Sellers-List"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 text-xs font-bold text-yellow-400 hover:text-yellow-300 transition-all bg-zinc-900 hover:bg-zinc-950 px-4 py-2.5 rounded-lg border border-zinc-700 hover:border-yellow-400 active:scale-[0.98] shadow-md animate-none"
+            >
+              ← Back to Sellers List
+            </Link>
+            
+            {approvedSellers.length > 0 && (
+              <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 bg-zinc-900 px-3.5 py-1.5 rounded-lg border border-zinc-750 shadow-inner">
+                <span className="text-zinc-400 text-xs font-bold whitespace-nowrap">Viewing stats for:</span>
+                <select
+                  value={adminSellerId || ""}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    const sel = approvedSellers.find(s => (s.user?._id || s.user) === selId);
+                    setAdminSellerId(selId);
+                    if (sel) {
+                      setAdminSellerName(sel.fullName);
+                    }
+                  }}
+                  className="bg-transparent py-1.5 focus:outline-none text-yellow-400 font-extrabold text-xs sm:text-sm cursor-pointer outline-none border-none animate-none"
+                >
+                  {approvedSellers.map((seller) => {
+                    const sId = seller.user?._id || seller.user;
+                    return (
+                      <option key={seller._id} value={sId} className="bg-zinc-900 text-white font-medium">
+                        {seller.fullName} ({seller.businessName || "No Business Name"})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Notifications Banner */}
         {notifications.length > 0 && (
@@ -158,14 +282,14 @@ const SellerDashboard = () => {
                     </div>
                   ))}
                   {notifications.length > 3 && (
-                    <Link to="/seller/orders" className="text-xs text-blue-400 hover:text-blue-300">
+                    <Link to={ordersLink} className="text-xs text-blue-400 hover:text-blue-300">
                       +{notifications.length - 3} more orders
                     </Link>
                   )}
                 </div>
               </div>
               <Link
-                to="/seller/orders"
+                to={ordersLink}
                 className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-all"
               >
                 View All
@@ -178,7 +302,7 @@ const SellerDashboard = () => {
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
 
-            {/* ✅ Total Revenue (totalEarned — all delivered orders, ever) */}
+            {/* Total Revenue */}
             <div className="bg-zinc-800/40 rounded-lg border border-zinc-700 p-4 hover:border-green-400/50 transition-all group">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-zinc-400 text-xs font-semibold">Total Revenue</span>
@@ -195,7 +319,7 @@ const SellerDashboard = () => {
               </div>
             </div>
 
-            {/* 💰 Wallet Balance (available to withdraw) */}
+            {/* Wallet Balance */}
             <div className="bg-zinc-800/40 rounded-lg border border-zinc-700 p-4 hover:border-yellow-400/50 transition-all group">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-zinc-400 text-xs font-semibold">Wallet Balance</span>
@@ -209,7 +333,7 @@ const SellerDashboard = () => {
               <p className="text-xs text-yellow-400 font-medium">Available to withdraw</p>
             </div>
 
-            {/* ⏳ Pending Revenue (in-transit, not yet paid out) */}
+            {/* Pending Revenue */}
             <div className="bg-zinc-800/40 rounded-lg border border-zinc-700 p-4 hover:border-orange-400/50 transition-all group">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-zinc-400 text-xs font-semibold">Pending</span>
@@ -223,7 +347,7 @@ const SellerDashboard = () => {
               <p className="text-xs text-orange-400 font-medium">Awaiting delivery</p>
             </div>
 
-            {/* 📦 Total Orders */}
+            {/* Total Orders */}
             <div className="bg-zinc-800/40 rounded-lg border border-zinc-700 p-4 hover:border-blue-400/50 transition-all group">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-zinc-400 text-xs font-semibold">Total Orders</span>
@@ -262,7 +386,6 @@ const SellerDashboard = () => {
               </p>
             </div>
 
-            {/* Total Withdrawn */}
             <div className="bg-zinc-800/40 rounded-lg border border-zinc-700 p-3">
               <div className="flex items-center gap-2 mb-1">
                 <ArrowDown className="w-3 h-3 text-purple-400" />
@@ -278,7 +401,7 @@ const SellerDashboard = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <Link
-            to="/seller/add-book"
+            to={addProductLink}
             className="p-4 bg-gradient-to-br from-yellow-400/10 to-yellow-500/10 border border-yellow-400/30 rounded-lg hover:border-yellow-400/50 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -293,7 +416,7 @@ const SellerDashboard = () => {
           </Link>
 
           <Link
-            to="/seller/myproducts"
+            to={productsLink}
             className="p-4 bg-gradient-to-br from-blue-400/10 to-blue-500/10 border border-blue-400/30 rounded-lg hover:border-blue-400/50 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -308,7 +431,7 @@ const SellerDashboard = () => {
           </Link>
 
           <Link
-            to="/seller/orders"
+            to={ordersLink}
             className="p-4 bg-gradient-to-br from-green-400/10 to-green-500/10 border border-green-400/30 rounded-lg hover:border-green-400/50 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -323,7 +446,7 @@ const SellerDashboard = () => {
           </Link>
 
           <Link
-            to="/seller/profile"
+            to={profileLink}
             className="p-4 bg-gradient-to-br from-purple-400/10 to-purple-500/10 border border-purple-400/30 rounded-lg hover:border-purple-400/50 transition-all group"
           >
             <div className="flex items-center gap-3">
@@ -347,7 +470,7 @@ const SellerDashboard = () => {
                 <ShoppingCart className="w-5 h-5 text-green-400" />
                 Recent Orders
               </h2>
-              <Link to="/seller/orders" className="text-xs text-yellow-400 hover:text-yellow-300">
+              <Link to={ordersLink} className="text-xs text-yellow-400 hover:text-yellow-300">
                 View All →
               </Link>
             </div>
@@ -387,7 +510,6 @@ const SellerDashboard = () => {
                         <p className="text-sm font-bold text-yellow-400">
                           ₹{order.amountPayable.toLocaleString()}
                         </p>
-                        {/* Show wallet-credited badge for delivered orders */}
                         {order.orderStatus === "Delivered" && (
                           <span className="text-xs text-green-400 flex items-center gap-0.5 justify-end mt-1">
                             <Wallet className="w-3 h-3" /> Credited
@@ -408,7 +530,7 @@ const SellerDashboard = () => {
                 <TrendingUp className="w-5 h-5 text-blue-400" />
                 Top Products
               </h2>
-              <Link to="/seller/myproducts" className="text-xs text-yellow-400 hover:text-yellow-300">
+              <Link to={productsLink} className="text-xs text-yellow-400 hover:text-yellow-300">
                 View All →
               </Link>
             </div>
@@ -418,7 +540,7 @@ const SellerDashboard = () => {
                 <Package className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                 <p className="text-sm text-gray-400">No products yet</p>
                 <Link
-                  to="/seller/add-book"
+                  to={addProductLink}
                   className="inline-block mt-3 px-4 py-2 bg-yellow-400/20 text-yellow-400 rounded-lg text-xs hover:bg-yellow-400/30 transition-all"
                 >
                   Add Your First Product
@@ -496,7 +618,7 @@ const SellerDashboard = () => {
                 </div>
                 {lowStockProducts.length > 4 && (
                   <Link
-                    to="/seller/myproducts"
+                    to={productsLink}
                     className="text-xs text-red-400 hover:text-red-300 mt-3 inline-block"
                   >
                     +{lowStockProducts.length - 4} more products need restocking
@@ -511,4 +633,4 @@ const SellerDashboard = () => {
   );
 };
 
-export default SellerDashboard;
+export default SellerDashboard;

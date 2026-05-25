@@ -18,21 +18,21 @@ import { useDispatch } from "react-redux";
 import { authActions } from "../../store/auth";
 
 const userLinks = [
-  { title: "Dashboard", link: "/admin/dashboard", icon: <FaTachometerAlt /> },
-  { title: "Users", link: "/admin/Users-List", icon: <FaUsers /> },
-  { title: "Books", link: "/admin/books", icon: <FaBook /> },
-  { title: "Add Book", link: "/admin/Addbook", icon: <FaPlus /> },
-  { title: "Manage Orders", link: "/admin/orders", icon: <FaTruck /> },
-  { title: "Settings", link: "/admin/settings", icon: <FaCog /> },
+  { title: "Dashboard", link: "/Admin/Sellers-List", icon: <FaTachometerAlt /> },
+  { title: "Users", link: "/Admin/Users-List", icon: <FaUsers /> },
+  { title: "Books", link: "/Admin/books", icon: <FaBook /> },
+  { title: "Add Book", link: "/Admin/AddBook", icon: <FaPlus /> },
+  { title: "Manage Orders", link: "/Admin/Seller-Orders", icon: <FaTruck /> },
+  { title: "Settings", link: "/Admin/profile", icon: <FaCog /> },
 ];
 
 const sellerLinks = [
-  { title: "Seller Dashboard", link: "/seller/dashboard", icon: <FaStore /> },
-  { title: "All Sellers", link: "/admin/Sellers-List", icon: <FaUsers /> },
+  { title: "Seller Dashboard", link: "/Admin/Seller-Dashboard", icon: <FaStore /> },
+  { title: "All Sellers", link: "/Admin/Sellers-List", icon: <FaUsers /> },
   { title: "Products", link: "/Admin/Seller-Products", icon: <FaClipboardList /> },
-  { title: "Add Product", link: "/seller/add", icon: <FaPlus /> },
-  { title: "Seller Orders", link: "/seller/orders", icon: <FaTruck /> },
-  { title: "Seller Settings", link: "/seller/settings", icon: <FaTags /> },
+  { title: "Add Product", link: "/Admin/Seller-AddProduct", icon: <FaPlus /> },
+  { title: "Seller Orders", link: "/Admin/Seller-Orders", icon: <FaTruck /> },
+  { title: "Seller Settings", link: "/Admin/Seller-Settings", icon: <FaTags /> },
 ];
 
 const AdminNavbar = () => {
@@ -83,7 +83,7 @@ const AdminNavbar = () => {
             onClick={() => setMobileOpen(!mobileOpen)}
             className="text-yellow-400 text-xl cursor-pointer lg:hidden"
           />
-          <Link to={isSeller ? "/seller/dashboard" : "/admin/dashboard"} className="flex items-center gap-2">
+          <Link to={isSeller ? "/Admin/Seller-Dashboard" : "/Admin/Sellers-List"} className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-yellow-400">
               {isSeller ? "Seller Panel" : "Admin Panel"}
             </h1>

@@ -183,6 +183,7 @@ const router = require("express").Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const Book = require("../models/book");
+const BookView = require("../models/bookView");
 const { authenticateToken } = require("./userAuth");
 const cloudinary = require("cloudinary").v2;
 const multer = require("multer");
@@ -838,6 +839,85 @@ router.get("/get-book-by-id/:id", async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "An error occurred" });
+  }
+});
+
+// 🔥 POST: Track Unique Book View
+const crypto = require("crypto");
+const JWT_SECRET = process.env.JWT_SECRET || "bookStore123";
+
+router.post("/track-view/:id", async (req, res) => {
+  try {
+    const bookId = req.params.id;
+
+    // Validate Book ID
+    if (!bookId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: "Invalid book ID format" });
+    }
+
+    // Solve for viewerId using standard 3-tier strategy
+    let viewerId = null;
+
+    // 1. JWT verification
+    try {
+      const authHeader = req.headers["authorization"];
+      const token = authHeader && authHeader.split(" ")[1];
+      if (token) {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const userId = req.headers.id || decoded.authClaims?.[0]?.id;
+        if (userId) viewerId = userId.toString();
+      }
+    } catch (err) {
+      // Ignored - fallback to guest headers
+    }
+
+    // 2. Custom header x-visitor-id
+    if (!viewerId) {
+      viewerId = req.headers["x-visitor-id"];
+    }
+
+    // 3. Fallback: Hashed IP + UserAgent
+    if (!viewerId) {
+      const ip = req.ip || req.connection.remoteAddress || "anonymous";
+      const userAgent = req.headers["user-agent"] || "";
+      viewerId = crypto.createHash("sha256").update(`${ip}-${userAgent}`).digest("hex");
+    }
+
+    // Create unique BookView record to atomically deduplicate
+    try {
+      const newView = new BookView({ book: bookId, viewerId });
+      await newView.save();
+
+      // Successfully saved unique view! Increment book's view count
+      const updatedBook = await Book.findByIdAndUpdate(
+        bookId,
+        { $inc: { views: 1 } },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Unique view recorded successfully",
+        views: updatedBook ? updatedBook.views : 0,
+        isUnique: true
+      });
+    } catch (dbError) {
+      // Catch MongoDB duplicate key error code 11000
+      if (dbError.code === 11000) {
+        // Fetch current views count to return accurate dashboard updates
+        const book = await Book.findById(bookId).select("views");
+        return res.status(200).json({
+          success: true,
+          message: "Duplicate view ignored",
+          views: book ? book.views : 0,
+          isUnique: false
+        });
+      }
+      throw dbError; // rethrow other DB exceptions
+    }
+  } catch (error) {
+    console.error("❌ Error in view tracking route:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 

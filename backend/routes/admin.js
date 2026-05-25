@@ -4282,7 +4282,7 @@ router.get("/admin/users/stats/summary", authenticateToken, isAdmin, async (req,
 // ✅ GET: Get all sellers
 router.get("/admin/sellers", authenticateToken, isAdmin, async (req, res) => {
   try {
-    const sellers = await Seller.find().sort({ createdAt: -1 });
+    const sellers = await Seller.find().populate("user", "username email phone avatar role").sort({ createdAt: -1 });
     
     res.status(200).json({ 
       success: true,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   FaEdit, FaTrash, FaEye, FaClock, FaCheckCircle, FaTimesCircle,
@@ -15,6 +16,7 @@ import { useAlert } from '../../Alert/useAlert';
 import Loader from '../../Loader/Loader';
 
 const SellerProduct = () => {
+  const navigate = useNavigate();
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +31,13 @@ const SellerProduct = () => {
   const [newStockValue, setNewStockValue] = useState('');
   const [newPriceValue, setNewPriceValue] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  
+  // Admin seller view filter states
+  const [adminSellerId, setAdminSellerId] = useState(null);
+  const [adminSellerName, setAdminSellerName] = useState("");
+
   const { alert, showAlert, hideAlert, success, error, warning, info } = useAlert();
-const BASE_URL = import.meta.env.VITE_API_URL
+  const BASE_URL = import.meta.env.VITE_API_URL
   const API_URL = `${BASE_URL}/api/v1`;
 
   const headers = {
@@ -39,13 +46,20 @@ const BASE_URL = import.meta.env.VITE_API_URL
   };
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const qSellerId = params.get("sellerId");
+    const qSellerName = params.get("sellerName");
+    if (qSellerId) {
+      setAdminSellerId(qSellerId);
+      setAdminSellerName(qSellerName || "Seller");
+    }
     fetchBooks();
     fetchAutoStatusSetting();
   }, []);
 
   useEffect(() => {
     filterAndSortBooks();
-  }, [filter, books, searchTerm, sortBy]);
+  }, [filter, books, searchTerm, sortBy, adminSellerId]);
 
   const fetchBooks = async () => {
     try {
@@ -70,6 +84,16 @@ const BASE_URL = import.meta.env.VITE_API_URL
 
   const filterAndSortBooks = () => {
     let filtered = [...books];
+
+    // Apply seller filter if viewing a specific seller's catalog
+    if (adminSellerId) {
+      filtered = filtered.filter(book => 
+        book.seller?._id === adminSellerId || 
+        book.seller === adminSellerId ||
+        book.createdBy === adminSellerId ||
+        book.createdBy?._id === adminSellerId
+      );
+    }
 
     // Apply search filter
     if (searchTerm) {
@@ -338,14 +362,22 @@ const BASE_URL = import.meta.env.VITE_API_URL
         {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between animate-slideDown">
           <div>
-            <h1 className="text-5xl font-black mb-2 bg-gradient-to-r from-purple-400 via-fuchsia-300 to-pink-500 bg-clip-text text-transparent animate-gradient">
-              📚 Admin Book Management
+            <h1 className="text-5xl font-black mb-2 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent">
+              {adminSellerId ? `Catalog: ${adminSellerName}` : "📚 Admin Book Management"}
             </h1>
             <p className="text-gray-400 text-lg flex items-center gap-2">
-              <Settings className="w-4 h-4 text-purple-400 animate-pulse" />
-              Manage all seller products and inventory
+              <Settings className="w-4 h-4 text-yellow-400 animate-pulse" />
+              {adminSellerId ? `Managing catalog items for ${adminSellerName}` : "Manage all seller products and inventory"}
             </p>
           </div>
+          {adminSellerId && (
+            <button
+              onClick={() => navigate('/Admin/Sellers-List')}
+              className="mt-4 md:mt-0 flex items-center gap-2 px-5 py-3 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 font-bold rounded-2xl border border-zinc-700 hover:border-yellow-400 transition-all shadow-md active:scale-95 text-sm"
+            >
+              ← Back to Sellers List
+            </button>
+          )}
         </div>
 
         {/* Stats Cards */}

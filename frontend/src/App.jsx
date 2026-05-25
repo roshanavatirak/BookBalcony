@@ -234,10 +234,14 @@ const SellerRouteGuard = ({ children }) => {
         headers: { authorization: `Bearer ${token}`, id }
       }).then(res => {
         const u = res.data?.data || res.data;
+        const isAdmin = u?.role === 'admin' || localStorage.getItem('role') === 'admin';
         const isSeller = u?.isSeller === true || u?.isSeller === 'true';
         const isApproved = u?.sellerApplicationStatus === 'Accepted';
-        setAllowed(isSeller && isApproved);
-      }).catch(() => setAllowed(false))
+        setAllowed(isAdmin || (isSeller && isApproved));
+      }).catch(() => {
+        const isAdmin = localStorage.getItem('role') === 'admin';
+        setAllowed(isAdmin);
+      })
         .finally(() => setChecking(false));
     });
   }, []);
@@ -377,6 +381,10 @@ const App = () => {
         <Route path="/Admin/Users-List" element={<AdminUsers />} />
         <Route path="/Admin/Sellers-List" element={<AdminSellers />} />
         <Route path="/Admin/Seller-Products" element={<SellerProduct />} />
+        <Route path="/Admin/Seller-Orders" element={<SellerOrdersDashboard />} />
+        <Route path="/Admin/Seller-Dashboard" element={<SellerDashboard />} />
+        <Route path="/Admin/Seller-AddProduct" element={<SellerAddBook />} />
+        <Route path="/Admin/Seller-Settings" element={<Settings />} />
 
         <Route path="/Admin/books" element={<AllBooks />} />
 

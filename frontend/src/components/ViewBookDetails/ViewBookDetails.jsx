@@ -153,9 +153,29 @@ const ViewBookDetails = () => {
     const trackView = async () => {
       if (!isViewTracked && Data) {
         try {
-          await axios.post(`${API_URL}/track-view/${id}`);
+          // Resolve visitorId securely
+          let visitorId = localStorage.getItem("visitor_id");
+          if (!visitorId) {
+            visitorId = window.crypto && window.crypto.randomUUID 
+              ? window.crypto.randomUUID() 
+              : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem("visitor_id", visitorId);
+          }
+
+          const trackHeaders = {
+            id: localStorage.getItem("id"),
+            authorization: `Bearer ${localStorage.getItem("token")}`,
+            "x-visitor-id": visitorId,
+          };
+
+          const res = await axios.post(`${API_URL}/track-view/${id}`, {}, { headers: trackHeaders });
           setIsViewTracked(true);
-          setViewCount(prev => prev + 1);
+          
+          if (res.data && res.data.views !== undefined) {
+            setViewCount(res.data.views);
+          } else {
+            setViewCount(prev => prev + 1);
+          }
         } catch (err) {
           console.error("Error tracking view:", err);
         }

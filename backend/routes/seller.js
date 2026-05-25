@@ -2112,12 +2112,28 @@ router.post("/withdraw", authenticateToken, async (req, res) => {
 router.get("/orders", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { status, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const { status, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', sellerId: querySellerId } = req.query;
 
     console.log('📦 [Seller Orders] Fetching orders for user:', userId);
 
+    let targetUserId = userId;
+    if (req.user && req.user.role === "admin") {
+      if (querySellerId) {
+        targetUserId = querySellerId;
+      } else if (req.headers.sellerid) {
+        targetUserId = req.headers.sellerid;
+      }
+    }
+
     // Find seller record
-    const seller = await Seller.findOne({ user: userId });
+    let seller = await Seller.findOne({ user: targetUserId });
+    
+    if (!seller && req.user && req.user.role === "admin") {
+      seller = await Seller.findOne({ status: "Approved" });
+      if (!seller) {
+        seller = await Seller.findOne();
+      }
+    }
     
     if (!seller) {
       return res.status(403).json({
@@ -2126,7 +2142,7 @@ router.get("/orders", authenticateToken, async (req, res) => {
       });
     }
 
-    if (seller.status !== 'Approved') {
+    if (seller.status !== 'Approved' && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: "Seller account is not approved yet.",
@@ -2178,12 +2194,16 @@ router.get("/orders", authenticateToken, async (req, res) => {
       }
     ]);
 
+    const pendingCount = stats.filter(s => ['Order Placed', 'Processing'].includes(s._id)).reduce((sum, s) => sum + s.count, 0);
+    const shippedCount = stats.filter(s => ['Shipped', 'Out for Delivery'].includes(s._id)).reduce((sum, s) => sum + s.count, 0);
+    const deliveredCount = stats.find(s => s._id === 'Delivered')?.count || 0;
+
     const statsFormatted = {
       total: totalOrders,
-      pending: stats.find(s => s._id === 'Order Placed')?.count || 0,
+      pending: pendingCount,
+      shipped: shippedCount,
+      delivered: deliveredCount,
       processing: stats.find(s => s._id === 'Processing')?.count || 0,
-      shipped: stats.find(s => s._id === 'Shipped')?.count || 0,
-      delivered: stats.find(s => s._id === 'Delivered')?.count || 0,
       cancelled: stats.find(s => s._id === 'Cancelled')?.count || 0,
       totalRevenue: stats.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
     };
@@ -2227,14 +2247,17 @@ router.get("/orders/:orderId", authenticateToken, async (req, res) => {
 
     console.log('📦 [Seller Orders] Fetching order details:', orderId);
 
-    // Find seller record
-    const seller = await Seller.findOne({ user: userId });
-    
-    if (!seller) {
-      return res.status(403).json({
-        success: false,
-        message: "User is not a registered seller.",
-      });
+    const isUserAdmin = req.user && req.user.role === "admin";
+    let seller = null;
+    if (!isUserAdmin) {
+      seller = await Seller.findOne({ user: userId });
+      
+      if (!seller) {
+        return res.status(403).json({
+          success: false,
+          message: "User is not a registered seller.",
+        });
+      }
     }
 
     // Fetch order with full details
@@ -2256,7 +2279,7 @@ router.get("/orders/:orderId", authenticateToken, async (req, res) => {
     }
 
     // Verify this order contains seller's book
-    if (order.book.seller.toString() !== seller._id.toString()) {
+    if (!isUserAdmin && order.book.seller.toString() !== seller._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Access denied. This order does not belong to you."
@@ -2310,14 +2333,17 @@ router.put("/orders/:orderId/status", authenticateToken, async (req, res) => {
       });
     }
 
-    // Find seller record
-    const seller = await Seller.findOne({ user: userId });
-    
-    if (!seller || seller.status !== 'Approved') {
-      return res.status(403).json({
-        success: false,
-        message: "Seller account not found or not approved.",
-      });
+    const isUserAdmin = req.user && req.user.role === "admin";
+    let seller = null;
+    if (!isUserAdmin) {
+      seller = await Seller.findOne({ user: userId });
+      
+      if (!seller || seller.status !== 'Approved') {
+        return res.status(403).json({
+          success: false,
+          message: "Seller account not found or not approved.",
+        });
+      }
     }
 
     // Fetch order
@@ -2331,7 +2357,7 @@ router.put("/orders/:orderId/status", authenticateToken, async (req, res) => {
     }
 
     // Verify ownership
-    if (order.book.seller.toString() !== seller._id.toString()) {
+    if (!isUserAdmin && order.book.seller.toString() !== seller._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Access denied. This order does not belong to you."
@@ -2352,24 +2378,26 @@ router.put("/orders/:orderId/status", authenticateToken, async (req, res) => {
     // Transitioning INTO "Delivered" for the first time →
     // credit amountPayable to walletBalance + totalEarned
     if (status === 'Delivered' && previousStatus !== 'Delivered') {
-      await Seller.findByIdAndUpdate(seller._id, {
+      const creditSellerId = isUserAdmin ? order.book.seller : seller._id;
+      await Seller.findByIdAndUpdate(creditSellerId, {
         $inc: {
           walletBalance: order.amountPayable,
           totalEarned:   order.amountPayable,
         },
       });
-      console.log(`✅ Wallet credited ₹${order.amountPayable} for seller ${seller._id}`);
+      console.log(`✅ Wallet credited ₹${order.amountPayable} for seller ${creditSellerId}`);
     }
 
     // Edge-case: delivered → cancelled → reverse the credit
     if (status === 'Cancelled' && previousStatus === 'Delivered') {
-      await Seller.findByIdAndUpdate(seller._id, {
+      const creditSellerId = isUserAdmin ? order.book.seller : seller._id;
+      await Seller.findByIdAndUpdate(creditSellerId, {
         $inc: {
           walletBalance: -order.amountPayable,
           totalEarned:   -order.amountPayable,
         },
       });
-      console.log(`⚠️ Wallet credit reversed ₹${order.amountPayable} for seller ${seller._id}`);
+      console.log(`⚠️ Wallet credit reversed ₹${order.amountPayable} for seller ${creditSellerId}`);
     }
     // ─────────────────────────────────────────────────────────
 
@@ -2465,14 +2493,17 @@ router.post("/orders/:orderId/tracking", authenticateToken, async (req, res) => 
       });
     }
 
-    // Find seller record
-    const seller = await Seller.findOne({ user: userId });
-    
-    if (!seller || seller.status !== 'Approved') {
-      return res.status(403).json({
-        success: false,
-        message: "Seller account not found or not approved.",
-      });
+    const isUserAdmin = req.user && req.user.role === "admin";
+    let seller = null;
+    if (!isUserAdmin) {
+      seller = await Seller.findOne({ user: userId });
+      
+      if (!seller || seller.status !== 'Approved') {
+        return res.status(403).json({
+          success: false,
+          message: "Seller account not found or not approved.",
+        });
+      }
     }
 
     // Fetch order
@@ -2486,7 +2517,7 @@ router.post("/orders/:orderId/tracking", authenticateToken, async (req, res) => 
     }
 
     // Verify ownership
-    if (order.book.seller.toString() !== seller._id.toString()) {
+    if (!isUserAdmin && order.book.seller.toString() !== seller._id.toString()) {
       return res.status(403).json({
         success: false,
         message: "Access denied. This order does not belong to you."
@@ -3226,9 +3257,26 @@ router.get("/get-seller-info", authenticateToken, async (req, res) => {
 router.get("/myproducts", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
+    const { sellerId: querySellerId } = req.query;
+
+    let targetUserId = userId;
+    if (req.user && req.user.role === "admin") {
+      if (querySellerId) {
+        targetUserId = querySellerId;
+      } else if (req.headers.sellerid) {
+        targetUserId = req.headers.sellerid;
+      }
+    }
 
     // First, check if this user is a seller
-    const seller = await Seller.findOne({ user: userId });
+    let seller = await Seller.findOne({ user: targetUserId });
+
+    if (!seller && req.user && req.user.role === "admin") {
+      seller = await Seller.findOne({ status: "Approved" });
+      if (!seller) {
+        seller = await Seller.findOne();
+      }
+    }
 
     if (!seller) {
       return res.status(403).json({
