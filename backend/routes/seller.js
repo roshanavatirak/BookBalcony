@@ -1929,12 +1929,19 @@
 
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Seller = require("../models/seller");
 const {authenticateToken} = require("./userAuth");
 const Book = require("../models/book"); 
 const User = require("../models/user");
 const Order = require("../models/order");
 const { sendOrderStatusEmail } = require("../services/emailService");
+const {
+  getCache,
+  setCache,
+  invalidateSellerStatsCache,
+} = require("../config/redis");
+
 
 // ==========================================
 // TEST ROUTE
@@ -1954,9 +1961,23 @@ router.get("/test", (req, res) => {
  */
 router.get("/dashboard-stats", authenticateToken, async (req, res) => {
   try {
-    const userId = req.headers.id;
+    let userId = req.headers.id;
+    const { sellerId: querySellerId } = req.query;
 
-    const seller = await Seller.findOne({ user: userId }).select(
+    if (req.user && req.user.role === "admin") {
+      if (querySellerId) {
+        userId = querySellerId;
+      } else if (req.headers.sellerid) {
+        userId = req.headers.sellerid;
+      }
+    }
+
+    const seller = await Seller.findOne({
+      $or: [
+        { user: mongoose.isValidObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null },
+        { _id: mongoose.isValidObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null }
+      ]
+    }).select(
       "walletBalance totalEarned totalWithdrawn _id status"
     );
 
@@ -1966,6 +1987,16 @@ router.get("/dashboard-stats", authenticateToken, async (req, res) => {
 
     if (seller.status !== "Approved") {
       return res.status(403).json({ message: "Seller account is not approved yet." });
+    }
+
+    // Check Redis cache for seller stats
+    const cacheKey = `cache:seller:stats:${seller._id}`;
+    const cachedStats = await getCache(cacheKey);
+    if (cachedStats) {
+      return res.status(200).json({
+        message: "Dashboard stats fetched",
+        data: cachedStats,
+      });
     }
 
     // Pending revenue = sum of amountPayable for in-transit orders
@@ -1983,18 +2014,25 @@ router.get("/dashboard-stats", authenticateToken, async (req, res) => {
 
     const totalOrders = await Order.countDocuments({ seller: seller._id });
 
+    const statsData = {
+      overview: {
+        totalRevenue: seller.totalEarned || 0,      // lifetime from delivered orders
+        walletBalance: seller.walletBalance || 0,   // available to withdraw
+        pendingRevenue,                              // in-transit orders not yet paid out
+        totalWithdrawn: seller.totalWithdrawn || 0,
+        totalOrders,
+      },
+    };
+
+    // Store in cache for 30 days (2,592,000 seconds)
+    await setCache(cacheKey, statsData, 2592000);
+
+
     return res.status(200).json({
       message: "Dashboard stats fetched",
-      data: {
-        overview: {
-          totalRevenue: seller.totalEarned || 0,      // lifetime from delivered orders
-          walletBalance: seller.walletBalance || 0,   // available to withdraw
-          pendingRevenue,                              // in-transit orders not yet paid out
-          totalWithdrawn: seller.totalWithdrawn || 0,
-          totalOrders,
-        },
-      },
+      data: statsData,
     });
+
   } catch (err) {
     console.error("getDashboardStats error:", err);
     return res.status(500).json({ message: "Internal server error" });
@@ -2012,9 +2050,23 @@ router.get("/dashboard-stats", authenticateToken, async (req, res) => {
  */
 router.get("/new-order-notifications", authenticateToken, async (req, res) => {
   try {
-    const userId = req.headers.id;
+    let userId = req.headers.id;
+    const { sellerId: querySellerId } = req.query;
 
-    const seller = await Seller.findOne({ user: userId }).select("_id status");
+    if (req.user && req.user.role === "admin") {
+      if (querySellerId) {
+        userId = querySellerId;
+      } else if (req.headers.sellerid) {
+        userId = req.headers.sellerid;
+      }
+    }
+
+    const seller = await Seller.findOne({
+      $or: [
+        { user: mongoose.isValidObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null },
+        { _id: mongoose.isValidObjectId(userId) ? new mongoose.Types.ObjectId(userId) : null }
+      ]
+    }).select("_id status");
     if (!seller) {
       return res.status(404).json({ message: "Seller profile not found" });
     }
@@ -2442,7 +2494,13 @@ router.put("/orders/:orderId/status", authenticateToken, async (req, res) => {
 
     await order.save();
 
+    // 🧹 Invalidate seller dashboard stats cache
+    if (order.seller) {
+      await invalidateSellerStatsCache(order.seller.toString());
+    }
+
     console.log('✅ [Seller Orders] Order status updated successfully');
+
 
     // Re-fetch order with populated data
     const updatedOrder = await Order.findById(orderId)

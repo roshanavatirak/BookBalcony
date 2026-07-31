@@ -6,6 +6,12 @@ const Seller = require("../models/seller");
 const { authenticateToken } = require("./userAuth");
 const { upload, cloudinary, handleMulterError } = require('../config/cloudinary');
 const { autoApproveBookMiddleware } = require("../middleware/autoApproveMiddleware");
+const {
+  invalidateBookCatalogCache,
+  invalidateBookDetailCache,
+  invalidateSellerStatsCache,
+} = require("../config/redis");
+
 
 
 // 🧹 Helper function to cleanup uploaded images
@@ -239,6 +245,10 @@ router.post(
         adminApproval: autoApprovalResult.book.adminApproval,
         isApproved: autoApprovalResult.book.isApproved
       });
+
+      // 🧹 Invalidate public catalog & seller dashboard stats caches
+      await invalidateBookCatalogCache();
+      await invalidateSellerStatsCache(seller._id.toString());
 
       // ==========================================
       // STEP 9: RETURN SUCCESS RESPONSE
@@ -774,7 +784,13 @@ router.put(
 
       console.log("✅ Book updated successfully!");
 
+      // 🧹 Invalidate public catalog, book detail, & seller stats caches
+      await invalidateBookCatalogCache();
+      await invalidateBookDetailCache(bookId);
+      await invalidateSellerStatsCache(seller._id.toString());
+
       return res.status(200).json({ 
+
         message: "✅ Book updated successfully!",
         book: {
           id: book._id,
@@ -1121,7 +1137,13 @@ router.put("/seller/update-book-stock/:id", authenticateToken, async (req, res) 
 
     await book.save();
 
+    // 🧹 Invalidate catalog, single book detail, and seller stats caches
+    await invalidateBookCatalogCache();
+    await invalidateBookDetailCache(bookId);
+    await invalidateSellerStatsCache(seller._id.toString());
+
     console.log(`✅ Stock updated: ${oldStock} → ${stock}`);
+
     console.log(`📊 Current status: ${book.productStatus}`);
 
     return res.status(200).json({ 

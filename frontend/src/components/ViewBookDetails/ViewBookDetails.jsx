@@ -4,7 +4,8 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import Loader from '../Loader/Loader';
 import { useParams, Link } from 'react-router-dom';
-import { extractIdFromSlug } from '../../utils/bookSlug';
+import { extractIdFromSlug, createBookSlug } from '../../utils/bookSlug';
+
 import { GrLanguage } from "react-icons/gr";
 import { motion, AnimatePresence } from 'framer-motion';
 import BookCard from '../BookCard/BookCard';
@@ -17,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { HiSparkles } from "react-icons/hi";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import { useBookDetails } from '../../hooks/useBooksQuery';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -24,9 +26,10 @@ const API_URL = `${BASE_URL}/api/v1`;
 const ViewBookDetails = () => {
   const { id: rawParam } = useParams();
   const id = extractIdFromSlug(rawParam);
-  const [Data, setData] = useState();
+  const { data: Data, isLoading: bookLoading } = useBookDetails(id);
   const [SimilarBooks, setSimilarBooks] = useState([]);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [sellerName, setSellerName] = useState("");
   const [isViewTracked, setIsViewTracked] = useState(false);
@@ -115,39 +118,33 @@ const ViewBookDetails = () => {
   };
 
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/get-book-by-id/${id}`);
-        setData(res.data.data);
-        setViewCount(res.data.data.views || 0);
+    const fetchExtraDetails = async () => {
+      if (!Data) return;
+      
+      setViewCount(Data.views || 0);
 
-        console.log("📚 Book data fetched:", {
-          title: res.data.data.title,
-          hasImages: !!res.data.data.images,
-          imagesCount: res.data.data.images?.length || 0,
-          images: res.data.data.images,
-          url: res.data.data.url
-        });
-
-        if (res.data.data.seller) {
-          try {
-            const sellerRes = await axios.get(`${API_URL}/get-user-info/${res.data.data.seller}`);
-            setSellerName(sellerRes.data.username || sellerRes.data.email);
-          } catch (err) {
-            console.error("Error fetching seller info:", err);
-            setSellerName("Unknown Seller");
-          }
+      if (Data.seller) {
+        try {
+          const sellerRes = await axios.get(`${API_URL}/get-user-info/${Data.seller}`);
+          setSellerName(sellerRes.data.username || sellerRes.data.email);
+        } catch (err) {
+          console.error("Error fetching seller info:", err);
+          setSellerName("Unknown Seller");
         }
+      }
 
-        const simRes = await axios.get(`${API_URL}/get-similar-books/${res.data.data.category}`);
+      try {
+        const simRes = await axios.get(`${API_URL}/get-similar-books/${Data.category}`);
         setSimilarBooks(simRes.data.data.filter(book => book._id !== id));
       } catch (err) {
-        console.error("Error fetching book:", err);
+        console.error("Error fetching similar books:", err);
       }
     };
-    fetch();
+
+    fetchExtraDetails();
     checkIfInCart();
-  }, [id]);
+  }, [id, Data]);
+
 
   useEffect(() => {
     const trackView = async () => {
@@ -239,7 +236,8 @@ const ViewBookDetails = () => {
       return;
     }
 
-    navigate(`/checkout/${id}`, {
+    const bookSlug = createBookSlug(Data?.title, Data?._id || id);
+    navigate(`/checkout/${bookSlug}`, {
       state: {
         book: {
           id: Data._id,
@@ -251,6 +249,7 @@ const ViewBookDetails = () => {
       },
     });
   };
+
 
   const handleCart = async () => {
     if (!isAvailableForPurchase()) {

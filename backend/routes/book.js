@@ -185,6 +185,15 @@ const jwt = require("jsonwebtoken");
 const Book = require("../models/book");
 const BookView = require("../models/bookView");
 const { authenticateToken } = require("./userAuth");
+const {
+  getCache,
+  setCache,
+  delCache,
+  invalidateBookCatalogCache,
+  invalidateBookDetailCache,
+} = require("../config/redis");
+
+
 const cloudinary = require("cloudinary").v2;
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
@@ -432,6 +441,10 @@ router.post(
       
       console.log("✅ Book saved successfully by admin!");
 
+      // 🧹 Invalidate public catalog cache
+      await invalidateBookCatalogCache();
+
+
       return res.status(201).json({ 
         message: "✅ Book added successfully!",
         book: {
@@ -628,6 +641,11 @@ router.put(
 
       console.log("✅ Book updated successfully by admin!");
 
+      // 🧹 Invalidate catalog and single book caches
+      await invalidateBookCatalogCache();
+      await invalidateBookDetailCache(bookId);
+
+
       return res.status(200).json({ 
         message: "✅ Book updated successfully!",
         book: {
@@ -702,6 +720,11 @@ router.delete(
       await Book.findByIdAndDelete(bookId);
       console.log("✅ Book deleted successfully from database by admin");
 
+      // 🧹 Invalidate catalog and single book caches
+      await invalidateBookCatalogCache();
+      await invalidateBookDetailCache(bookId);
+
+
       return res.status(200).json({
         message: "✅ Book deleted successfully"
       });
@@ -774,7 +797,18 @@ router.get(
 // 📚 GET: Get All Books
 router.get("/get-all-books", async (req, res) => {
   try {
+    const cacheKey = "cache:books:all";
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      return res.json({
+        status: "Success",
+        data: cachedData,
+      });
+    }
+
     const books = await Book.find().sort({ createdAt: -1 });
+    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+
     return res.json({
       status: "Success",
       data: books,
@@ -788,7 +822,18 @@ router.get("/get-all-books", async (req, res) => {
 // 📚 GET: Get Recently Added Books
 router.get("/get-recent-books", async (req, res) => {
   try {
+    const cacheKey = "cache:books:recent";
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      return res.json({
+        status: "Success",
+        data: cachedData,
+      });
+    }
+
     const books = await Book.find().sort({ createdAt: -1 }).limit(20);
+    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+
     return res.json({
       status: "Success",
       data: books,
@@ -802,7 +847,18 @@ router.get("/get-recent-books", async (req, res) => {
 // 🔥 GET: Get Trending Books
 router.get("/get-trending-books", async (req, res) => {
   try {
+    const cacheKey = "cache:books:trending";
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      return res.json({
+        status: "Success",
+        data: cachedData,
+      });
+    }
+
     const books = await Book.find().sort({ views: -1 }).limit(10);
+    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+
     return res.json({
       status: "Success",
       data: books,
@@ -816,7 +872,18 @@ router.get("/get-trending-books", async (req, res) => {
 // ⭐ GET: Get Editor's Choice Books
 router.get("/get-editors-choice", async (req, res) => {
   try {
+    const cacheKey = "cache:books:editors";
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      return res.json({
+        status: "Success",
+        data: cachedData,
+      });
+    }
+
     const books = await Book.find().sort({ sold: -1 }).limit(4);
+    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+
     return res.json({
       status: "Success",
       data: books,
@@ -827,11 +894,25 @@ router.get("/get-editors-choice", async (req, res) => {
   }
 });
 
+
 // 📖 GET: Get Book By ID
 router.get("/get-book-by-id/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const cacheKey = `cache:book:${id}`;
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      return res.json({
+        status: "Success",
+        data: cachedData,
+      });
+    }
+
     const book = await Book.findById(id);
+    if (book) {
+      await setCache(cacheKey, book, 2592000); // 30 days (2,592,000s) TTL
+    }
+
     return res.json({
       status: "Success",
       data: book,
@@ -841,6 +922,7 @@ router.get("/get-book-by-id/:id", async (req, res) => {
     return res.status(500).json({ message: "An error occurred" });
   }
 });
+
 
 // 🔥 POST: Track Unique Book View
 const crypto = require("crypto");
@@ -894,6 +976,11 @@ router.post("/track-view/:id", async (req, res) => {
         { $inc: { views: 1 } },
         { new: true }
       );
+
+      // 🧹 Invalidate trending books & single book cache so view counts reflect in real-time
+      await delCache("cache:books:trending");
+      await invalidateBookDetailCache(bookId);
+
 
       return res.status(200).json({
         success: true,

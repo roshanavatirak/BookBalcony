@@ -51,12 +51,14 @@ const Cart = () => {
       return;
     }
 
-    navigate(`/checkout/cart`, {
+    const userId = localStorage.getItem("id") || "session";
+    navigate(`/checkout/cart-${userId}`, {
       state: {
         cartItems: cart
       },
     });
   };
+
 
   const totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
   const savings = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
@@ -66,7 +68,8 @@ const Cart = () => {
   }, []);
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 via-zinc-900 to-black min-h-screen relative overflow-hidden">
+    <div className="bg-gradient-to-br from-gray-900 via-zinc-800 to-gray-900 min-h-screen relative overflow-hidden">
+
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div

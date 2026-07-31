@@ -5,6 +5,12 @@ const User = require("../models/user");
 const Book = require("../models/book");
 const mongoose = require("mongoose");
 const { sendOrderStatusEmail } = require("../services/emailService");
+const {
+  invalidateBookCatalogCache,
+  invalidateBookDetailCache,
+  invalidateSellerStatsCache,
+} = require("../config/redis");
+
 // // 📌 Place an order
 // router.post("/place-order", authenticateToken, async (req, res) => {
 //   try {
@@ -197,7 +203,13 @@ router.post("/place-order", authenticateToken, async (req, res) => {
       await Book.findByIdAndUpdate(book._id, {
         $inc: { sold: 1, stock: -1 }
       });
+
+      // 🧹 Invalidate public catalog, single book detail, and seller stats caches
+      await invalidateBookCatalogCache();
+      await invalidateBookDetailCache(book._id.toString());
+      await invalidateSellerStatsCache(book.seller.toString());
     }
+
 
     return res.status(201).json({
       status: "Success",
@@ -527,7 +539,15 @@ router.put('/cancel-order/:orderId', authenticateToken, async (req, res) => {
       await Book.findByIdAndUpdate(order.book._id, {
         $inc: { sold: -1, stock: 1 }
       });
+
+      // 🧹 Invalidate catalog, book detail, and seller stats caches
+      await invalidateBookCatalogCache();
+      await invalidateBookDetailCache(order.book._id.toString());
+      if (order.book.seller) {
+        await invalidateSellerStatsCache(order.book.seller.toString());
+      }
     }
+
     
     console.log(`Order ${orderId} cancelled successfully`);
     

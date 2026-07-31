@@ -1,27 +1,18 @@
 
 
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import BookCard from '../BookCard/BookCard';
 import Loader from '../Loader/Loader';
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
-const API_URL = `${BASE_URL}/api/v1`;
+import { useRecentBooks } from '../../hooks/useBooksQuery';
 
 function RecentlyAdded() {
-  const [Data, setData] = useState();
+  const { data: rawData, isLoading } = useRecentBooks();
+  const Data = rawData ? rawData.slice(0, 20) : undefined;
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(false);
   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    const fetch = async () => {
-      const response = await axios.get(`${API_URL}/get-recent-books`);
-      setData(response.data.data.slice(0, 20));
-    };
-    fetch();
-  }, []);
 
   useEffect(() => {
     const updateScrollVisibility = () => {

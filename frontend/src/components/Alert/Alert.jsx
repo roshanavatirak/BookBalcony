@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
+
 
 /**
  * Premium Alert Component with Smooth Outro
@@ -112,18 +114,20 @@ const Alert = ({
   };
 
   const positionClasses = {
-    'top-right': 'top-6 right-6',
-    'top-left': 'top-6 left-6',
-    'top-center': 'top-6 left-1/2 -translate-x-1/2',
-    'bottom-right': 'bottom-6 right-6',
-    'bottom-left': 'bottom-6 left-6',
+    'top-right': 'top-24 right-4 sm:right-8',
+    'top-left': 'top-24 left-4 sm:left-8',
+    'top-center': 'top-24 left-1/2 -translate-x-1/2',
+    'bottom-right': 'bottom-6 right-4 sm:right-8',
+    'bottom-left': 'bottom-6 left-4 sm:left-8',
     'bottom-center': 'bottom-6 left-1/2 -translate-x-1/2'
   };
+
+
 
   const config = alertConfig[type];
   const Icon = config.icon;
 
-  return (
+  const alertContent = (
     <>
       <style>{`
         @keyframes slideIn {
@@ -278,6 +282,8 @@ const Alert = ({
       </div>
     </>
   );
+
+  return createPortal(alertContent, document.body);
 };
 
-export default Alert;
+export default Alert;

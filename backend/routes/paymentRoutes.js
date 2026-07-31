@@ -301,6 +301,12 @@ const User = require("../models/user");
 const Book = require("../models/book");
 const {authenticateToken} = require("./userAuth");
 const Order = require('../models/order');
+const {
+  invalidateBookCatalogCache,
+  invalidateBookDetailCache,
+  invalidateSellerStatsCache,
+} = require("../config/redis");
+
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
@@ -461,6 +467,11 @@ router.post("/verify", authenticateToken, async (req, res) => {
             $inc: { sold: 1, stock: -1 }
           });
           console.log(`✅ [VERIFY] Book stock updated`);
+
+          // 🧹 Invalidate catalog, book detail, and seller stats caches
+          await invalidateBookCatalogCache();
+          await invalidateBookDetailCache(data.book.toString());
+          await invalidateSellerStatsCache(data.seller.toString());
         }
         
       } else {
@@ -524,7 +535,13 @@ router.post("/verify", authenticateToken, async (req, res) => {
           $inc: { sold: 1, stock: -1 }
         });
         console.log(`✅ [VERIFY] Book stock updated`);
+
+        // 🧹 Invalidate catalog, book detail, and seller stats caches
+        await invalidateBookCatalogCache();
+        await invalidateBookDetailCache(data.book.toString());
+        await invalidateSellerStatsCache(data.seller.toString());
       }
+
       
     } catch (err) {
       console.error("❌ [VERIFY] Order creation error:", err);

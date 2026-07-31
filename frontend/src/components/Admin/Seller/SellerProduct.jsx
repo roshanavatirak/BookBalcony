@@ -1,19 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  FaEdit, FaTrash, FaEye, FaClock, FaCheckCircle, FaTimesCircle,
-  FaFilter, FaSearch, FaSort, FaChartBar, FaBox, FaDollarSign,
-  FaEyeSlash, FaShoppingCart, FaTimes, FaCheck, FaPencilAlt,
-  FaImage, FaCalendar, FaTag, FaBook, FaUserCircle, FaWarehouse
+import {
+  FaStore, FaBook, FaWarehouse, FaDollarSign, FaShoppingCart,
+  FaPencilAlt, FaTrash, FaEye, FaCalendar, FaTag, FaImage,
+  FaClock, FaCheckCircle, FaTimesCircle, FaEyeSlash, FaTimes, FaCheck, FaSort
 } from 'react-icons/fa';
-import { 
+import {
   TrendingUp, Package, Activity, Zap, RefreshCw, AlertCircle,
-  ChevronDown, X, Check, Pencil, ArrowUp, ArrowDown, Settings
+  ChevronDown, X, Check as LucideCheck, Pencil, ArrowUp, ArrowDown, Settings
 } from 'lucide-react';
+import {
+  FiSearch, FiRotateCw, FiEye, FiX, FiActivity, FiChevronRight, FiEdit2, FiTrash2, FiClock
+} from 'react-icons/fi';
 import Alert from '../../Alert/Alert';
 import { useAlert } from '../../Alert/useAlert';
 import Loader from '../../Loader/Loader';
+
+// ==================== INLINE CUSTOM CSS EFFECTS ====================
+const CustomStyles = () => (
+  <style dangerouslySetInnerHTML={{
+    __html: `
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.08); }
+      50% { box-shadow: 0 0 20px rgba(250, 204, 21, 0.2); }
+    }
+    @keyframes cardEntrance {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes modalEntrance {
+      from { opacity: 0; transform: scale(0.98) translateY(6px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes dotPulse {
+      0%, 100% { opacity: 0.6; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    .premium-gold-glow:hover {
+      animation: pulseGlow 2.5s infinite ease-in-out;
+    }
+    .animate-card-entrance {
+      animation: cardEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-modal-entrance {
+      animation: modalEntrance 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .pulse-dot-active {
+      animation: dotPulse 1.8s infinite ease-in-out;
+    }
+    .premium-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .premium-scrollbar::-webkit-scrollbar-track {
+      background: rgba(24, 24, 27, 0.2);
+    }
+    .premium-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(250, 204, 21, 0.12);
+      border-radius: 9999px;
+    }
+    .premium-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(250, 204, 21, 0.3);
+    }
+    .border-zinc-850 {
+      border-color: rgba(39, 39, 42, 0.55);
+    }
+  `}} />
+);
+
 
 const SellerProduct = () => {
   const navigate = useNavigate();
@@ -31,7 +86,7 @@ const SellerProduct = () => {
   const [newStockValue, setNewStockValue] = useState('');
   const [newPriceValue, setNewPriceValue] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-  
+
   // Admin seller view filter states
   const [adminSellerId, setAdminSellerId] = useState(null);
   const [adminSellerName, setAdminSellerName] = useState("");
@@ -87,8 +142,8 @@ const SellerProduct = () => {
 
     // Apply seller filter if viewing a specific seller's catalog
     if (adminSellerId) {
-      filtered = filtered.filter(book => 
-        book.seller?._id === adminSellerId || 
+      filtered = filtered.filter(book =>
+        book.seller?._id === adminSellerId ||
         book.seller === adminSellerId ||
         book.createdBy === adminSellerId ||
         book.createdBy?._id === adminSellerId
@@ -97,7 +152,7 @@ const SellerProduct = () => {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(book => 
+      filtered = filtered.filter(book =>
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.category?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -115,7 +170,7 @@ const SellerProduct = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      switch(sortBy) {
+      switch (sortBy) {
         case 'newest':
           return new Date(b.createdAt) - new Date(a.createdAt);
         case 'oldest':
@@ -169,8 +224,8 @@ const SellerProduct = () => {
         { stock: stockValue },
         { headers }
       );
-      
-      setBooks(books.map(book => 
+
+      setBooks(books.map(book =>
         book._id === bookId ? { ...book, stock: stockValue } : book
       ));
       setEditingStock(null);
@@ -195,8 +250,8 @@ const SellerProduct = () => {
         { price: priceValue },
         { headers }
       );
-      
-      setBooks(books.map(book => 
+
+      setBooks(books.map(book =>
         book._id === bookId ? { ...book, price: priceValue } : book
       ));
       setEditingPrice(null);
@@ -265,13 +320,13 @@ const SellerProduct = () => {
     try {
       const d = new Date(date);
       if (isNaN(d.getTime())) return "N/A";
-      
+
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const compareDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       const diffTime = today.getTime() - compareDate.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays === 0) return "Today";
       if (diffDays === 1) return "Yesterday";
       if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`;
@@ -279,11 +334,11 @@ const SellerProduct = () => {
         const weeks = Math.floor(diffDays / 7);
         return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
       }
-      
-      return d.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined 
+
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
       });
     } catch (error) {
       return "N/A";
@@ -292,35 +347,35 @@ const SellerProduct = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      'Available': { 
+      'Available': {
         bg: 'bg-gradient-to-r from-green-500/20 to-emerald-500/20',
         text: 'text-green-300',
         border: 'border-green-500/50',
         icon: FaCheckCircle
       },
-      'Sold Out': { 
+      'Sold Out': {
         bg: 'bg-gradient-to-r from-red-500/20 to-rose-500/20',
         text: 'text-red-300',
         border: 'border-red-500/50',
         icon: FaTimesCircle
       },
-      'Not Available': { 
+      'Not Available': {
         bg: 'bg-gradient-to-r from-gray-500/20 to-slate-500/20',
         text: 'text-gray-300',
         border: 'border-gray-500/50',
         icon: FaEyeSlash
       },
-      'Arriving Soon': { 
+      'Arriving Soon': {
         bg: 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20',
         text: 'text-blue-300',
         border: 'border-blue-500/50',
         icon: FaClock
       }
     };
-    
+
     const config = statusConfig[status] || statusConfig['Not Available'];
     const Icon = config.icon;
-    
+
     return { ...config, Icon };
   };
 
@@ -339,13 +394,18 @@ const SellerProduct = () => {
   const availableBooks = books.filter(b => b.productStatus === "Available" && b.stock > 0).length;
   const lowStockBooks = books.filter(b => b.stock > 0 && b.stock <= 5).length;
   const totalStock = books.reduce((sum, book) => sum + (book.stock || 0), 0);
-
   if (loading) {
-    return <Loader fullPage text="Loading books..." />;
+    return <Loader fullPage text="Loading registry catalog..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-zinc-900 to-black text-white p-6">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 text-white px-2 sm:px-4 py-6 flex justify-center relative overflow-hidden">
+      <CustomStyles />
+
+      {/* Ambient background glows */}
+      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-zinc-500/5 rounded-full blur-[120px] pointer-events-none" />
+
       {alert && (
         <Alert
           type={alert.type}
@@ -358,729 +418,678 @@ const SellerProduct = () => {
         />
       )}
 
-      <div className="max-w-7xl mx-auto">
+      {/* Central Centered Container Card Wrapper - High-Density Glass Panel */}
+      <div className="w-full max-w-7xl bg-zinc-900/25 backdrop-blur-xl border border-zinc-850 p-4 sm:p-5 shadow-2xl rounded-2xl relative animate-card-entrance">
+
         {/* Header */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between animate-slideDown">
-          <div>
-            <h1 className="text-5xl font-black mb-2 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent">
-              {adminSellerId ? `Catalog: ${adminSellerName}` : "📚 Admin Book Management"}
-            </h1>
-            <p className="text-gray-400 text-lg flex items-center gap-2">
-              <Settings className="w-4 h-4 text-yellow-400 animate-pulse" />
-              {adminSellerId ? `Managing catalog items for ${adminSellerName}` : "Manage all seller products and inventory"}
-            </p>
-          </div>
-          {adminSellerId && (
-            <button
-              onClick={() => navigate('/Admin/Sellers-List')}
-              className="mt-4 md:mt-0 flex items-center gap-2 px-5 py-3 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 font-bold rounded-2xl border border-zinc-700 hover:border-yellow-400 transition-all shadow-md active:scale-95 text-sm"
-            >
-              ← Back to Sellers List
-            </button>
-          )}
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-zinc-800/80 via-zinc-900/80 to-black/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 p-6 hover:border-purple-400/50 transition-all duration-500 group hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Books</span>
-              <div className="p-3 bg-gradient-to-br from-purple-400/20 to-fuchsia-500/20 rounded-2xl group-hover:scale-110 transition-all">
-                <FaBook className="w-6 h-6 text-purple-400" />
+        <div className="mb-6 text-center">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1 text-left sm:text-center">
+              <div className="inline-flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse"></span>
+                Catalog Control Room
               </div>
-            </div>
-            <p className="text-4xl font-black text-white mb-2">{totalBooks}</p>
-            <div className="flex items-center gap-2 text-sm">
-              <ArrowUp className="w-4 h-4 text-purple-400" />
-              <span className="text-purple-400 font-semibold">{availableBooks} Available</span>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-zinc-800/80 via-zinc-900/80 to-black/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 p-6 hover:border-green-400/50 transition-all duration-500 group hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Revenue</span>
-              <div className="p-3 bg-gradient-to-br from-green-400/20 to-emerald-500/20 rounded-2xl group-hover:scale-110 transition-all">
-                <FaDollarSign className="w-6 h-6 text-green-400" />
-              </div>
-            </div>
-            <p className="text-4xl font-black text-white mb-2">₹{totalRevenue.toLocaleString()}</p>
-            <div className="flex items-center gap-2 text-sm">
-              <TrendingUp className="w-4 h-4 text-green-400" />
-              <span className="text-green-400 font-semibold">From {totalSold} sales</span>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-zinc-800/80 via-zinc-900/80 to-black/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 p-6 hover:border-blue-400/50 transition-all duration-500 group hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Views</span>
-              <div className="p-3 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 rounded-2xl group-hover:scale-110 transition-all">
-                <FaEye className="w-6 h-6 text-blue-400" />
-              </div>
-            </div>
-            <p className="text-4xl font-black text-white mb-2">{totalViews.toLocaleString()}</p>
-            <div className="flex items-center gap-2 text-sm">
-              <Activity className="w-4 h-4 text-blue-400 animate-pulse" />
-              <span className="text-blue-400 font-semibold">Total Engagement</span>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-zinc-800/80 via-zinc-900/80 to-black/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 p-6 hover:border-orange-400/50 transition-all duration-500 group hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Stock</span>
-              <div className="p-3 bg-gradient-to-br from-orange-400/20 to-amber-500/20 rounded-2xl group-hover:scale-110 transition-all">
-                <FaWarehouse className="w-6 h-6 text-orange-400" />
-              </div>
-            </div>
-            <p className="text-4xl font-black text-white mb-2">{totalStock}</p>
-            <div className="flex items-center gap-2 text-sm">
-              {lowStockBooks > 0 ? (
-                <>
-                  <AlertCircle className="w-4 h-4 text-yellow-400 animate-pulse" />
-                  <span className="text-yellow-400 font-semibold">{lowStockBooks} Low Stock</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4 text-orange-400" />
-                  <span className="text-orange-400 font-semibold">All Healthy</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Auto Status Control */}
-        <div className="bg-gradient-to-br from-zinc-800/60 via-zinc-900/60 to-black/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 p-6 mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                <Settings className="w-6 h-6 text-purple-400" />
-                Auto Status Mode
-              </h2>
-              <p className="text-gray-400">
-                {autoStatusMode 
-                  ? '✅ New books automatically change from "Arriving Soon" to "Available"' 
-                  : '⚠️ New books require manual status approval'}
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400 bg-clip-text text-transparent mb-1.5">
+                {adminSellerId ? `Catalog: ${adminSellerName}` : "Admin Book Management"}
+              </h1>
+              <p className="text-zinc-400 text-xs flex items-center sm:justify-center gap-2 font-medium">
+                <span className="w-2 h-2 bg-yellow-400 rounded-full pulse-dot-active" />
+                {adminSellerId ? `Managing catalog items for ${adminSellerName}` : "Manage all seller products and inventory catalog."}
               </p>
             </div>
-            <button
-              onClick={toggleAutoStatusMode}
-              className={`px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-lg flex items-center gap-2 ${
-                autoStatusMode
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-green-500/30'
-                  : 'bg-gradient-to-r from-gray-600 to-slate-700 hover:from-gray-700 hover:to-slate-800 text-white shadow-gray-500/30'
-              }`}
-            >
-              <RefreshCw className="w-5 h-5" />
-              {autoStatusMode ? 'Auto Mode: ON' : 'Manual Mode: ON'}
-            </button>
+            <div className="flex gap-2">
+              {adminSellerId && (
+                <button
+                  onClick={() => navigate('/Admin/Sellers-List')}
+                  className="px-3.5 py-1.5 bg-zinc-900/60 hover:bg-zinc-900 text-yellow-400 rounded-lg transition-all flex items-center gap-1 border border-zinc-850 hover:border-yellow-400/30 text-xs font-semibold shadow-md active:scale-[0.98]"
+                >
+                  ← Back to Sellers List
+                </button>
+              )}
+              <button
+                onClick={fetchBooks}
+                className="px-3.5 py-1.5 bg-zinc-900/60 hover:bg-zinc-900 text-white rounded-lg transition-all flex items-center gap-2 border border-zinc-850 hover:border-yellow-400/30 text-xs font-semibold shadow-md active:scale-[0.98] group"
+              >
+                <FiRotateCw className="w-3.5 h-3.5 text-yellow-400 group-hover:rotate-180 transition-transform duration-700" />
+                <span>Sync Catalog</span>
+              </button>
+            </div>
           </div>
+          <div className="h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent w-full" />
         </div>
 
-        {/* Filters and Search */}
-        <div className="bg-gradient-to-br from-zinc-800/60 via-zinc-900/60 to-black/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 p-6 mb-8">
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative group">
-              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-purple-400 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search by title, author, or category..." 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-                className="w-full pl-12 pr-4 py-4 bg-zinc-900/80 border border-zinc-700 rounded-2xl focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all text-white placeholder-gray-500 font-medium hover:border-zinc-600" 
-              />
+        {/* Compact Statistics Deck */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4 relative z-10">
+          {/* Total Books */}
+          <div className="relative overflow-hidden p-3 rounded-xl border border-zinc-850 bg-zinc-900/10 hover:border-zinc-800 transition-all duration-300 group">
+            <div className="absolute top-0 right-0 w-8 h-8 bg-purple-500/5 rounded-bl-full pointer-events-none"></div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                <FaBook size={12} />
+              </div>
+            </div>
+            <div>
+              <div className="text-lg font-black text-white tracking-tight">{totalBooks}</div>
+              <div className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">{availableBooks} Available</div>
             </div>
           </div>
 
-          {/* Status Filters */}
-          <div className="flex flex-wrap gap-3 mb-6">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                filter === 'all' 
-                  ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white shadow-lg shadow-purple-500/30' 
-                  : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'
-              }`}
-            >
-              All Books ({totalBooks})
-            </button>
-            <button
-              onClick={() => setFilter('new')}
-              className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                filter === 'new' 
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-lg shadow-blue-500/30' 
-                  : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'
-              }`}
-            >
-              🆕 New Additions
-            </button>
-            <button
-              onClick={() => setFilter('Arriving Soon')}
-              className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                filter === 'Arriving Soon' 
-                  ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-white shadow-lg shadow-yellow-500/30' 
-                  : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'
-              }`}
-            >
-              🕒 Arriving Soon
-            </button>
-            <button
-              onClick={() => setFilter('Available')}
-              className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                filter === 'Available' 
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30' 
-                  : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'
-              }`}
-            >
-              ✅ Available
-            </button>
-            <button
-              onClick={() => setFilter('Sold Out')}
-              className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                filter === 'Sold Out' 
-                  ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg shadow-red-500/30' 
-                  : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'
-              }`}
-            >
-              ❌ Sold Out
-            </button>
-            <button
-              onClick={() => setFilter('Not Available')}
-              className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                filter === 'Not Available' 
-                  ? 'bg-gradient-to-r from-gray-500 to-slate-600 text-white shadow-lg shadow-gray-500/30' 
-                  : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'
-              }`}
-            >
-              ⛔ Not Available
-            </button>
+          {/* Total Revenue */}
+          <div className="relative overflow-hidden p-3 rounded-xl border border-zinc-850 bg-zinc-900/10 hover:border-zinc-800 transition-all duration-300 group">
+            <div className="absolute top-0 right-0 w-8 h-8 bg-green-500/5 rounded-bl-full pointer-events-none"></div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="p-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
+                <FaDollarSign size={12} />
+              </div>
+            </div>
+            <div>
+              <div className="text-lg font-black text-white tracking-tight">₹{totalRevenue.toLocaleString()}</div>
+              <div className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">{totalSold} Books Sold</div>
+            </div>
           </div>
 
-          {/* Sort Options */}
-          <div className="flex items-center gap-3 bg-zinc-900/80 px-5 rounded-2xl border border-zinc-700 hover:border-zinc-600 transition-all group w-fit">
-            <FaSort className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors" />
-            <select 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value)} 
-              className="bg-transparent py-4 pr-8 focus:outline-none text-white font-semibold cursor-pointer"
-            >
-              <option value="newest" className="bg-zinc-900">🆕 Newest First</option>
-              <option value="oldest" className="bg-zinc-900">📅 Oldest First</option>
-              <option value="price-high" className="bg-zinc-900">💰 Price: High to Low</option>
-              <option value="price-low" className="bg-zinc-900">💵 Price: Low to High</option>
-              <option value="stock-high" className="bg-zinc-900">📦 Stock: High to Low</option>
-              <option value="stock-low" className="bg-zinc-900">⚠️ Stock: Low to High</option>
-              <option value="views" className="bg-zinc-900">👁️ Most Viewed</option>
-              <option value="sales" className="bg-zinc-900">🛒 Most Sold</option>
-            </select>
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+          {/* Total Views */}
+          <div className="relative overflow-hidden p-3 rounded-xl border border-zinc-850 bg-zinc-900/10 hover:border-zinc-800 transition-all duration-300 group">
+            <div className="absolute top-0 right-0 w-8 h-8 bg-blue-500/5 rounded-bl-full pointer-events-none"></div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="p-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                <FaEye size={12} />
+              </div>
+            </div>
+            <div>
+              <div className="text-lg font-black text-white tracking-tight">{totalViews.toLocaleString()}</div>
+              <div className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Total Views</div>
+            </div>
+          </div>
+
+          {/* Total Stock */}
+          <div className="relative overflow-hidden p-3 rounded-xl border border-zinc-850 bg-zinc-900/10 hover:border-zinc-800 transition-all duration-300 group">
+            <div className="absolute top-0 right-0 w-8 h-8 bg-amber-500/5 rounded-bl-full pointer-events-none"></div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <FaWarehouse size={12} />
+              </div>
+            </div>
+            <div>
+              <div className="text-lg font-black text-white tracking-tight">{totalStock}</div>
+              <div className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">{lowStockBooks} Low Stock</div>
+            </div>
           </div>
         </div>
 
-        {/* Books Grid */}
-        {filteredBooks.length === 0 ? (
-          <div className="bg-gradient-to-br from-zinc-800/60 via-zinc-900/60 to-black/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 p-16 text-center">
-            <FaBox className="w-24 h-24 text-gray-600 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-white mb-3">No books found</h3>
-            <p className="text-gray-400 text-lg">Try adjusting your filters or search terms</p>
+        {/* Auto Status Control Panel */}
+        <div className="bg-zinc-900/20 border border-zinc-850 rounded-xl p-3.5 mb-4 relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="space-y-0.5">
+            <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+              <Settings className="text-yellow-400/85 animate-spin-slow" size={12} /> Auto Status Pipeline
+            </h4>
+            <p className="text-[11px] text-zinc-400">
+              {autoStatusMode
+                ? '✅ Auto Mode: New seller products are automatically authorized as "Available".'
+                : '⚠️ Manual Mode: New seller products require admin validation and manual approval.'}
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.map((book, index) => {
-              const statusBadge = getStatusBadge(book.productStatus);
-              const stockInfo = getStockLevel(book.stock || 0);
-              
+          <button
+            onClick={toggleAutoStatusMode}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all duration-300 border shadow-md ${autoStatusMode
+                ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 shadow-emerald-500/5'
+                : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750'
+              }`}
+          >
+            {autoStatusMode ? 'Auto Mode: ON' : 'Auto Mode: OFF'}
+          </button>
+        </div>
+
+        {/* Search & Filter Deck */}
+        <div className="bg-zinc-900/15 border border-zinc-850 rounded-xl p-3 mb-4 space-y-3 relative z-10">
+          <div className="flex flex-col md:flex-row gap-2">
+            {/* Search Bar */}
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={13} />
+              <input
+                type="text"
+                placeholder="Search books by title, author, category..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-zinc-950/40 border border-zinc-850 hover:border-zinc-800 focus:border-yellow-400/40 rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-zinc-650 focus:outline-none transition-all duration-300 shadow-inner"
+              />
+            </div>
+
+            {/* Sort option */}
+            <div className="flex items-center gap-2 bg-zinc-950/30 px-3 py-1 rounded-lg border border-zinc-850 hover:border-zinc-800 min-w-[160px] self-start md:self-auto">
+              <FaSort className="text-zinc-500" size={11} />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent focus:outline-none text-[11px] font-semibold cursor-pointer outline-none border-none text-zinc-300 w-full"
+              >
+                <option value="newest" className="bg-zinc-900 text-white font-medium">Newest First</option>
+                <option value="oldest" className="bg-zinc-900 text-white font-medium">Oldest First</option>
+                <option value="price-high" className="bg-zinc-900 text-white font-medium">Price: High to Low</option>
+                <option value="price-low" className="bg-zinc-900 text-white font-medium">Price: Low to High</option>
+                <option value="stock-high" className="bg-zinc-900 text-white font-medium">Stock: High to Low</option>
+                <option value="stock-low" className="bg-zinc-900 text-white font-medium">Stock: Low to High</option>
+                <option value="views" className="bg-zinc-900 text-white font-medium">Most Viewed</option>
+                <option value="sales" className="bg-zinc-900 text-white font-medium">Most Sold</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Filter categories tabs */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {[
+              { id: 'all', label: `All Books (${totalBooks})`, bg: 'bg-zinc-900/40 border-zinc-850 text-zinc-450 hover:bg-zinc-850/60 hover:text-white', activeBg: 'border-yellow-500/35 bg-yellow-500/10 text-yellow-400' },
+              { id: 'new', label: 'New Additions', bg: 'bg-zinc-900/40 border-zinc-850 text-zinc-450 hover:bg-zinc-850/60 hover:text-white', activeBg: 'border-blue-500/35 bg-blue-500/10 text-blue-400' },
+              { id: 'Arriving Soon', label: 'Arriving Soon', bg: 'bg-zinc-900/40 border-zinc-850 text-zinc-450 hover:bg-zinc-850/60 hover:text-white', activeBg: 'border-amber-500/35 bg-amber-500/10 text-amber-400' },
+              { id: 'Available', label: 'Available', bg: 'bg-zinc-900/40 border-zinc-850 text-zinc-450 hover:bg-zinc-850/60 hover:text-white', activeBg: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-400' },
+              { id: 'Sold Out', label: 'Sold Out', bg: 'bg-zinc-900/40 border-zinc-850 text-zinc-450 hover:bg-zinc-850/60 hover:text-white', activeBg: 'border-rose-500/35 bg-rose-500/10 text-rose-400' },
+              { id: 'Not Available', label: 'Not Available', bg: 'bg-zinc-900/40 border-zinc-850 text-zinc-450 hover:bg-zinc-850/60 hover:text-white', activeBg: 'border-zinc-700 bg-zinc-800/40 text-zinc-400' }
+            ].map((tab) => {
+              const isActive = filter === tab.id;
               return (
-                <div 
-                  key={book._id} 
-                  className="bg-gradient-to-br from-zinc-800/60 via-zinc-900/60 to-black/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-zinc-700/50 overflow-hidden hover:border-purple-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-purple-400/20 hover:-translate-y-2 group animate-fadeInUp"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                <button
+                  key={tab.id}
+                  onClick={() => setFilter(tab.id)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all duration-300 ${isActive ? tab.activeBg : tab.bg
+                    }`}
                 >
-                  <div className="relative h-64 bg-gradient-to-br from-zinc-900 to-black overflow-hidden">
-                    {book.images && book.images[0] && (
-                      <img 
-                        src={book.images[0].url} 
-                        alt={book.title} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-500"></div>
-                    
-                    {/* Status Badge */}
-                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm ${statusBadge.bg} ${statusBadge.text} border ${statusBadge.border} shadow-lg flex items-center gap-1.5`}>
-                        <statusBadge.Icon className="w-3.5 h-3.5" />
-                        {book.productStatus}
-                      </span>
-                      
-                      {/* Approval Status Badge */}
-                      {!book.isApproved && book.adminApproval !== "Approved" && (
-                        <span className="px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 shadow-lg flex items-center gap-1.5">
-                          <FaClock className="w-3.5 h-3.5 animate-pulse" />
-                          Pending Approval
-                        </span>
-                      )}
-                      
-                      {book.adminApproval === "Rejected" && (
-                        <span className="px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm bg-red-500/20 text-red-300 border border-red-500/50 shadow-lg flex items-center gap-1.5">
-                          <FaTimesCircle className="w-3.5 h-3.5" />
-                          Rejected
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stock Badge with Edit */}
-                    <div className="absolute top-4 right-4 z-10">
-                      {editingStock === book._id ? (
-                        <div className="flex items-center gap-2 bg-black/90 backdrop-blur-sm rounded-xl p-2 border border-white/20 shadow-xl">
-                          <input
-                            type="number"
-                            min="0"
-                            value={newStockValue}
-                            onChange={(e) => setNewStockValue(e.target.value)}
-                            className="w-20 px-2 py-1 bg-zinc-800 border border-zinc-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-400 outline-none"
-                            placeholder="Stock"
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => updateBookStock(book._id)}
-                            className="p-1.5 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors"
-                          >
-                            <Check className="w-4 h-4 text-green-400" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingStock(null);
-                              setNewStockValue("");
-                            }}
-                            className="p-1.5 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors"
-                          >
-                            <X className="w-4 h-4 text-red-400" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className={`flex items-center gap-2 ${stockInfo.bg} backdrop-blur-sm rounded-full border border-white/20 shadow-lg pl-3 pr-2 py-1.5 group/stock`}>
-                          <span className={`text-xs font-bold ${stockInfo.color}`}>
-                            {book.stock || 0}
-                          </span>
-                          <button
-                            onClick={() => {
-                              setEditingStock(book._id);
-                              setNewStockValue(book.stock?.toString() || "0");
-                            }}
-                            className="p-1 hover:bg-white/10 rounded-full transition-colors opacity-0 group-hover/stock:opacity-100"
-                          >
-                            <Pencil className="w-3 h-3 text-white" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Posted Date */}
-                    <div className="absolute bottom-4 left-4 z-10">
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-full border border-white/10 shadow-lg">
-                        <FaCalendar className="w-3 h-3 text-purple-400" />
-                        <span className="text-xs font-semibold text-gray-200">
-                          {formatDate(book.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Image Count */}
-                    {book.images && book.images.length > 1 && (
-                      <div className="absolute bottom-4 right-4 z-10">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-full border border-white/10 shadow-lg">
-                          <FaImage className="w-3 h-3 text-blue-400" />
-                          <span className="text-xs font-semibold text-gray-200">
-                            {book.images.length}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-5">
-                    <h3 className="font-bold text-lg text-white mb-1 line-clamp-2 group-hover:text-purple-400 transition-colors">
-                      {book.title}
-                    </h3>
-                    <p className="text-gray-400 text-sm mb-3 flex items-center gap-1">
-                      <FaUserCircle className="w-3 h-3" />
-                      {book.author}
-                    </p>
-
-                    {/* Category Tag */}
-                    {book.category && (
-                      <div className="mb-4">
-                        <span className="px-3 py-1.5 bg-gradient-to-r from-zinc-700 to-zinc-800 rounded-xl text-xs text-gray-300 border border-zinc-600 font-semibold flex items-center gap-1 w-fit">
-                          <FaTag className="w-3 h-3" />
-                          {book.category}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <div className="bg-blue-500/10 rounded-lg p-2 border border-blue-500/20 text-center">
-                        <FaEye className="w-3 h-3 text-blue-400 mx-auto mb-1" />
-                        <p className="text-xs font-bold text-white">{book.views || 0}</p>
-                      </div>
-                      <div className="bg-green-500/10 rounded-lg p-2 border border-green-500/20 text-center">
-                        <FaShoppingCart className="w-3 h-3 text-green-400 mx-auto mb-1" />
-                        <p className="text-xs font-bold text-white">{book.sold || 0}</p>
-                      </div>
-                      <div className={`${stockInfo.bg} rounded-lg p-2 border ${stockInfo.color.replace('text-', 'border-')}/20 text-center`}>
-                        <FaBox className={`w-3 h-3 ${stockInfo.color} mx-auto mb-1`} />
-                        <p className="text-xs font-bold text-white">{book.stock || 0}</p>
-                      </div>
-                    </div>
-
-                    {/* Price with Edit */}
-                    <div className="mb-4 pb-4 border-b border-zinc-700/50">
-                      {editingPrice === book._id ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={newPriceValue}
-                            onChange={(e) => setNewPriceValue(e.target.value)}
-                            className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-400 outline-none"
-                            placeholder="Price"
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => updateBookPrice(book._id)}
-                            className="p-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors"
-                          >
-                            <Check className="w-4 h-4 text-green-400" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingPrice(null);
-                              setNewPriceValue("");
-                            }}
-                            className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors"
-                          >
-                            <X className="w-4 h-4 text-red-400" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between group/price">
-                          <span className="text-2xl font-black bg-gradient-to-r from-purple-400 via-fuchsia-300 to-pink-500 bg-clip-text text-transparent">
-                            ₹{book.price.toLocaleString()}
-                          </span>
-                          <button
-                            onClick={() => {
-                              setEditingPrice(book._id);
-                              setNewPriceValue(book.price?.toString() || "0");
-                            }}
-                            className="p-2 hover:bg-purple-500/10 rounded-lg transition-colors opacity-0 group-hover/price:opacity-100"
-                          >
-                            <Pencil className="w-4 h-4 text-purple-400" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedBook(book);
-                          setShowModal(true);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white rounded-xl hover:from-purple-600 hover:to-fuchsia-700 transition-all duration-300 text-sm font-bold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
-                      >
-                        <FaEye className="w-4 h-4" />
-                        View
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteConfirm(book._id)}
-                        className="px-3 py-2.5 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 transition-all duration-300 border border-red-500/20 hover:border-red-500/40"
-                      >
-                        <FaTrash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  {tab.label}
+                </button>
               );
             })}
           </div>
-        )}
+        </div>
 
-        {/* Book Detail Modal */}
-        {showModal && selectedBook && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-3xl shadow-2xl border border-zinc-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slideUp">
-              <div className="p-8">
-                {/* Modal Header */}
-                <div className="flex justify-between items-start mb-6">
-                  <h2 className="text-3xl font-bold text-white">{selectedBook.title}</h2>
-                  <button 
-                    onClick={() => setShowModal(false)} 
-                    className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-xl"
+        {/* Central Books Grid - Ultra Compact */}
+        <div className="relative z-10">
+          {filteredBooks.length === 0 ? (
+            <div className="text-center py-16 bg-zinc-950/10 border border-zinc-900/60 rounded-xl">
+              <FaBook className="text-3xl text-zinc-700 mx-auto mb-2" />
+              <p className="text-xs font-bold text-zinc-450">No catalog books found</p>
+              <p className="text-[10px] text-zinc-655 mt-0.5 max-w-xs mx-auto">Verify your search spelling or adjust active category filter tabs above.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {filteredBooks.map((book, index) => {
+                const statusBadge = getStatusBadge(book.productStatus);
+                const stockInfo = getStockLevel(book.stock || 0);
+                const isApproved = book.isApproved || book.adminApproval === "Approved";
+                const isRejected = book.adminApproval === "Rejected";
+
+                return (
+                  <div
+                    key={book._id}
+                    className="animate-card-entrance group relative flex flex-col justify-between bg-zinc-900/15 backdrop-blur-md rounded-xl border border-zinc-850 hover:border-yellow-400/30 p-3.5 transition-all duration-300 cursor-pointer shadow-md hover:shadow-[0_6px_18px_rgba(250,204,21,0.03)] overflow-hidden transform hover:-translate-y-0.5"
+                    style={{ animationDelay: `${index * 30}ms` }}
+                    onClick={() => {
+                      setSelectedBook(book);
+                      setShowModal(true);
+                    }}
                   >
-                    <FaTimes className="w-6 h-6" />
-                  </button>
-                </div>
-                
-                <div className="grid md:grid-cols-2 gap-8">
-                  {/* Image */}
-                  <div>
+                    {/* Accent glowing gradient line */}
+                    <div className="absolute top-0 left-0 right-0 h-[1.2px] bg-gradient-to-r from-yellow-500/0 via-yellow-400/30 to-yellow-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                    <div className="space-y-2.5">
+                      {/* Book Cover Cover art */}
+                      <div className="relative h-36 bg-zinc-955/80 rounded-lg overflow-hidden border border-zinc-900 shadow-inner">
+                        {book.images && book.images[0] && (
+                          <img
+                            src={book.images[0].url}
+                            alt={book.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
+
+                        {/* Top Badge Overlay */}
+                        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5 origin-top-left scale-90">
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold border ${statusBadge.bg} ${statusBadge.text} ${statusBadge.border} flex items-center gap-1 shadow-md`}>
+                            <statusBadge.Icon size={8} />
+                            {book.productStatus}
+                          </span>
+
+                          {!isApproved && !isRejected && (
+                            <span className="px-2 py-0.5 rounded text-[8px] font-extrabold border bg-yellow-500/10 border-yellow-500/20 text-yellow-400 flex items-center gap-1 shadow-md">
+                              <FiClock className="animate-pulse" size={8} />
+                              Pending
+                            </span>
+                          )}
+
+                          {isRejected && (
+                            <span className="px-2 py-0.5 rounded text-[8px] font-extrabold border bg-rose-500/10 border-rose-500/20 text-rose-400 flex items-center gap-1 shadow-md">
+                              <FiX size={8} />
+                              Rejected
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Image count and Date */}
+                        <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5 scale-90 origin-bottom-left">
+                          <span className="px-1.5 py-0.5 rounded bg-zinc-950/65 text-[7px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <FaCalendar size={6} />
+                            {formatDate(book.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Title & Author Info */}
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-extrabold text-zinc-100 truncate line-clamp-1 group-hover:text-yellow-400 transition-colors duration-300">
+                          {book.title || "No Title"}
+                        </h3>
+                        <p className="text-[10px] text-zinc-450 italic mt-0.5 truncate">
+                          by {book.author || "Unknown"}
+                        </p>
+                      </div>
+
+                      {/* Middle metadata chips */}
+                      <div className="grid grid-cols-3 gap-1 text-[9px] font-mono">
+                        <div className="flex flex-col items-center justify-center bg-zinc-950/20 py-1 rounded border border-zinc-900">
+                          <FiEye className="text-zinc-550 mb-0.5" size={9} />
+                          <span className="text-zinc-300 font-bold">{book.views || 0}</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center bg-zinc-950/20 py-1 rounded border border-zinc-900">
+                          <FaShoppingCart className="text-zinc-550 mb-0.5" size={9} />
+                          <span className="text-zinc-300 font-bold">{book.sold || 0}</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center bg-zinc-950/20 py-1 rounded border border-zinc-900">
+                          <FaWarehouse className="text-zinc-550 mb-0.5" size={9} />
+                          <span className={`${stockInfo.color} font-bold`}>{book.stock || 0}</span>
+                        </div>
+                      </div>
+
+                      {/* Category Tag */}
+                      {book.category && (
+                        <div className="flex items-center gap-1 text-[9px] text-zinc-450 bg-zinc-950/15 px-2 py-0.5 rounded border border-zinc-900/60 w-fit">
+                          <FaTag className="text-yellow-400/80" size={8} />
+                          <span className="truncate max-w-[100px]">{book.category}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stock & Price Inline Editors - Tightly Integrated */}
+                    <div className="mt-3 pt-2.5 border-t border-zinc-900/80 space-y-2.5" onClick={(e) => e.stopPropagation()}>
+                      {/* Price Section */}
+                      <div className="flex items-center justify-between gap-1.5 h-6">
+                        {editingPrice === book._id ? (
+                          <div className="flex items-center gap-1 w-full bg-zinc-950 rounded-lg p-0.5 border border-zinc-800">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={newPriceValue}
+                              onChange={(e) => setNewPriceValue(e.target.value)}
+                              className="flex-1 bg-transparent px-1.5 py-0.5 text-[10px] text-white focus:outline-none font-mono"
+                              placeholder="Price"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => updateBookPrice(book._id)}
+                              className="p-1 hover:bg-zinc-900 text-green-400 rounded transition-colors"
+                            >
+                              <FaCheck size={8} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingPrice(null);
+                                setNewPriceValue("");
+                              }}
+                              className="p-1 hover:bg-zinc-900 text-rose-400 rounded transition-colors"
+                            >
+                              <FaTimes size={8} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between items-center w-full group/price">
+                            <span className="text-sm font-black text-yellow-400/90 font-mono">
+                              ₹{book.price?.toLocaleString()}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setEditingPrice(book._id);
+                                setNewPriceValue(book.price?.toString() || "0");
+                              }}
+                              className="opacity-0 group-hover/price:opacity-100 p-1 bg-zinc-950/45 hover:bg-yellow-400 text-zinc-450 hover:text-zinc-950 rounded transition-all duration-300"
+                              title="Edit Price"
+                            >
+                              <FiEdit2 size={9} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Stock Section */}
+                      <div className="flex items-center justify-between gap-1.5 h-6">
+                        {editingStock === book._id ? (
+                          <div className="flex items-center gap-1 w-full bg-zinc-950 rounded-lg p-0.5 border border-zinc-800">
+                            <input
+                              type="number"
+                              min="0"
+                              value={newStockValue}
+                              onChange={(e) => setNewStockValue(e.target.value)}
+                              className="flex-1 bg-transparent px-1.5 py-0.5 text-[10px] text-white focus:outline-none font-mono"
+                              placeholder="Stock"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => updateBookStock(book._id)}
+                              className="p-1 hover:bg-zinc-900 text-green-400 rounded transition-colors"
+                            >
+                              <FaCheck size={8} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingStock(null);
+                                setNewStockValue("");
+                              }}
+                              className="p-1 hover:bg-zinc-900 text-rose-400 rounded transition-colors"
+                            >
+                              <FaTimes size={8} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between items-center w-full group/stock">
+                            <span className="text-[10px] text-zinc-555 font-bold uppercase tracking-wider flex items-center gap-1">
+                              Stock: <span className={`${stockInfo.color} font-mono font-extrabold`}>{book.stock || 0}</span>
+                            </span>
+                            <button
+                              onClick={() => {
+                                setEditingStock(book._id);
+                                setNewStockValue(book.stock?.toString() || "0");
+                              }}
+                              className="opacity-0 group-hover/stock:opacity-100 p-1 bg-zinc-955/45 hover:bg-yellow-400 text-zinc-450 hover:text-zinc-950 rounded transition-all duration-300"
+                              title="Edit Stock"
+                            >
+                              <FaPencilAlt size={8} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions Deck */}
+                      <div className="flex gap-1.5 pt-1">
+                        <button
+                          onClick={() => {
+                            setSelectedBook(book);
+                            setShowModal(true);
+                          }}
+                          className="flex-1 bg-zinc-900/80 hover:bg-yellow-400 text-zinc-400 hover:text-zinc-955 border border-zinc-800/85 hover:border-yellow-400/20 font-bold py-1 rounded text-[9px] transition-all duration-300 flex items-center justify-center gap-1"
+                        >
+                          <FiEye size={10} />
+                          <span>View dossier</span>
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteConfirm(book._id)}
+                          className="bg-zinc-900 hover:bg-rose-600/10 text-zinc-450 hover:text-rose-400 border border-zinc-800 hover:border-rose-500/25 p-1 rounded transition-all duration-300"
+                          title="Purge book"
+                        >
+                          <FiTrash2 size={11} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Dynamic Detail Modal Layer */}
+        {showModal && selectedBook && (
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => {
+              setShowModal(false);
+              setSelectedBook(null);
+            }}
+          >
+            <div
+              className="animate-modal-entrance bg-zinc-955 rounded-2xl max-w-xl w-full border border-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.8)] my-8 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Cover Header Banner */}
+              <div className="relative bg-gradient-to-r from-zinc-900 via-zinc-950 to-zinc-900 p-4 border-b border-zinc-900 flex justify-between items-start gap-4">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(250,204,21,0.02),transparent)] pointer-events-none"></div>
+
+                <div className="flex gap-3 relative z-10 text-left min-w-0">
+                  <div className="relative shrink-0">
                     {selectedBook.images && selectedBook.images[0] && (
-                      <img 
-                        src={selectedBook.images[0].url} 
-                        alt={selectedBook.title} 
-                        className="w-full rounded-2xl shadow-2xl border border-zinc-700"
+                      <img
+                        src={selectedBook.images[0].url}
+                        alt={selectedBook.title}
+                        className="w-11 h-15 object-cover rounded-lg border border-zinc-800 shadow-md bg-zinc-900"
                       />
                     )}
                   </div>
-                  
-                  {/* Details */}
-                  <div className="space-y-5">
-                    <div>
-                      <h3 className="font-semibold text-gray-400 text-sm mb-1">Author</h3>
-                      <p className="text-white text-lg">{selectedBook.author}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold text-gray-400 text-sm mb-2">Price</h3>
-                      <p className="text-4xl font-black bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-                        ₹{selectedBook.price.toLocaleString()}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold text-gray-400 text-sm mb-2">Current Status</h3>
-                      {(() => {
-                        const statusBadge = getStatusBadge(selectedBook.productStatus);
-                        const StatusIcon = statusBadge.Icon;
-                        return (
-                          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold ${statusBadge.bg} ${statusBadge.text} border ${statusBadge.border}`}>
-                            <StatusIcon className="w-4 h-4" />
-                            {selectedBook.productStatus}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-400 text-sm mb-1">Stock</h3>
-                        <p className="text-white text-lg font-bold">{selectedBook.stock} units</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-400 text-sm mb-1">Category</h3>
-                        <p className="text-white text-lg">{selectedBook.category}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-400 text-sm mb-1">Language</h3>
-                        <p className="text-white text-lg">{selectedBook.language}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-400 text-sm mb-1">Edition/Year</h3>
-                        <p className="text-white text-lg">{selectedBook.editionOrPublishYear}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-400 text-sm mb-1">Views</h3>
-                        <p className="text-white text-lg font-bold">{selectedBook.views || 0}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-400 text-sm mb-1">Sold</h3>
-                        <p className="text-white text-lg font-bold">{selectedBook.sold || 0}</p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold text-gray-400 text-sm mb-1">Added On</h3>
-                      <p className="text-white">{new Date(selectedBook.createdAt).toLocaleDateString()}</p>
+
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-black text-zinc-100 truncate pr-4">
+                      {selectedBook.title}
+                    </h2>
+                    <p className="text-zinc-450 font-bold text-[10px] mt-0.5 truncate">
+                      by {selectedBook.author}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold border ${getStatusBadge(selectedBook.productStatus).bg} ${getStatusBadge(selectedBook.productStatus).text} ${getStatusBadge(selectedBook.productStatus).border}`}>
+                        {selectedBook.productStatus}
+                      </span>
+                      {selectedBook.category && (
+                        <span className="px-2 py-0.5 rounded text-[8px] bg-yellow-500/10 border border-yellow-500/25 text-yellow-400 font-extrabold uppercase tracking-wider">
+                          {selectedBook.category}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
-                
-                {/* Description */}
-                <div className="mt-8">
-                  <h3 className="font-semibold text-gray-400 text-sm mb-3">Description</h3>
-                  <p className="text-gray-300 leading-relaxed">{selectedBook.desc}</p>
+
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedBook(null);
+                  }}
+                  className="text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 p-1.5 rounded-xl transition-all duration-300 relative z-10 shrink-0 border border-transparent hover:border-zinc-800"
+                >
+                  <FiX size={15} />
+                </button>
+              </div>
+
+              {/* Modal Body Info Sections scrollcontainer */}
+              <div className="p-4 sm:p-5 space-y-4 max-h-[50vh] overflow-y-auto premium-scrollbar bg-zinc-955/20">
+                {/* Dossier details card grid */}
+                <div className="space-y-2">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <FiActivity className="text-yellow-400/80" size={11} /> Identity Dossier
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    <div className="bg-zinc-900/30 border border-zinc-850 rounded-lg p-2.5 hover:border-zinc-800 transition-all duration-300">
+                      <p className="text-[8px] text-zinc-550 font-bold uppercase tracking-wider">Edition / Publication</p>
+                      <p className="font-semibold text-zinc-200 mt-0.5 truncate">{selectedBook.editionOrPublishYear || "N/A"}</p>
+                    </div>
+
+                    <div className="bg-zinc-900/30 border border-zinc-850 rounded-lg p-2.5 hover:border-zinc-800 transition-all duration-300">
+                      <p className="text-[8px] text-zinc-550 font-bold uppercase tracking-wider">System Language</p>
+                      <p className="font-semibold text-zinc-200 mt-0.5 truncate">{selectedBook.language || "English"}</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Admin Approval Section */}
-                {(!selectedBook.isApproved && selectedBook.adminApproval !== "Approved") && (
-                  <div className="mt-8 p-6 bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border border-yellow-500/30 rounded-2xl">
-                    <h3 className="font-semibold text-yellow-300 text-lg mb-3 flex items-center gap-2">
-                      <FaClock className="w-5 h-5 animate-pulse" />
-                      Admin Approval Required
+                {/* Logistics / Inventory Info */}
+                <div className="space-y-2">
+                  <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <FaWarehouse className="text-yellow-400/80" size={11} /> Stock & Ledger
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div className="bg-zinc-900/30 border border-zinc-850 rounded-lg p-2.5 flex flex-col justify-between hover:border-zinc-800 transition-all duration-300">
+                      <p className="text-[8px] text-zinc-550 font-bold uppercase tracking-wider">Vault Price</p>
+                      <p className="font-black text-yellow-400/90 text-sm mt-0.5 font-mono">₹{selectedBook.price}</p>
+                    </div>
+
+                    <div className="bg-zinc-900/30 border border-zinc-850 rounded-lg p-2.5 flex flex-col justify-between hover:border-zinc-800 transition-all duration-300">
+                      <p className="text-[8px] text-zinc-550 font-bold uppercase tracking-wider">Physical Inventory</p>
+                      <p className="font-bold text-zinc-200 text-sm mt-0.5 font-mono">{selectedBook.stock} units</p>
+                    </div>
+
+                    <div className="bg-zinc-900/30 border border-zinc-850 rounded-lg p-2.5 flex flex-col justify-between hover:border-zinc-800 transition-all duration-300">
+                      <p className="text-[8px] text-zinc-550 font-bold uppercase tracking-wider">Registry Date</p>
+                      <p className="font-semibold text-zinc-200 text-xs mt-0.5">{new Date(selectedBook.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {selectedBook.desc && (
+                  <div className="space-y-2">
+                    <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                      <FaBook className="text-yellow-400/80" size={10} /> Product Dossier Description
                     </h3>
-                    <p className="text-gray-300 mb-4">
-                      This book is pending admin approval. Once approved, sellers will be able to set it as "Available".
+                    <div className="bg-zinc-900/30 border border-zinc-850 rounded-lg p-3 hover:border-zinc-800 transition-all duration-300">
+                      <p className="text-[11px] leading-relaxed text-zinc-350 select-text whitespace-pre-line">{selectedBook.desc}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin Approval Control Panel */}
+                {(!selectedBook.isApproved && selectedBook.adminApproval !== "Approved") && (
+                  <div className="p-3 rounded-lg border bg-yellow-500/10 border-yellow-500/25 text-yellow-400 space-y-2">
+                    <h4 className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                      <FiClock className="animate-pulse" size={11} /> Admin Credentials Authorization Required
+                    </h4>
+                    <p className="text-[10px] text-zinc-300 leading-relaxed">
+                      This product catalog submission is currently pending verification. Authorize display or reject query listing:
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 pt-1">
                       <button
                         onClick={() => approveBook(selectedBook._id)}
-                        className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-bold shadow-lg shadow-green-500/30 flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-zinc-955 font-bold py-1 rounded text-[9px] transition-all duration-300 shadow-md shadow-emerald-500/5 active:scale-95"
                       >
-                        <FaCheckCircle className="w-5 h-5" />
-                        Approve Book
+                        Approve listing
                       </button>
                       <button
                         onClick={() => {
-                          const reason = prompt("Enter rejection reason:");
+                          const reason = prompt("Enter administrative rejection citation:");
                           if (reason) {
                             rejectBook(selectedBook._id, reason);
                           }
                         }}
-                        className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 font-bold shadow-lg shadow-red-500/30 flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-r from-rose-500 to-red-650 hover:from-rose-400 hover:to-red-550 text-white font-bold py-1 rounded text-[9px] transition-all duration-300 shadow-md shadow-rose-555/5 active:scale-95"
                       >
-                        <FaTimesCircle className="w-5 h-5" />
-                        Reject Book
+                        Decline listing
                       </button>
                     </div>
                   </div>
                 )}
 
                 {selectedBook.adminApproval === "Rejected" && (
-                  <div className="mt-8 p-6 bg-gradient-to-br from-red-500/10 to-rose-500/10 border border-red-500/30 rounded-2xl">
-                    <h3 className="font-semibold text-red-300 text-lg mb-3 flex items-center gap-2">
-                      <FaTimesCircle className="w-5 h-5" />
-                      Book Rejected
-                    </h3>
-                    <p className="text-gray-300 mb-2">
-                      <span className="font-semibold">Reason:</span> {selectedBook.rejectionReason || "Not specified"}
+                  <div className="p-3 rounded-lg border bg-rose-500/10 border-rose-500/25 text-rose-400 space-y-1">
+                    <h4 className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                      <FiX size={11} /> Credential Listing Declined
+                    </h4>
+                    <p className="text-[10px] text-zinc-300 leading-relaxed">
+                      <strong>Reason:</strong> {selectedBook.rejectionReason || "Validation mismatch"}
                     </p>
                     <button
                       onClick={() => approveBook(selectedBook._id)}
-                      className="mt-3 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-bold shadow-lg shadow-green-500/30 flex items-center gap-2"
+                      className="mt-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-zinc-955 font-bold px-3 py-1 rounded text-[9px] transition-all duration-300"
                     >
-                      <FaCheckCircle className="w-5 h-5" />
-                      Re-Approve Book
+                      Authorize Overrule
                     </button>
                   </div>
                 )}
 
                 {(selectedBook.isApproved || selectedBook.adminApproval === "Approved") && (
-                  <div className="mt-8 p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl">
-                    <div className="flex items-center gap-2 text-green-300">
-                      <FaCheckCircle className="w-5 h-5" />
-                      <span className="font-semibold">Book Approved</span>
-                      {selectedBook.approvedAt && (
-                        <span className="text-sm text-gray-400 ml-auto">
-                          on {new Date(selectedBook.approvedAt).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
+                  <div className="p-2.5 rounded-lg border bg-emerald-500/10 border-emerald-500/25 text-emerald-400 flex items-center justify-between text-[10px] font-bold">
+                    <span className="flex items-center gap-1"><FiCheckCircle size={11} /> Credential catalog approved</span>
+                    {selectedBook.approvedAt && (
+                      <span className="text-zinc-550 uppercase text-[9px]">Verified: {new Date(selectedBook.approvedAt).toLocaleDateString()}</span>
+                    )}
                   </div>
                 )}
-                
-                {/* Status Update Buttons */}
-                <div className="mt-8">
-                  <h3 className="font-semibold text-gray-400 text-sm mb-4">Update Status</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {['Available', 'Sold Out', 'Not Available', 'Arriving Soon'].map(status => (
-                      <button
-                        key={status}
-                        onClick={() => updateBookStatus(selectedBook._id, status)}
-                        className={`px-4 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                          selectedBook.productStatus === status
-                            ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white shadow-lg shadow-purple-500/30'
-                            : 'bg-zinc-800 hover:bg-zinc-700 text-gray-300 border border-zinc-700'
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
+              </div>
+
+              {/* Modal Control Footer Panel */}
+              <div className="p-3 border-t border-zinc-900 bg-zinc-900/10 space-y-3">
+                <div className="space-y-1 text-left px-1">
+                  <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Update System Status</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {['Available', 'Sold Out', 'Not Available', 'Arriving Soon'].map((status) => {
+                      const isActive = selectedBook.productStatus === status;
+                      return (
+                        <button
+                          key={status}
+                          onClick={() => updateBookStatus(selectedBook._id, status)}
+                          className={`py-1.5 rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all duration-200 ${isActive
+                              ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-zinc-955 border border-transparent shadow-md"
+                              : "bg-zinc-900 hover:bg-zinc-850 text-zinc-400 border border-zinc-800"
+                            }`}
+                        >
+                          {status}
+                        </button>
+                      );
+                    })}
                   </div>
+                </div>
+
+                <div className="flex gap-2 pt-0.5 justify-end">
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setSelectedBook(null);
+                    }}
+                    className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-450 hover:text-white px-3.5 py-1.5 rounded-lg font-bold text-[9px] transition-all duration-300"
+                  >
+                    Close Dossier
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal Overlay */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-3xl shadow-2xl border border-zinc-700 max-w-md w-full p-8 animate-slideUp">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-4 bg-gradient-to-br from-red-500/20 to-rose-500/20 rounded-2xl shadow-lg shadow-red-500/20">
-                  <FaTrash className="w-7 h-7 text-red-400" />
+          <div
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            onClick={() => setShowDeleteConfirm(null)}
+          >
+            <div
+              className="animate-modal-entrance bg-zinc-955 rounded-2xl max-w-sm w-full border border-zinc-800 shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="h-[2px] bg-gradient-to-r from-red-500 via-rose-400 to-red-555"></div>
+
+              <div className="p-4.5 space-y-4 text-center">
+                <div className="w-10 h-10 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto text-lg">
+                  <FiTrash2 />
                 </div>
-                <h3 className="text-2xl font-bold text-white">Delete Book?</h3>
-              </div>
-              <p className="text-gray-400 mb-8 text-base">
-                Are you sure you want to delete "<span className="text-white font-semibold">{books.find(b => b._id === showDeleteConfirm)?.title}</span>"? This action cannot be undone.
-              </p>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setShowDeleteConfirm(null)} 
-                  className="flex-1 px-4 py-3 bg-zinc-800 text-white rounded-xl hover:bg-zinc-700 transition-all duration-300 font-semibold border border-zinc-600 hover:border-zinc-500"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={() => deleteBook(showDeleteConfirm)} 
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 font-bold shadow-lg shadow-red-500/30 hover:shadow-red-500/50"
-                >
-                  Delete
-                </button>
+
+                <div className="space-y-1">
+                  <h3 className="text-xs sm:text-sm font-black text-zinc-150 uppercase tracking-wider">Purge book registry file?</h3>
+                  <p className="text-[10px] leading-relaxed text-zinc-450 max-w-[260px] mx-auto">
+                    Are you absolutely sure you want to permanently remove "<span className="text-zinc-250 font-bold">{books.find(b => b._id === showDeleteConfirm)?.title}</span>"? This cannot be undone.
+                  </p>
+                </div>
+
+                <div className="flex gap-2 pt-0.5">
+                  <button
+                    onClick={() => setShowDeleteConfirm(null)}
+                    className="flex-1 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-350 px-3 py-2 rounded-xl font-bold text-[10px] transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => deleteBook(showDeleteConfirm)}
+                    className="flex-1 bg-gradient-to-r from-red-655 to-rose-700 hover:from-red-550 hover:to-rose-600 text-white px-3 py-2 rounded-xl font-bold text-[10px] transition-all duration-300 shadow-md shadow-red-500/10"
+                  >
+                    Purge
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes fadeInUp {
-          from { 
-            opacity: 0; 
-            transform: translateY(30px); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0); 
-          }
-        }
-        
-        @keyframes slideDown {
-          from { 
-            opacity: 0; 
-            transform: translateY(-20px); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0); 
-          }
-        }
-        
-        @keyframes slideUp {
-          from { 
-            opacity: 0; 
-            transform: translateY(20px) scale(0.95); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0) scale(1); 
-          }
-        }
-
-        @keyframes gradient {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        .animate-fadeInUp { animation: fadeInUp 0.5s ease-out forwards; }
-        .animate-slideDown { animation: slideDown 0.3s ease-out; }
-        .animate-slideUp { animation: slideUp 0.3s ease-out; }
-        .animate-spin-slow { animation: spin 3s linear infinite; }
-        .animate-gradient { 
-          background-size: 200% 200%;
-          animation: gradient 3s ease infinite; 
-        }
-      `}</style>
     </div>
   );
 };

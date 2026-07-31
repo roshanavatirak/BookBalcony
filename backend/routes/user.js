@@ -851,6 +851,51 @@ router.delete("/delete-address/:addressId", authenticateToken, async (req, res) 
   }
 });
 
+// Edit existing address by ID
+router.put("/edit-address/:addressId", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const { addressId } = req.params;
+    const updateData = req.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const targetAddr = user.addresses.id(addressId);
+    if (!targetAddr) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Address not found" 
+      });
+    }
+
+    // Update fields
+    const allowed = ['fullName', 'phone', 'addressLine1', 'addressLine2', 'locality', 'city', 'state', 'postalCode', 'country'];
+    allowed.forEach(field => {
+      if (updateData[field] !== undefined) {
+        targetAddr[field] = updateData[field];
+      }
+    });
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Address updated successfully",
+      addresses: user.addresses
+    });
+  } catch (error) {
+    console.error("Edit address error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Failed to update address" 
+    });
+  }
+});
+
+
 // Get primary address (for quick checkout)
 router.get("/get-primary-address", authenticateToken, async (req, res) => {
   try {

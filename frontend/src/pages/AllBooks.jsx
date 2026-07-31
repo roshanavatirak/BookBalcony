@@ -1,31 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 import Loader from '../components/Loader/Loader';
 import BookCard from '../components/BookCard/BookCard';
 import useFavouriteBookIds from '../hooks/useFavouriteBookIds';
-
-const BASE_URL = import.meta.env.VITE_API_URL;
-const API_URL = `${BASE_URL}/api/v1`;
+import { useAllBooks } from '../hooks/useBooksQuery';
 
 const AllBooks = () => {
-  const [Data, setData] = useState();
-  const favouriteIds = useFavouriteBookIds(); // Custom hook to get favourite IDs
+  const { data: Data, isLoading } = useAllBooks();
+  const favouriteIds = useFavouriteBookIds();
 
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/get-all-books`);
-        setData(response.data.data);
-      } catch (error) {
-        console.error("Error fetching books:", error);
-      }
-    };
-    fetch();
-  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 text-white px-2 sm:px-8 py-4 sm:py-10 flex justify-center">
-      <div className="w-full max-w-7xl bg-zinc-900/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl px-3 sm:px-12 py-6 sm:py-10 shadow-2xl border border-zinc-800 sm:border-zinc-700">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-zinc-800 to-gray-900 text-white px-2 sm:px-8 py-4 sm:py-10 flex justify-center">
+      <div className="w-full max-w-7xl bg-gradient-to-br from-gray-900/95 via-zinc-800/95 to-gray-900/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl px-3 sm:px-12 py-6 sm:py-10 shadow-2xl border border-zinc-700">
+
         
         {/* Heading */}
         <div className="text-center mb-6 sm:mb-10">

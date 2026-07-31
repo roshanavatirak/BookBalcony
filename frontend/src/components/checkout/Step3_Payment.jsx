@@ -1,7 +1,3 @@
-
-// ============================================
-// FILE: Step3_Payment.jsx - COMPLETE UPDATED VERSION
-// ============================================
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaRupeeSign, FaMoneyBillAlt, FaUserShield } from "react-icons/fa";
@@ -9,11 +5,15 @@ import { GiReceiveMoney } from "react-icons/gi";
 import { MdDiscount } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import COD_Page from "./COD_Page";
+import Alert from "../Alert/Alert";
+import { useAlert } from "../Alert/useAlert";
+
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
 export default function Step3_Payment({ address, order, onBack }) {
+  const { alert: alertData, hideAlert, success, error, warning } = useAlert();
   const isPremium = localStorage.getItem("isPremiumUser") === "true";
   const [coupon, setCoupon] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
@@ -24,8 +24,9 @@ export default function Step3_Payment({ address, order, onBack }) {
   const [showCODPage, setShowCODPage] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [booksWithSellers, setBooksWithSellers] = useState([]);
-  const [pricingPreview, setPricingPreview] = useState([]); // ✅ NEW: Preview pricing
+  const [pricingPreview, setPricingPreview] = useState([]);
   const navigate = useNavigate();
+
 
   const validCoupons = ["SAVE10A", "BOOK5X1", "OFFER77B"];
 
@@ -42,13 +43,12 @@ export default function Step3_Payment({ address, order, onBack }) {
     }
   }, []);
 
-  // ✅ Calculate preview pricing when books or discount changes
   useEffect(() => {
     if (booksWithSellers.length > 0) {
       const preview = calculateProportionalPricing(
         booksWithSellers,
         discountApplied,
-        0 // Free delivery
+        0
       );
       setPricingPreview(preview);
     } else if (order.items.length > 0) {
@@ -61,15 +61,8 @@ export default function Step3_Payment({ address, order, onBack }) {
     }
   }, [booksWithSellers, order.items, discountApplied]);
 
-  // ✅ PROPORTIONAL PRICING CALCULATOR
   const calculateProportionalPricing = (books, totalDiscount, deliveryCharge) => {
-    console.log("💰 [PRICING] Calculating proportional pricing...");
-    console.log("💰 [PRICING] Books:", books.length);
-    console.log("💰 [PRICING] Total discount:", totalDiscount);
-    
     const totalBasePrice = books.reduce((sum, book) => sum + (book.price || 0), 0);
-    console.log("💰 [PRICING] Total base price:", totalBasePrice);
-    
     if (totalBasePrice === 0) {
       return books.map(book => ({
         book, originalPrice: 0, priceShare: 0,
@@ -77,17 +70,12 @@ export default function Step3_Payment({ address, order, onBack }) {
       }));
     }
     
-    const pricingDetails = books.map((book, index) => {
+    const pricingDetails = books.map((book) => {
       const bookPrice = book.price || 0;
       const priceShare = bookPrice / totalBasePrice;
       const bookDiscount = Math.round(totalDiscount * priceShare);
       const bookDeliveryCharge = Math.round(deliveryCharge * priceShare);
       const amountPayable = bookPrice - bookDiscount + bookDeliveryCharge;
-      
-      console.log(`📦 Book ${index + 1}: "${book.title}"`);
-      console.log(`   - Original Price: ₹${bookPrice}`);
-      console.log(`   - Discount: ₹${bookDiscount}`);
-      console.log(`   - Amount Payable: ₹${amountPayable}`);
       
       return {
         book, 
@@ -99,17 +87,14 @@ export default function Step3_Payment({ address, order, onBack }) {
       };
     });
     
-    // Handle rounding errors
     const calculatedTotal = pricingDetails.reduce((sum, item) => sum + item.amountPayable, 0);
     const expectedTotal = totalBasePrice - totalDiscount + deliveryCharge;
     
     if (calculatedTotal !== expectedTotal && pricingDetails.length > 0) {
       const difference = expectedTotal - calculatedTotal;
-      console.log("⚠️ [PRICING] Rounding adjustment:", difference);
       pricingDetails[pricingDetails.length - 1].amountPayable += difference;
     }
     
-    console.log("✅ [PRICING] Calculation complete");
     return pricingDetails;
   };
 
@@ -127,7 +112,6 @@ export default function Step3_Payment({ address, order, onBack }) {
       
       const responses = await Promise.all(bookDetailsPromises);
       const completeBooks = responses.map(res => res.data.data);
-      console.log("✅ [FETCH] Books fetched:", completeBooks.length);
       setBooksWithSellers(completeBooks);
     } catch (err) {
       console.error("❌ [FETCH] Error:", err);
@@ -176,13 +160,13 @@ export default function Step3_Payment({ address, order, onBack }) {
       const { formatAddress, missingFields } = validateAndFormatAddress(address);
       
       if (missingFields.length > 0) {
-        alert(`Missing: ${missingFields.join(", ")}`);
+        warning(`Missing: ${missingFields.join(", ")}`, "Incomplete Address");
         setIsProcessing(false);
         return;
       }
 
       if (!window.Razorpay) {
-        alert("Razorpay not loaded. Refresh and try again.");
+        error("Razorpay SDK not loaded. Please refresh page.", "Payment Error");
         setIsProcessing(false);
         return;
       }
@@ -191,7 +175,7 @@ export default function Step3_Payment({ address, order, onBack }) {
       
       const booksWithoutSeller = booksToUse.filter(book => !book.seller && !book.addedby);
       if (booksWithoutSeller.length > 0) {
-        alert("Some books missing seller info. Contact support.");
+        error("Some books are missing seller information. Contact support.", "Order Error");
         setIsProcessing(false);
         return;
       }
@@ -211,14 +195,12 @@ export default function Step3_Payment({ address, order, onBack }) {
         order_id: data.order.id,
         handler: async (response) => {
           try {
-            // ✅ CALCULATE PROPORTIONAL PRICING
             const pricingDetails = calculateProportionalPricing(
               booksToUse,
               discountApplied,
-              0 // Free delivery
+              0
             );
             
-            // ✅ CREATE ORDER DATA WITH CORRECT PRICING
             const orderDataArray = pricingDetails.map((item) => {
               const { book, originalPrice, discount, amountPayable } = item;
               const sellerValue = book.seller || book.addedby;
@@ -296,7 +278,7 @@ export default function Step3_Payment({ address, order, onBack }) {
         },
         prefill: {
           name: formatAddress.fullName,
-          email: "test@example.com",
+          email: "user@bookbalcony.com",
           contact: formatAddress.phone,
         },
         theme: { color: "#FACC15" },
@@ -308,20 +290,20 @@ export default function Step3_Payment({ address, order, onBack }) {
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', () => {
         setIsProcessing(false);
-        alert('Payment failed.');
+        error("Payment failed or was cancelled.", "Payment Failed");
       });
       rzp.open();
       
     } catch (err) {
       setIsProcessing(false);
-      alert("Payment failed. Try again.");
+      error("Payment failed. Please try again.", "Payment Error");
     }
   };
 
   const handleCODClick = () => {
     const { formatAddress, missingFields } = validateAndFormatAddress(address);
     if (missingFields.length > 0) {
-      alert(`Missing: ${missingFields.join(", ")}`);
+      warning(`Missing: ${missingFields.join(", ")}`, "Incomplete Address");
       return;
     }
     setShowCODPage(true);
@@ -345,159 +327,180 @@ export default function Step3_Payment({ address, order, onBack }) {
   }
 
   const displayBooks = booksWithSellers.length > 0 ? booksWithSellers : order.items;
+  const finalPayable = order.payable - discountApplied;
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xl max-w-3xl mx-auto text-black relative">
+    <div className="w-full text-white text-xs relative">
+      {alertData && (
+        <Alert
+          type={alertData.type}
+          title={alertData.title}
+          message={alertData.message}
+          duration={alertData.duration}
+          position={alertData.position}
+          autoClose={alertData.autoClose}
+          onClose={hideAlert}
+        />
+      )}
+
+      {/* Cancel Payment Confirmation Modal */}
       {showCancelPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-lg max-w-sm w-full text-center mx-4">
-            <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">❓ Cancel Payment?</h2>
-            <p className="mb-4 sm:mb-6 text-gray-600 text-sm sm:text-base">Cancel payment process?</p>
-            <div className="flex justify-center gap-4">
-              <button onClick={() => setShowCancelPopup(false)} className="bg-gray-300 px-4 py-2 rounded-lg">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50 p-4">
+          <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl shadow-2xl max-w-xs w-full text-center">
+            <h2 className="text-sm font-bold text-yellow-400 mb-2">❓ Cancel Payment?</h2>
+            <p className="mb-4 text-zinc-300 text-xs">Are you sure you want to go back?</p>
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => setShowCancelPopup(false)}
+                className="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
+              >
                 No, Continue
               </button>
-              <button onClick={onBack} className="bg-red-500 text-white px-4 py-2 rounded-lg">
-                Yes, Cancel
+              <button
+                onClick={onBack}
+                className="bg-red-500/20 border border-red-500/40 hover:bg-red-500 text-red-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+              >
+                Yes, Go Back
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <button onClick={() => setShowCancelPopup(true)} className="text-blue-600 underline text-xs sm:text-sm mt-1 sm:mt-2">
-        ← Back to Summary
-      </button>
-
-      <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-center text-blue-800">💳 Payment Options</h2>
-
-      {/* ✅ FIXED: Show individual book pricing */}
-      {displayBooks.map((book, idx) => {
-        // Find pricing info for this book
-        const pricingInfo = pricingPreview.find(p => p.book._id === book._id);
-        
-        return (
-          <div key={idx} className="flex gap-3 sm:gap-4 border p-3 sm:p-4 rounded-lg bg-zinc-50 mb-3 sm:mb-4 items-center">
-            <img src={book.url} alt={book.title} className="w-16 h-22 sm:w-20 sm:h-28 object-cover rounded" />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold truncate">{book.title}</h3>
-              <p className="text-gray-600 text-xs sm:text-sm">
-                To: {address.fullName || "Customer"}, {address.city || "City"}
-              </p>
-              
-              {/* ✅ Show pricing breakdown */}
-              <div className="mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1">
-                <div className="flex items-center gap-2 text-xs sm:text-sm">
-                  <span className="text-gray-500 line-through">MRP: ₹{book.price}</span>
-                </div>
-                
-                {pricingInfo && pricingInfo.discount > 0 && (
-                  <div className="flex items-center gap-2 text-xs sm:text-sm">
-                    <span className="text-green-600 font-medium">
-                      Discount: -₹{pricingInfo.discount}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="text-base sm:text-lg font-bold text-green-600">
-                    ₹{pricingInfo ? pricingInfo.amountPayable : book.price}
-                  </span>
-                  {pricingInfo && pricingInfo.discount > 0 && (
-                    <span className="text-[10px] sm:text-xs bg-green-100 text-green-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
-                      {Math.round((pricingInfo.discount / book.price) * 100)}% off
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Total Payable */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 sm:p-4 rounded-xl mb-3 sm:mb-4">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-700 font-medium text-sm sm:text-base">Total Payable:</span>
-          <span className="text-xl sm:text-2xl font-bold text-green-600 flex items-center gap-1">
-            <FaRupeeSign className="text-lg sm:text-xl" />
-            {order.payable - discountApplied}
-          </span>
-        </div>
-        {discountApplied > 0 && (
-          <p className="text-xs sm:text-sm text-green-600 text-right mt-1">
-            (Coupon discount: ₹{discountApplied})
-          </p>
-        )}
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between mb-2">
+        <button
+          onClick={() => setShowCancelPopup(true)}
+          className="text-yellow-400 hover:text-yellow-300 text-xs font-semibold flex items-center gap-1 transition-colors"
+        >
+          <span>← Back to Summary</span>
+        </button>
+        <span className="text-[10px] text-zinc-500">Step 3 of 3</span>
       </div>
 
-      <div className="mb-3 sm:mb-4 mt-3 sm:mt-4">
-        <label className="font-medium text-xs sm:text-sm flex items-center gap-1 mb-1">
-          <MdDiscount /> Apply Coupon
+      <h2 className="text-sm sm:text-base font-bold bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500 bg-clip-text text-transparent text-center mb-2.5">
+        💳 Select Payment Method
+      </h2>
+
+      {/* Book Items Pricing Preview */}
+      <div className="space-y-1.5 mb-2.5 max-h-36 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700">
+        {displayBooks.map((book, idx) => {
+          const pricingInfo = pricingPreview.find(p => p.book._id === book._id);
+          return (
+            <div key={idx} className="flex items-center gap-2 bg-zinc-800/40 border border-zinc-700/50 p-2 rounded-lg">
+              <img src={book.url} alt={book.title} className="w-8 h-11 object-cover rounded shadow flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xs font-bold text-white truncate">{book.title}</h3>
+                <p className="text-[10px] text-zinc-400 truncate">Deliver to: {address.fullName}</p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-xs font-bold text-green-400">
+                  ₹{pricingInfo ? pricingInfo.amountPayable : book.price}
+                </p>
+                {pricingInfo && pricingInfo.discount > 0 && (
+                  <p className="text-[9px] text-zinc-500 line-through">₹{book.price}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Total Amount Banner */}
+      <div className="bg-zinc-950/70 border border-zinc-800 p-2.5 rounded-xl mb-2.5 flex items-center justify-between">
+        <span className="text-xs font-semibold text-zinc-300">Total Amount Payable:</span>
+        <div className="text-right">
+          <span className="text-sm font-bold text-yellow-400 flex items-center gap-0.5">
+            <FaRupeeSign className="text-xs" />
+            {finalPayable}
+          </span>
+          {discountApplied > 0 && (
+            <span className="text-[9px] text-green-400 block">(Discount: -₹{discountApplied})</span>
+          )}
+        </div>
+      </div>
+
+      {/* Coupon Code Block - Compact */}
+      <div className="mb-3 bg-zinc-800/40 border border-zinc-700/50 p-2 rounded-xl">
+        <label className="text-[11px] font-semibold text-zinc-300 flex items-center gap-1 mb-1">
+          <MdDiscount className="text-yellow-400" /> Apply Coupon Code
         </label>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <input
             type="text"
-            placeholder="Coupon code"
-            className="flex-1 border p-2 rounded text-sm sm:text-base"
+            placeholder="e.g. SAVE10A"
+            className="flex-1 bg-zinc-950/80 border border-zinc-700 rounded-lg px-2.5 py-1 text-xs text-white placeholder-zinc-500 uppercase focus:border-yellow-400 focus:outline-none"
             value={coupon}
             onChange={(e) => setCoupon(e.target.value)}
           />
-          <button onClick={applyCoupon} className="bg-yellow-400 px-3 sm:px-4 py-2 rounded font-medium text-sm sm:text-base">
+          <button
+            onClick={applyCoupon}
+            className="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-bold px-3 py-1 rounded-lg text-xs shadow transition-colors"
+          >
             Apply
           </button>
         </div>
         {couponMessage && (
-          <p className={`text-xs sm:text-sm mt-1 ${couponMessage.startsWith("✅") ? "text-green-600" : "text-red-600"}`}>
+          <p className={`text-[10px] mt-1 ${couponMessage.startsWith("✅") ? "text-green-400" : "text-red-400"}`}>
             {couponMessage}
           </p>
         )}
       </div>
 
-      <div className="space-y-2 sm:space-y-3 mt-4 sm:mt-6">
+      {/* Payment Action Buttons Stack */}
+      <div className="space-y-1.5">
         <button
           onClick={handleOnlinePayment}
           disabled={isProcessing}
-          className={`font-semibold py-2.5 sm:py-3 rounded-xl w-full flex items-center justify-center gap-2 text-sm sm:text-base ${
-            isProcessing ? "bg-gray-400 cursor-not-allowed" : "bg-yellow-400 hover:bg-yellow-300"
+          className={`w-full font-bold py-2 px-3 rounded-xl text-xs shadow-lg flex items-center justify-center gap-1.5 transition-all ${
+            isProcessing
+              ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
+              : "bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black shadow-yellow-500/20"
           }`}
         >
-          <GiReceiveMoney size={18} /> 
-          {isProcessing ? "Processing..." : "Pay Online"}
+          <GiReceiveMoney size={16} /> 
+          {isProcessing ? "Processing Online Payment..." : `Pay Online via UPI / Card (₹${finalPayable})`}
         </button>
 
         <button
           onClick={handleCODClick}
-          className="bg-white border text-gray-800 font-medium py-2.5 sm:py-3 rounded-xl w-full flex items-center justify-center gap-2 hover:bg-gray-100 text-sm sm:text-base"
+          className="w-full bg-zinc-800 hover:bg-zinc-700/80 border border-zinc-700 text-white font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
         >
-          <FaMoneyBillAlt size={16} /> COD (₹{order.payable - discountApplied} + 9 )
+          <FaMoneyBillAlt size={14} className="text-yellow-400" />
+          Cash on Delivery — COD (₹{finalPayable + 9} incl. ₹9 handling fee)
         </button>
 
         <button
           disabled={!isPremium}
-          className={`w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base ${
-            isPremium ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-500 cursor-not-allowed"
+          className={`w-full py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+            isPremium
+              ? "bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500 hover:text-white"
+              : "bg-zinc-800/30 border border-zinc-800 text-zinc-600 cursor-not-allowed"
           }`}
         >
-          <FaUserShield size={16} /> Meet in Person (Premium)
+          <FaUserShield size={14} /> Meet in Person (Premium User Feature)
         </button>
       </div>
 
+      {/* Success / Error Popup Modal */}
       {showSuccessPopup && paymentDetails && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50 p-4">
           {paymentDetails.failed ? (
-            <div className="bg-white rounded-3xl shadow-2xl max-w-lg p-8 text-center">
-              <h2 className="text-2xl font-bold text-red-700 mb-3">Payment Issue</h2>
-              <p className="mb-4">{paymentDetails.errorDetails}</p>
-              <button onClick={() => window.location.href = "/contact"} className="bg-blue-600 text-white py-3 px-6 rounded-lg">
+            <div className="bg-zinc-900 border border-red-500/30 rounded-2xl shadow-2xl max-w-sm p-5 text-center text-white">
+              <h2 className="text-base font-bold text-red-400 mb-2">Payment Issue</h2>
+              <p className="text-xs text-zinc-300 mb-4">{paymentDetails.errorDetails}</p>
+              <button
+                onClick={() => window.location.href = "/support"}
+                className="bg-red-500/20 border border-red-500/40 text-red-300 py-1.5 px-4 rounded-lg text-xs font-bold"
+              >
                 Contact Support
               </button>
             </div>
           ) : (
-            <div className="bg-white rounded-3xl shadow-2xl max-w-md p-8 text-center">
-              <h2 className="text-2xl font-bold text-green-700 mb-2">🎉 Success!</h2>
-              <p className="mb-4">Paid ₹{paymentDetails.price}</p>
-              <p className="text-sm text-gray-500">Redirecting...</p>
+            <div className="bg-zinc-900 border border-green-500/30 rounded-2xl shadow-2xl max-w-xs p-5 text-center text-white">
+              <h2 className="text-base font-bold text-green-400 mb-1">🎉 Payment Successful!</h2>
+              <p className="text-xs text-zinc-300 mb-2">Amount Paid: ₹{paymentDetails.price}</p>
+              <p className="text-[10px] text-zinc-500">Redirecting to Order History...</p>
             </div>
           )}
         </div>
