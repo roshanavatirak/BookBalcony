@@ -24,7 +24,12 @@ const Sidebar = ({ data, seller }) => {
   console.log('Seller keys:', seller ? Object.keys(seller) : 'null/undefined');
   console.groupEnd();
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === "/profile") {
+      return location.pathname === "/profile";
+    }
+    return location.pathname.startsWith(path);
+  };
 
   // ✅ Enhanced avatar handling with debugging
   const getAvatarSrc = () => {

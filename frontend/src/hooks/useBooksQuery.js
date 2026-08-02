@@ -59,7 +59,13 @@ export function useBookDetails(id) {
     queryFn: async () => {
       if (!id) return null;
       const res = await axios.get(`${API_URL}/get-book-by-id/${id}`);
-      return res.data.data;
+      return {
+        ...res.data.data,
+        isLive: res.data.isLive,
+        isFutureScheduled: res.data.isFutureScheduled,
+        scheduledMessage: res.data.scheduledMessage,
+        goLiveDate: res.data.goLiveDate,
+      };
     },
     enabled: !!id,
     staleTime: 10 * 60 * 1000, // 10 minutes fresh

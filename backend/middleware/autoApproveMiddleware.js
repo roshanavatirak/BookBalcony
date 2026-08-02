@@ -20,10 +20,14 @@ const autoApproveBookMiddleware = async (book, sellerId = null) => {
       book.adminApproval = "Approved";
       book.approvedAt = new Date();
       
-      // If book has stock and is "Arriving Soon", change to "Available"
-      if (book.stock > 0 && book.productStatus === "Arriving Soon") {
+      const isFutureScheduled = book.isScheduled && book.goLiveDate && new Date(book.goLiveDate) > new Date();
+
+      // If book has stock, is "Arriving Soon", and NOT scheduled for a future date, change to "Available"
+      if (book.stock > 0 && book.productStatus === "Arriving Soon" && !isFutureScheduled) {
         book.productStatus = "Available";
         console.log("📊 Auto-updated status to 'Available'");
+      } else if (isFutureScheduled) {
+        console.log(`📅 Book approved but scheduled to go live on ${book.goLiveDate}`);
       }
       
       await book.save();

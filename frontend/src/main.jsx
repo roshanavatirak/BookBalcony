@@ -11,6 +11,25 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './config/queryClient.js';
 
+// 🚫 Global suppression of all browser console logs/info/debug/warn & third-party logger errors
+if (typeof window !== "undefined") {
+  const noop = () => {};
+  window.console.log = noop;
+  window.console.info = noop;
+  window.console.debug = noop;
+  window.console.warn = noop;
+
+  // Silence unhandled rejections from third-party tracking scripts (e.g. Razorpay lumberjack telemetry)
+  window.addEventListener("unhandledrejection", (event) => {
+    if (event.reason && (
+      String(event.reason).includes("lumberjack") ||
+      String(event.reason).includes("ERR_BLOCKED_BY_CLIENT")
+    )) {
+      event.preventDefault();
+    }
+  });
+}
+
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
 createRoot(document.getElementById('root')).render(

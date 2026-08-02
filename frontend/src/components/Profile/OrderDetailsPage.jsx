@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getBookDetailPath } from '../../utils/bookSlug';
 import { 
   ArrowLeft, 
@@ -711,65 +711,110 @@ const OrderDetailsPage = () => {
             <div className="bg-zinc-800/40 rounded-xl border border-zinc-700 p-3 sm:p-6 shadow-xl">
               <h2 className="text-sm sm:text-xl font-bold text-yellow-400 mb-4 sm:mb-6 flex items-center gap-2">
                 <ShoppingBag size={16} className="sm:w-5 sm:h-5" />
-                Item Details
+                Item Details ({order.items?.length || 1} {order.items?.length === 1 ? 'Item' : 'Items'})
               </h2>
               
-              <div className="flex gap-3 sm:gap-6 bg-zinc-900/40 p-2.5 sm:p-4 rounded-xl border border-zinc-700/50">
-                {order.book && (
-                  <div className="relative group shrink-0 w-16 sm:w-32">
-                    <img
-                      src={order.book.url || "https://via.placeholder.com/150x200?text=Book"}
-                      alt={order.book.title}
-                      className="w-full h-22 sm:h-44 object-cover rounded-lg border border-zinc-700 shadow-md group-hover:scale-[1.02] transition-transform duration-300"
-                    />
-                  </div>
-                )}
-                
-                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                  <div>
-                    <h3 className="text-sm sm:text-xl font-bold text-yellow-355 leading-snug line-clamp-1 sm:line-clamp-2 mb-0.5 sm:mb-1.5">
-                      {order.book?.title || "Book Information Unavailable"}
-                    </h3>
-                    
-                    {order.book?.desc && (
-                      <p className="hidden sm:block text-zinc-400 text-xs sm:text-sm mb-3 leading-relaxed line-clamp-3">
-                        {order.book.desc}
-                      </p>
-                    )}
-                    
-                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] sm:text-xs text-zinc-400 mb-2">
-                      <div className="flex items-center gap-1">
-                        <User className="text-yellow-400 shrink-0" size={10} />
-                        <span>by <strong className="text-white font-medium">{order.book?.author || "Unknown"}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-1 border-l border-zinc-700 pl-2">
-                        <span>Lang: <strong className="text-white font-medium">{order.book?.language || "English"}</strong></span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Total Paid & Payment Status combined into a compact bar */}
-                  <div className="flex items-center justify-between sm:justify-start gap-3 bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/20 rounded-lg p-1.5 sm:p-3">
-                    <div className="flex items-center gap-1.5">
-                      <div className="p-1 bg-green-500/20 rounded shrink-0">
-                        <IndianRupee className="text-green-400 w-3 h-3 sm:w-4 sm:h-4" />
-                      </div>
-                      <div>
-                        <span className="text-[8px] sm:text-[10px] text-zinc-500 uppercase font-bold tracking-wider block">Total Paid</span>
-                        <span className="text-xs sm:text-xl font-black text-green-400 leading-none">
-                          {formatCurrency(order.amountPayable)}
-                        </span>
-                      </div>
-                    </div>
-                    <span className={`text-[9px] border px-1.5 py-0.5 rounded font-extrabold uppercase sm:ml-auto ${
-                      order.paymentStatus === 'Success' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                      order.paymentStatus === 'Pending' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
-                      'bg-red-500/10 text-red-400 border-red-500/20'
+              <div className="space-y-4">
+                {(order.items && order.items.length > 0 ? order.items : [order.book]).map((item, idx) => {
+                  const bookData = item.book || (item.bookId ? order.book : item);
+                  const itemTitle = item.title || bookData?.title || "Book Information Unavailable";
+                  const itemPrice = item.price || bookData?.price || order.amountPayable;
+                  const itemStatus = item.status || order.orderStatus;
+                  const isItemCancelled = itemStatus === 'Cancelled';
+                  const itemId = item.id;
+                  const bookId = bookData?._id || item.bookId;
+
+                  return (
+                    <div key={idx} className={`flex flex-col sm:flex-row gap-3 sm:gap-6 bg-zinc-900/40 p-3 sm:p-4 rounded-xl border transition-all ${
+                      isItemCancelled ? 'border-red-500/20 bg-red-950/10 opacity-75' : 'border-zinc-700/50'
                     }`}>
-                      {order.paymentStatus}
-                    </span>
-                  </div>
-                </div>
+                      <div className="flex gap-3 sm:gap-6 flex-1 min-w-0">
+                        {bookData && (
+                          <Link to={bookId ? getBookDetailPath(itemTitle, bookId) : '#'} className="relative group shrink-0 w-16 sm:w-24">
+                            <img
+                              src={bookData.url || "https://via.placeholder.com/150x200?text=Book"}
+                              alt={itemTitle}
+                              className="w-full h-22 sm:h-32 object-cover rounded-lg border border-zinc-700 shadow-md group-hover:scale-[1.05] transition-transform duration-300"
+                            />
+                          </Link>
+                        )}
+                        
+                        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <Link to={bookId ? getBookDetailPath(itemTitle, bookId) : '#'}>
+                                <h3 className={`text-sm sm:text-lg font-bold leading-snug line-clamp-1 sm:line-clamp-2 hover:text-yellow-400 transition-colors ${
+                                  isItemCancelled ? 'line-through text-zinc-500' : 'text-yellow-355'
+                                }`}>
+                                  {itemTitle}
+                                </h3>
+                              </Link>
+                              <span className={`text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border shrink-0 ${
+                                isItemCancelled ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'
+                              }`}>
+                                {itemStatus}
+                              </span>
+                            </div>
+                            
+                            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] sm:text-xs text-zinc-400 mb-2">
+                              {bookData?.author && (
+                                <div className="flex items-center gap-1">
+                                  <User className="text-yellow-400 shrink-0" size={10} />
+                                  <span>by <strong className="text-white font-medium">{bookData.author}</strong></span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1 border-l border-zinc-700 pl-2">
+                                <span>Qty: <strong className="text-white font-medium">{item.quantity || 1}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/20 rounded-lg p-1.5 sm:p-2.5">
+                            <div className="flex items-center gap-1.5">
+                              <div className="p-1 bg-green-500/20 rounded shrink-0">
+                                <IndianRupee className="text-green-400 w-3 h-3 sm:w-4 sm:h-4" />
+                              </div>
+                              <div>
+                                <span className="text-[8px] sm:text-[10px] text-zinc-500 uppercase font-bold tracking-wider block">Price</span>
+                                <span className="text-xs sm:text-base font-black text-green-400 leading-none">
+                                  {formatCurrency(itemPrice)}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Item-level Cancel Button */}
+                            {!isItemCancelled && canCancelOrder() && itemId && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const token = localStorage.getItem("token");
+                                    const id = localStorage.getItem("id");
+                                    const res = await fetch(`${API_URL}/cancel-item/${order._id}/${itemId}`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json', id, authorization: `Bearer ${token}` }
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      success(data.message);
+                                      fetchOrderDetails();
+                                    } else {
+                                      showError(data.message);
+                                    }
+                                  } catch (err) {
+                                    showError("Failed to cancel item");
+                                  }
+                                }}
+                                className="text-[10px] bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white px-2.5 py-1 rounded font-bold transition-all border border-red-500/30 flex items-center gap-1 shrink-0"
+                              >
+                                <X size={10} /> Cancel Item
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

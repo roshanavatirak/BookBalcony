@@ -5,6 +5,7 @@ import { FaTrashAlt, FaShoppingCart, FaShieldAlt, FaTruck, FaLock, FaCheckCircle
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiSparkles } from "react-icons/hi";
+import Alert from '../components/Alert/Alert';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -32,13 +33,15 @@ const Cart = () => {
     setLoading(false);
   };
 
+  const [alertConfig, setAlertConfig] = useState(null);
+
   const removeFromCart = async (bookid) => {
     setRemovingId(bookid);
     try {
       await axios.put(`${API_URL}/remove-from-cart/${bookid}`, {}, { headers });
       setCart(prev => prev.filter(item => item._id !== bookid));
     } catch (error) {
-      alert("Failed to remove item.");
+      setAlertConfig({ type: 'error', title: 'Error', message: "Failed to remove item from cart." });
       console.error(error);
     } finally {
       setRemovingId(null);
@@ -47,7 +50,7 @@ const Cart = () => {
 
   const placeOrdernew = () => {
     if (cart.length === 0) {
-      alert("Your cart is empty!");
+      setAlertConfig({ type: 'warning', title: 'Empty Cart', message: "Your cart is empty!" });
       return;
     }
 
@@ -417,6 +420,15 @@ const Cart = () => {
           </>
         )}
       </div>
+
+      {alertConfig && (
+        <Alert
+          type={alertConfig.type}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          onClose={() => setAlertConfig(null)}
+        />
+      )}
     </div>
   );
 };

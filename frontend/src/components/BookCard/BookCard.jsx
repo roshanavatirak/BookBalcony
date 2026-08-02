@@ -6,6 +6,7 @@ import { useFavourites } from '../../context/FavouriteContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { getBookDetailPath } from '../../utils/bookSlug';
+import Alert from '../Alert/Alert';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -27,6 +28,8 @@ function BookCard({ data, onRemove }) {
     if (onRemove) onRemove();
   };
 
+  const [alertConfig, setAlertConfig] = React.useState(null);
+
   const handleQuickAdd = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -34,17 +37,16 @@ function BookCard({ data, onRemove }) {
     const stock = data?.stock < 0 ? 0 : data?.stock;
     const status = data?.productStatus?.toLowerCase();
     
-    // Check if available for purchase
     if (status === "not available") {
-      alert("⚠️ This book is not available for purchase!");
+      setAlertConfig({ type: 'warning', title: 'Not Available', message: 'This book is not available for purchase!' });
       return;
     }
     if (stock === 0 || status === "sold out") {
-      alert("⚠️ This book is currently out of stock!");
+      setAlertConfig({ type: 'warning', title: 'Out of Stock', message: 'This book is currently out of stock!' });
       return;
     }
     if (status === "arriving soon") {
-      alert("⏰ This book is arriving soon. Please check back later!");
+      setAlertConfig({ type: 'info', title: 'Arriving Soon', message: 'This book is arriving soon. Please check back later!' });
       return;
     }
 
@@ -55,17 +57,16 @@ function BookCard({ data, onRemove }) {
         bookid: data._id,
       };
       
-      // Correct API call format - send bookid in body
       const response = await axios.put(
         `${API_URL}/add-to-cart`,
-        {}, // Send bookid in request body
+        {},
         { headers }
       );
       
-      alert(response.data.message || "✅ Book added to cart successfully!");
+      setAlertConfig({ type: 'success', title: 'Added to Cart', message: response.data.message || "Book added to cart successfully!" });
     } catch (error) {
       console.error("Error adding to cart:", error);
-      alert(error.response?.data?.message || "❌ Failed to add to cart!");
+      setAlertConfig({ type: 'error', title: 'Error', message: error.response?.data?.message || "Failed to add to cart!" });
     }
   };
 
@@ -279,6 +280,15 @@ function BookCard({ data, onRemove }) {
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
         </div>
+
+        {alertConfig && (
+          <Alert
+            type={alertConfig.type}
+            title={alertConfig.title}
+            message={alertConfig.message}
+            onClose={() => setAlertConfig(null)}
+          />
+        )}
       </motion.div>
     </Link>
   );

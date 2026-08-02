@@ -557,7 +557,7 @@ router.post("/google-signup", async (req, res) => {
 // ✅ Get current user profile
 router.get('/get-user-profile', authenticateToken, async (req, res) => {
   try {
-    const userId = req.headers.id;
+    const userId = req.user?.id || req.headers.id;
     const user = await User.findById(userId).select('username email phone avatar');
 
     if (!user) {
@@ -653,7 +653,7 @@ router.get('/get-user-profile', authenticateToken, async (req, res) => {
 
 router.get("/get-user-information", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const user = await User.findById(id).select("-password");
     
     if (!user) {
@@ -672,7 +672,7 @@ router.get("/get-user-information", authenticateToken, async (req, res) => {
 // Add new address (up to 3)
 router.post("/add-address", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const addressData = req.body;
 
     const user = await User.findById(id);
@@ -727,7 +727,7 @@ router.post("/add-address", authenticateToken, async (req, res) => {
 // Update all addresses (for settings page)
 router.put("/update-addresses", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const { addresses } = req.body;
 
     if (!Array.isArray(addresses)) {
@@ -774,7 +774,7 @@ router.put("/update-addresses", authenticateToken, async (req, res) => {
 // Set primary address
 router.put("/set-primary-address", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const { addressId } = req.body;
 
     const user = await User.findById(id);
@@ -805,7 +805,7 @@ router.put("/set-primary-address", authenticateToken, async (req, res) => {
 // Delete address
 router.delete("/delete-address/:addressId", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const { addressId } = req.params;
 
     const user = await User.findById(id);
@@ -854,7 +854,7 @@ router.delete("/delete-address/:addressId", authenticateToken, async (req, res) 
 // Edit existing address by ID
 router.put("/edit-address/:addressId", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const { addressId } = req.params;
     const updateData = req.body;
 
@@ -899,7 +899,7 @@ router.put("/edit-address/:addressId", authenticateToken, async (req, res) => {
 // Get primary address (for quick checkout)
 router.get("/get-primary-address", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const user = await User.findById(id);
     
     if (!user) {

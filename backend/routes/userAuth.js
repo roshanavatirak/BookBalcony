@@ -53,8 +53,16 @@ const authenticateToken = async (req, res, next) => {
         });
       }
 
-      // ✅ Fetch user from database to get latest premium status
-      const userId = req.headers.id || decoded.authClaims?.[0]?.id;
+      // ✅ Securely resolve user ID strictly from verified JWT payload (prevent header spoofing)
+      const userId = decoded.id || decoded._id || decoded.userId || decoded.authClaims?.[0]?.id;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid token payload: User ID missing"
+        });
+      }
+
       const user = await User.findById(userId).select("-password");
 
       if (!user) {
@@ -67,7 +75,8 @@ const authenticateToken = async (req, res, next) => {
       // ✅ Attach user info including premium status to request
       req.user = {
         ...decoded,
-        id: user._id,
+        id: user._id.toString(),
+        _id: user._id,
         role: user.role,
         isSeller: user.isSeller,
         isPremium: user.isPremiumActive ? user.isPremiumActive() : false,

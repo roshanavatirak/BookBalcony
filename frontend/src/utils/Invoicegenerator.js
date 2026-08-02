@@ -159,7 +159,22 @@ export const generateInvoicePDF = (order) => {
     
     const tableData = [];
     
-    if (order.book) {
+    if (order.items && order.items.length > 0) {
+      order.items.forEach((item, idx) => {
+        const title = item.title || (order.book?.title) || 'Book';
+        const price = item.price || order.book?.price || 0;
+        const qty = item.quantity || 1;
+        const total = price * qty;
+        tableData.push([
+          (idx + 1).toString(),
+          title,
+          order.book?.author || 'N/A',
+          `₹${price.toFixed(2)}`,
+          qty.toString(),
+          `₹${total.toFixed(2)}`
+        ]);
+      });
+    } else if (order.book) {
       tableData.push([
         '1',
         order.book.title || 'Book',
@@ -387,15 +402,8 @@ export const generateInvoicePDF = (order) => {
 export const isInvoiceAvailable = (order) => {
   if (!order) return false;
   
-  // Invoice is available if:
-  // 1. Payment status is Success (for online payments)
-  // 2. Order is placed (for COD orders)
-  // 3. Order is not cancelled
-  
-  const validStatuses = ['Success', 'Pending']; // Pending for COD
-  const notCancelled = order.orderStatus !== 'Cancelled';
-  
-  return validStatuses.includes(order.paymentStatus) && notCancelled;
+  // Invoice is available ONLY after order is Delivered
+  return order.orderStatus === 'Delivered';
 };
 
 /**

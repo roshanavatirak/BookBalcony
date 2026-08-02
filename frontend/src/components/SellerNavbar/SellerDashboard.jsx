@@ -271,7 +271,7 @@ const SellerDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 text-white px-2 sm:px-4 py-6 flex justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-r from-gray-900 via-zinc-800 to-gray-900 text-white px-2 sm:px-4 py-6 flex justify-center relative overflow-hidden">
       <CustomStyles />
       
       {/* Ambient background glows */}

@@ -1,9 +1,8 @@
 const router = require("express").Router();
 const { authenticateToken } = require("./userAuth");
-const Order = require("../models/order");
 const User = require("../models/user");
 const Book = require("../models/book");
-const mongoose = require("mongoose");
+const prisma = require("../conn/prisma");
 const { sendOrderStatusEmail } = require("../services/emailService");
 const {
   invalidateBookCatalogCache,
@@ -11,110 +10,12 @@ const {
   invalidateSellerStatsCache,
 } = require("../config/redis");
 
-// // 📌 Place an order
-// router.post("/place-order", authenticateToken, async (req, res) => {
-//   try {
-//     const { id } = req.headers;
-//     const { order, shippingAddress, amountPayable, discount, handlingFee } = req.body;
+const orderSagaService = require("../services/orderSagaService");
 
-//     // Validate required fields
-//     if (!shippingAddress || !amountPayable) {
-//       return res.status(400).json({ 
-//         message: "Shipping address and amount payable are required" 
-//       });
-//     }
-
-//     // Validate shipping address fields
-//     const requiredAddressFields = ['fullName', 'phone', 'addressLine1', 'city', 'state', 'postalCode'];
-//     for (const field of requiredAddressFields) {
-//       if (!shippingAddress[field]) {
-//         return res.status(400).json({ 
-//           message: `Shipping address field '${field}' is required` 
-//         });
-//       }
-//     }
-
-//     const savedOrders = [];
-
-//     for (const orderData of order) {
-//       const newOrder = new Order({
-//         user: id,
-//         book: orderData.book || orderData._id,
-//         orderStatus: orderData.orderStatus || "Order Placed",
-//         paymentStatus: orderData.paymentStatus || "Pending",
-//         paymentMethod: orderData.paymentMethod || "COD",
-        
-//         // ✅ Add the missing required fields
-//         amountPayable: amountPayable,
-//         shippingAddress: {
-//           fullName: shippingAddress.fullName,
-//           phone: shippingAddress.phone,
-//           addressLine1: shippingAddress.addressLine1,
-//           addressLine2: shippingAddress.addressLine2 || "",
-//           city: shippingAddress.city,
-//           state: shippingAddress.state,
-//           postalCode: shippingAddress.postalCode,
-//           country: shippingAddress.country || "India"
-//         },
-        
-//         // ✅ Optional: Add discount and handling fee if your schema supports them
-//         // discount: discount || 0,
-//         // handlingFee: handlingFee || 0,
-        
-//         // ✅ Initialize tracking
-//         currentLocation: "Warehouse",
-//         trackingHistory: [{
-//           status: "Order Placed",
-//           location: "Warehouse",
-//           date: new Date()
-//         }]
-//       });
-
-//       const savedOrder = await newOrder.save();
-//       savedOrders.push(savedOrder);
-
-//       // ✅ Update user's orders and remove from cart
-//       await User.findByIdAndUpdate(id, {
-//         $push: { orders: savedOrder._id },
-//         $pull: { cart: orderData.book || orderData._id },
-//       });
-//     }
-
-//     return res.status(201).json({
-//       status: "Success",
-//       message: "Order Placed Successfully",
-//       orders: savedOrders.map(order => ({
-//         orderId: order._id,
-//         orderStatus: order.orderStatus,
-//         paymentStatus: order.paymentStatus,
-//         amountPayable: order.amountPayable
-//       }))
-//     });
-
-//   } catch (error) {
-//     console.log("Place Order Error:", error);
-    
-//     // ✅ Better error handling
-//     if (error.name === 'ValidationError') {
-//       const validationErrors = Object.values(error.errors).map(err => err.message);
-//       return res.status(400).json({ 
-//         message: "Validation failed", 
-//         errors: validationErrors 
-//       });
-//     }
-    
-//     return res.status(500).json({ 
-//       message: "An error occurred while placing the order",
-//       error: process.env.NODE_ENV === 'development' ? error.message : undefined
-//     });
-//   }
-// });
-
-
-// Place an order with seller notification
+// 📌 Place an order with Master Order & Multiple OrderItems (PostgreSQL Write Primary)
 router.post("/place-order", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
+    const id = req.user?.id || req.headers.id;
     const { order, shippingAddress, amountPayable, discount, handlingFee } = req.body;
 
     if (!shippingAddress || !amountPayable) {
@@ -132,136 +33,111 @@ router.post("/place-order", authenticateToken, async (req, res) => {
       }
     }
 
-    const savedOrders = [];
-
-    for (const orderData of order) {
-      // Fetch book to get seller information
-      const book = await Book.findById(orderData.book || orderData._id);
-      
-      if (!book) {
-        return res.status(404).json({ 
-          message: `Book not found: ${orderData.book || orderData._id}` 
-        });
-      }
-
-      if (!book.seller) {
-        return res.status(400).json({ 
-          message: `Book does not have a seller assigned: ${book.title}` 
-        });
-      }
-
-      // Calculate expected delivery date (7 days from now)
-      const expectedDelivery = new Date();
-      expectedDelivery.setDate(expectedDelivery.getDate() + 7);
-
-      const newOrder = new Order({
-        user: id,
-        book: book._id,
-        seller: book.seller, // ✅ Add seller from book
-        orderStatus: orderData.orderStatus || "Order Placed",
-        paymentStatus: orderData.paymentStatus || "Pending",
-        paymentMethod: orderData.paymentMethod || "COD",
-        amountPayable: amountPayable,
-        discount: discount || 0,
-        handlingFee: handlingFee || 0,
-        shippingAddress: {
-          fullName: shippingAddress.fullName,
-          phone: shippingAddress.phone,
-          addressLine1: shippingAddress.addressLine1,
-          addressLine2: shippingAddress.addressLine2 || "",
-          city: shippingAddress.city,
-          state: shippingAddress.state,
-          postalCode: shippingAddress.postalCode,
-          country: shippingAddress.country || "India"
-        },
-        currentLocation: "Warehouse",
-        expectedDeliveryDate: expectedDelivery,
-        trackingHistory: [{
-          status: "Order Placed",
-          location: "Warehouse",
-          date: new Date()
-        }],
-        sellerNotified: true,
-        sellerNotificationDate: new Date()
-      });
-
-      const savedOrder = await newOrder.save();
-      savedOrders.push(savedOrder);
-
-      // Update user's orders and remove from cart
-      await User.findByIdAndUpdate(id, {
-        $push: { orders: savedOrder._id },
-        $pull: { cart: book._id },
-      });
-
-      // ✅ Add order to seller's orders list
-      await User.findByIdAndUpdate(book.seller, {
-        $push: { orders: savedOrder._id }
-      });
-
-      // Update book stock and sold count
-      await Book.findByIdAndUpdate(book._id, {
-        $inc: { sold: 1, stock: -1 }
-      });
-
-      // 🧹 Invalidate public catalog, single book detail, and seller stats caches
-      await invalidateBookCatalogCache();
-      await invalidateBookDetailCache(book._id.toString());
-      await invalidateSellerStatsCache(book.seller.toString());
+    if (!Array.isArray(order) || order.length === 0) {
+      return res.status(400).json({ message: "Order must contain at least one item" });
     }
 
+    const cleanAddress = {
+      fullName: shippingAddress.fullName,
+      phone: shippingAddress.phone,
+      addressLine1: shippingAddress.addressLine1,
+      addressLine2: shippingAddress.addressLine2 || "",
+      city: shippingAddress.city,
+      state: shippingAddress.state,
+      postalCode: shippingAddress.postalCode,
+      country: shippingAddress.country || "India"
+    };
+
+    // Execute PlaceOrderSaga via Saga Orchestrator
+    const createdOrders = await orderSagaService.placeOrder({
+      userId: id,
+      items: order,
+      shippingAddress: cleanAddress,
+      discount,
+      handlingFee
+    });
 
     return res.status(201).json({
       status: "Success",
       message: "Order Placed Successfully",
-      orders: savedOrders.map(order => ({
-        orderId: order._id,
-        orderStatus: order.orderStatus,
-        paymentStatus: order.paymentStatus,
-        amountPayable: order.amountPayable,
-        expectedDelivery: order.expectedDeliveryDate
+      orders: createdOrders.map(orderItem => ({
+        orderId: orderItem.id,
+        orderStatus: orderItem.orderStatus,
+        paymentStatus: orderItem.paymentStatus,
+        amountPayable: orderItem.amountPayable,
+        expectedDelivery: orderItem.expectedDeliveryDate,
+        itemsCount: orderItem.items ? orderItem.items.length : 1
       }))
     });
 
   } catch (error) {
-    console.log("Place Order Error:", error);
-    
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        message: "Validation failed", 
-        errors: validationErrors 
-      });
-    }
-    
+    console.error("Place Order Error:", error);
     return res.status(500).json({ 
-      message: "An error occurred while placing the order",
+      message: error.message || "An error occurred while placing the order",
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// 📌 Get order history of user
+// 📌 Get order history of user (PostgreSQL Read Replica + OrderItems)
 router.get("/get-order-history", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
-    const userData = await User.findById(id).populate({
-      path: "orders",
-      populate: { path: "book", select: "title desc price url" },
+    const id = req.user?.id || req.headers.id;
+
+    // Fetch user orders from PostgreSQL Read Replica
+    const orders = await prisma.order.findMany({
+      where: { userId: id.toString() },
+      include: { items: true },
+      orderBy: { createdAt: 'desc' }
     });
 
-    const ordersData = userData.orders.reverse();
+    // Populate book data for UI
+    const populatedOrders = await Promise.all(
+      orders.map(async (o) => {
+        const populatedItems = await Promise.all(
+          (o.items || []).map(async (item) => {
+            const itemBook = item.bookId ? await Book.findById(item.bookId).select("title desc price url author language") : null;
+            return {
+              ...item,
+              book: itemBook
+            };
+          })
+        );
+
+        let mainBook = null;
+        if (populatedItems.length > 0 && populatedItems[0].book) {
+          mainBook = populatedItems[0].book;
+        } else if (o.bookId) {
+          mainBook = await Book.findById(o.bookId).select("title desc price url author language");
+        }
+
+        return {
+          _id: o.id,
+          id: o.id,
+          book: mainBook || { title: "Book Unavailable", price: o.amountPayable, url: "" },
+          items: populatedItems,
+          paymentMethod: o.paymentMethod,
+          paymentStatus: o.paymentStatus,
+          orderStatus: o.orderStatus,
+          amountPayable: o.amountPayable,
+          shippingAddress: o.shippingAddress,
+          trackingHistory: o.trackingHistory,
+          createdAt: o.createdAt
+        };
+      })
+    );
+
     return res.json({
       status: "Success",
-      data: ordersData,
+      data: populatedOrders,
     });
   } catch (error) {
-    console.log("Order History Error:", error);
+    console.error("Order History Error:", error);
     return res.status(500).json({ message: "An error occurred" });
   }
 });
 
-// 📌 Get all orders (admin only)
+// 📌 Get all orders (admin only - PostgreSQL Read Replica)
 router.get("/get-all-orders", authenticateToken, async (req, res) => {
   try {
     if (!req.user || req.user.role !== "admin") {
@@ -271,28 +147,48 @@ router.get("/get-all-orders", authenticateToken, async (req, res) => {
       });
     }
 
-    const allOrders = await Order.find()
-      .populate("book")
-      .populate("user")
-      .sort({ createdAt: -1 });
+    const allOrders = await prisma.order.findMany({
+      include: { items: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const populatedOrders = await Promise.all(
+      allOrders.map(async (o) => {
+        const targetBookId = o.items && o.items.length > 0 ? o.items[0].bookId : o.bookId;
+        const book = targetBookId ? await Book.findById(targetBookId) : null;
+        const user = await User.findById(o.userId).select("username email");
+        return {
+          _id: o.id,
+          id: o.id,
+          book: book || null,
+          user: user || null,
+          items: o.items,
+          paymentMethod: o.paymentMethod,
+          paymentStatus: o.paymentStatus,
+          orderStatus: o.orderStatus,
+          amountPayable: o.amountPayable,
+          shippingAddress: o.shippingAddress,
+          createdAt: o.createdAt
+        };
+      })
+    );
 
     return res.json({
       status: "Success",
-      data: allOrders,
+      data: populatedOrders,
     });
   } catch (error) {
-    console.log("Get All Orders Error:", error);
+    console.error("Get All Orders Error:", error);
     return res.status(500).json({ message: "An error occurred" });
   }
 });
 
-// 📌 Update order status (admin only)
+// 📌 Update order status (admin only - PostgreSQL Write Primary)
 router.put("/update-status/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     let { orderStatus } = req.body;
 
-    // ✅ Admin check
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({
         status: "Error",
@@ -302,6 +198,8 @@ router.put("/update-status/:id", authenticateToken, async (req, res) => {
 
     const allowedStatuses = [
       "Order Placed",
+      "Processing",
+      "Shipped",
       "Out for Delivery",
       "Delivered",
       "Cancelled",
@@ -314,23 +212,36 @@ router.put("/update-status/:id", authenticateToken, async (req, res) => {
       });
     }
 
-    const updatedOrder = await Order.findByIdAndUpdate(
-      id,
-      { orderStatus },
-      { new: true }
-    ).populate('user').populate('book');
+    const existingOrder = await prisma.order.findFirst({
+      where: { OR: [{ id: id }, { mongoId: id }] }
+    });
 
-    if (!updatedOrder) {
+    if (!existingOrder) {
       return res.status(404).json({
         status: "Error",
         message: "Order not found.",
       });
     }
 
-    // Send email notification for important statuses
+    const updatedTracking = Array.isArray(existingOrder.trackingHistory)
+      ? [...existingOrder.trackingHistory, { status: orderStatus, location: "Warehouse", date: new Date() }]
+      : [{ status: orderStatus, location: "Warehouse", date: new Date() }];
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: existingOrder.id },
+      data: {
+        orderStatus: orderStatus,
+        trackingHistory: updatedTracking,
+        ...(orderStatus === 'Delivered' ? { actualDeliveryDate: new Date(), paymentStatus: 'Success' } : {})
+      },
+      include: { items: true }
+    });
+
+    const user = await User.findById(existingOrder.userId);
+    const book = await Book.findById(existingOrder.bookId);
+
     if (orderStatus === 'Out for Delivery' || orderStatus === 'Delivered') {
-      // Async so it doesn't block the response
-      sendOrderStatusEmail(updatedOrder, orderStatus).catch(err => 
+      sendOrderStatusEmail({ ...updatedOrder, user, book }, orderStatus).catch(err => 
         console.error("Failed to send status email in admin route:", err)
       );
     }
@@ -349,21 +260,12 @@ router.put("/update-status/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/v1/get-order-details/:orderId - Improved with better error handling
+// GET /api/v1/get-order-details/:orderId (PostgreSQL Read Replica + Items)
 router.get('/get-order-details/:orderId', authenticateToken, async (req, res) => {
   try {
     const { orderId } = req.params;
-    const userId = req.headers.id;
+    const userId = req.user?.id || req.headers.id;
     
-    // Validate orderId format
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Invalid order ID format" 
-      });
-    }
-    
-    // Validate userId
     if (!userId) {
       return res.status(400).json({ 
         success: false,
@@ -371,201 +273,227 @@ router.get('/get-order-details/:orderId', authenticateToken, async (req, res) =>
       });
     }
     
-    console.log(`Fetching order details for orderId: ${orderId}, userId: ${userId}`);
-    
-    const order = await Order.findById(orderId)
-      .populate({
-        path: 'book',
-        select: 'title desc price url author language'
-      })
-      .populate({
-        path: 'user', 
-        select: 'username email'
-      })
-      .lean(); // Use lean() for better performance
+    const order = await prisma.order.findFirst({
+      where: { OR: [{ id: orderId }, { mongoId: orderId }] },
+      include: { items: true }
+    });
     
     if (!order) {
-      console.log(`Order not found: ${orderId}`);
       return res.status(404).json({ 
         success: false,
         message: "Order not found" 
       });
     }
     
-    // Ensure user owns this order or is admin
-    if (order.user._id.toString() !== userId && req.user?.role !== 'admin') {
-      console.log(`Access denied for user ${userId} to order ${orderId}`);
+    if (order.userId !== userId && req.user?.role !== 'admin') {
       return res.status(403).json({ 
         success: false,
         message: "Access denied - you can only view your own orders" 
       });
     }
     
-    // Ensure tracking history exists
-    if (!order.trackingHistory || order.trackingHistory.length === 0) {
-      order.trackingHistory = [{
-        status: order.orderStatus || "Order Placed",
-        location: order.currentLocation || "Warehouse",
-        date: order.createdAt || new Date()
-      }];
-    }
-    
-    console.log(`Order details fetched successfully for orderId: ${orderId}`);
+    const populatedItems = await Promise.all(
+      (order.items || []).map(async (item) => {
+        const itemBook = item.bookId ? await Book.findById(item.bookId).select("title desc price url author language") : null;
+        return {
+          ...item,
+          book: itemBook
+        };
+      })
+    );
+
+    const targetBookId = order.items && order.items.length > 0 ? order.items[0].bookId : order.bookId;
+    const mainBook = targetBookId ? await Book.findById(targetBookId).select("title desc price url author language") : null;
+    const user = await User.findById(order.userId).select("username email");
     
     res.json({ 
       success: true, 
-      data: order 
+      data: {
+        ...order,
+        _id: order.id,
+        book: mainBook,
+        items: populatedItems,
+        user
+      } 
     });
     
   } catch (error) {
     console.error("Get Order Details Error:", error);
-    
-    // Handle specific MongoDB errors
-    if (error.name === 'CastError') {
-      return res.status(400).json({ 
-        success: false,
-        message: "Invalid order ID format" 
-      });
-    }
-    
-    if (error.name === 'MongoNetworkError') {
-      return res.status(503).json({ 
-        success: false,
-        message: "Database connection error" 
-      });
-    }
-    
     res.status(500).json({ 
       success: false, 
       message: "Internal server error while fetching order details",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
 
-// Additional helper route to validate order existence
-router.get('/validate-order/:orderId', authenticateToken, async (req, res) => {
+// 📌 Cancel Single Item inside an Order (PostgreSQL Write Primary)
+router.put('/cancel-item/:orderId/:itemId', authenticateToken, async (req, res) => {
   try {
-    const { orderId } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Invalid order ID format" 
+    const { orderId, itemId } = req.params;
+    const userId = req.user?.id || req.headers.id;
+
+    const order = await prisma.order.findFirst({
+      where: { OR: [{ id: orderId }, { mongoId: orderId }] },
+      include: { items: true }
+    });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    if (order.userId !== userId && req.user?.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const item = order.items.find(i => i.id === itemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: "Order item not found" });
+    }
+
+    if (item.status === 'Cancelled') {
+      return res.status(400).json({ success: false, message: "Item is already cancelled" });
+    }
+
+    // 1. Mark item as Cancelled
+    await prisma.orderItem.update({
+      where: { id: itemId },
+      data: { status: 'Cancelled' }
+    });
+
+    // Restore book stock in MongoDB
+    if (item.bookId) {
+      await Book.findByIdAndUpdate(item.bookId, {
+        $inc: { sold: -item.quantity, stock: item.quantity }
+      });
+      await invalidateBookCatalogCache();
+      await invalidateBookDetailCache(item.bookId);
+    }
+
+    // 2. Check if all items in this order are now cancelled
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { items: true }
+    });
+
+    const activeItems = updatedOrder.items.filter(i => i.status !== 'Cancelled');
+    const allCancelled = activeItems.length === 0;
+
+    let finalOrderStatus = order.orderStatus;
+    let finalPaymentStatus = order.paymentStatus;
+
+    if (allCancelled) {
+      finalOrderStatus = 'Cancelled';
+      if (order.paymentMethod === 'RAZORPAY' && order.paymentStatus === 'Success') {
+        finalPaymentStatus = 'Refund Pending';
+      }
+
+      const updatedTracking = Array.isArray(order.trackingHistory)
+        ? [...order.trackingHistory, { status: "Cancelled", location: "Cancelled by user", date: new Date() }]
+        : [{ status: "Cancelled", location: "Cancelled by user", date: new Date() }];
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          orderStatus: finalOrderStatus,
+          paymentStatus: finalPaymentStatus,
+          currentLocation: 'Cancelled',
+          trackingHistory: updatedTracking
+        }
       });
     }
-    
-    const orderExists = await Order.exists({ _id: orderId });
-    
-    res.json({ 
+
+    return res.json({
       success: true,
-      exists: !!orderExists 
+      message: allCancelled ? 'All items cancelled. Whole order cancelled.' : 'Item cancelled successfully',
+      allCancelled,
+      data: updatedOrder
     });
-    
+
   } catch (error) {
-    console.error("Validate Order Error:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Error validating order" 
-    });
+    console.error("Cancel Item Error:", error);
+    return res.status(500).json({ success: false, message: "Error cancelling item" });
   }
 });
 
-
-// 📌 Cancel order (user can cancel before shipping)
+// 📌 Cancel Entire Order (PostgreSQL Write Primary)
 router.put('/cancel-order/:orderId', authenticateToken, async (req, res) => {
   try {
     const { orderId } = req.params;
-    const userId = req.headers.id;
+    const userId = req.user?.id || req.headers.id;
     
-    console.log(`Cancel order request for orderId: ${orderId}, userId: ${userId}`);
-    
-    // Validate orderId format
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Invalid order ID format" 
-      });
-    }
-    
-    // Find the order
-    const order = await Order.findById(orderId).populate('book');
+    const order = await prisma.order.findFirst({
+      where: { OR: [{ id: orderId }, { mongoId: orderId }] },
+      include: { items: true }
+    });
     
     if (!order) {
       return res.status(404).json({ 
-        success: false,
+        success: false, 
         message: "Order not found" 
       });
     }
     
-    // Verify ownership
-    if (order.user.toString() !== userId) {
+    if (order.userId !== userId && req.user?.role !== 'admin') {
       return res.status(403).json({ 
-        success: false,
+        success: false, 
         message: "Access denied - you can only cancel your own orders" 
       });
     }
     
-    // Check if order can be cancelled
     const nonCancellableStatuses = ['Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
     if (nonCancellableStatuses.includes(order.orderStatus)) {
       return res.status(400).json({ 
-        success: false,
-        message: `Cannot cancel order. Order is already ${order.orderStatus}. Orders can only be cancelled before shipping.` 
+        success: false, 
+        message: `Cannot cancel order. Order is already ${order.orderStatus}.` 
       });
     }
     
-    // Update order status to Cancelled
-    order.orderStatus = 'Cancelled';
-    order.currentLocation = 'Cancelled';
-    
-    // Add cancellation to tracking history
-    order.trackingHistory.push({
-      status: 'Cancelled',
-      location: 'Cancelled by user',
-      date: new Date(),
-      notes: 'Order cancelled by customer'
+    // Mark all items as Cancelled
+    await prisma.orderItem.updateMany({
+      where: { orderId: order.id },
+      data: { status: 'Cancelled' }
     });
-    
-    // Update payment status for refund processing
-    if (order.paymentMethod === 'RAZORPAY' && order.paymentStatus === 'Success') {
-      order.paymentStatus = 'Refund Pending';
-    }
-    
-    await order.save();
-    
-    // Restore book stock if needed
-    if (order.book) {
-      await Book.findByIdAndUpdate(order.book._id, {
-        $inc: { sold: -1, stock: 1 }
-      });
 
-      // 🧹 Invalidate catalog, book detail, and seller stats caches
-      await invalidateBookCatalogCache();
-      await invalidateBookDetailCache(order.book._id.toString());
-      if (order.book.seller) {
-        await invalidateSellerStatsCache(order.book.seller.toString());
+    const updatedTracking = Array.isArray(order.trackingHistory)
+      ? [...order.trackingHistory, { status: "Cancelled", location: "Cancelled by user", date: new Date() }]
+      : [{ status: "Cancelled", location: "Cancelled by user", date: new Date() }];
+
+    const updatedOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        orderStatus: 'Cancelled',
+        currentLocation: 'Cancelled',
+        trackingHistory: updatedTracking,
+        ...(order.paymentMethod === 'RAZORPAY' && order.paymentStatus === 'Success' ? { paymentStatus: 'Refund Pending' } : {})
+      },
+      include: { items: true }
+    });
+
+    // Restore stock for all order items
+    const itemsToRestore = order.items && order.items.length > 0 ? order.items : [{ bookId: order.bookId, quantity: 1 }];
+    for (const item of itemsToRestore) {
+      if (item.bookId) {
+        await Book.findByIdAndUpdate(item.bookId, {
+          $inc: { sold: -item.quantity, stock: item.quantity }
+        });
+        await invalidateBookCatalogCache();
+        await invalidateBookDetailCache(item.bookId);
       }
     }
-
-    
-    console.log(`Order ${orderId} cancelled successfully`);
     
     res.json({ 
       success: true,
-      message: 'Order cancelled successfully',
-      data: order
+      message: 'Entire order cancelled successfully',
+      data: updatedOrder
     });
     
   } catch (error) {
     console.error("Cancel Order Error:", error);
     res.status(500).json({ 
       success: false, 
-      message: "Internal server error while cancelling order",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Internal server error while cancelling order"
     });
   }
 });
 
-
-module.exports= router;
+module.exports = router;

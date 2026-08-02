@@ -152,6 +152,8 @@ router.post(
         category,
         editionOrPublishYear,
         stock,
+        goLiveOption,
+        goLiveDate,
       } = req.body;
 
       console.log("📋 Form data received:", {
@@ -160,7 +162,9 @@ router.post(
         price,
         category,
         language,
-        stock
+        stock,
+        goLiveOption,
+        goLiveDate
       });
 
       const validationErrors = [];
@@ -189,6 +193,14 @@ router.post(
         validationErrors.push({ field: "stock", message: "Valid stock quantity is required" });
       }
 
+      if (goLiveOption === "scheduled") {
+        if (!goLiveDate || isNaN(new Date(goLiveDate).getTime())) {
+          validationErrors.push({ field: "goLiveDate", message: "Valid scheduled go-live date and time is required" });
+        } else if (new Date(goLiveDate).getTime() <= Date.now()) {
+          validationErrors.push({ field: "goLiveDate", message: "Scheduled go-live date & time cannot be in the past. Please select a future date and time." });
+        }
+      }
+
       if (validationErrors.length > 0) {
         console.log("❌ Validation failed:", validationErrors);
         await cleanupUploadedImages(uploadedFiles);
@@ -210,8 +222,11 @@ router.post(
       console.log(`✅ Processed ${images.length} images`);
 
       // ==========================================
-      // STEP 7: CREATE NEW BOOK WITH PENDING STATUS
+      // STEP 7: CREATE NEW BOOK WITH PENDING STATUS & GO-LIVE SCHEDULE
       // ==========================================
+      const isScheduled = goLiveOption === "scheduled" && !!goLiveDate;
+      const parsedGoLiveDate = isScheduled ? new Date(goLiveDate) : null;
+
       const newBook = new Book({
         images: images,
         url: images[0].url,
@@ -225,6 +240,11 @@ router.post(
         stock: stock ? Number(stock) : 1,
         seller: seller._id,
         
+        // 🚀 Go-Live Scheduling
+        goLiveOption: goLiveOption || "immediately",
+        goLiveDate: parsedGoLiveDate,
+        isScheduled: isScheduled,
+
         // ✅ IMPORTANT: Initial approval status
         isApproved: false,
         adminApproval: "Pending",

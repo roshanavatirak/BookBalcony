@@ -1,7 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-require("./conn/conn"); // Make sure this uses CommonJS too
+require("./conn/conn"); // MongoDB Connection
+require("./conn/prisma"); // PostgreSQL Supabase Connection
+
 
 const paymentRoutes = require("./routes/paymentRoutes");
 const userRoutes = require("./routes/user");

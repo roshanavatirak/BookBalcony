@@ -198,6 +198,7 @@ const ViewBookDetails = () => {
   };
 
   const isAvailableForPurchase = () => {
+    if (Data?.isFutureScheduled) return false;
     const stock = Data?.stock < 0 ? 0 : Data?.stock;
     const status = Data?.productStatus?.toLowerCase();
     
@@ -208,6 +209,7 @@ const ViewBookDetails = () => {
   };
 
   const getButtonText = () => {
+    if (Data?.isFutureScheduled) return "Scheduled Release";
     const stock = Data?.stock < 0 ? 0 : Data?.stock;
     const status = Data?.productStatus?.toLowerCase();
     
@@ -222,16 +224,21 @@ const ViewBookDetails = () => {
   };
 
   const handleBuyNow = () => {
+    if (Data?.isFutureScheduled) {
+      info(Data?.scheduledMessage || `This book is approved and scheduled to go live on ${new Date(Data.goLiveDate).toLocaleString()}`, "Scheduled Release");
+      return;
+    }
+
     if (!isAvailableForPurchase()) {
       const stock = Data?.stock < 0 ? 0 : Data?.stock;
       const status = Data?.productStatus?.toLowerCase();
       
       if (status === "not available") {
-        alert("⚠️ This book is not available for purchase!");
+        warning("This book is not available for purchase!", "Not Available");
       } else if (stock === 0 || status === "sold out") {
-        alert("⚠️ This book is currently out of stock!");
+        warning("This book is currently out of stock!", "Out of Stock");
       } else if (status === "arriving soon") {
-        alert("⏰ This book is arriving soon. Please check back later!");
+        info("This book is arriving soon. Please check back later!", "Arriving Soon");
       }
       return;
     }
@@ -252,16 +259,21 @@ const ViewBookDetails = () => {
 
 
   const handleCart = async () => {
+    if (Data?.isFutureScheduled) {
+      info(Data?.scheduledMessage || `This book is approved and scheduled to go live on ${new Date(Data.goLiveDate).toLocaleString()}`, "Scheduled Release");
+      return;
+    }
+
     if (!isAvailableForPurchase()) {
       const stock = Data?.stock < 0 ? 0 : Data?.stock;
       const status = Data?.productStatus?.toLowerCase();
       
       if (status === "not available") {
-        alert("⚠️ This book is not available for purchase!");
+        warning("This book is not available for purchase!", "Not Available");
       } else if (stock === 0 || status === "sold out") {
-        alert("⚠️ This book is currently out of stock!");
+        warning("This book is currently out of stock!", "Out of Stock");
       } else if (status === "arriving soon") {
-        alert("⏰ This book is arriving soon. Please check back later!");
+        info("This book is arriving soon. Please check back later!", "Arriving Soon");
       }
       return;
     }
@@ -276,7 +288,7 @@ const ViewBookDetails = () => {
       setIsInCart(true);
     } catch (error) {
       console.error("Error adding to cart:", error);
-      alert(error.response?.data?.message || "Failed to add to cart!");
+      error(error.response?.data?.message || "Failed to add to cart!");
     }
   };
 
@@ -290,9 +302,9 @@ const ViewBookDetails = () => {
       );
       success("🗑️ Book removed from your cart!");
       setIsInCart(false);
-    } catch (error) {
-      console.error("Error removing from cart:", error);
-      alert(error.response?.data?.message || "Failed to remove from cart!");
+    } catch (err) {
+      console.error("Error removing from cart:", err);
+      error(err.response?.data?.message || "Failed to remove from cart!");
     } finally {
       setRemovingFromCart(false);
     }
@@ -310,6 +322,15 @@ const ViewBookDetails = () => {
   };
 
   const getStatusBadge = () => {
+    if (Data?.isFutureScheduled) {
+      return (
+        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 border border-yellow-500/50 rounded-full backdrop-blur-sm">
+          <FaClock className="text-yellow-400 text-xs animate-pulse" />
+          <span className="text-yellow-300 font-semibold text-xs">🚀 Scheduled Release</span>
+        </div>
+      );
+    }
+
     const stock = Data?.stock < 0 ? 0 : Data?.stock;
     const isOutOfStock = stock === 0;
     const status = Data?.productStatus?.toLowerCase();
@@ -555,6 +576,18 @@ const ViewBookDetails = () => {
               <div className="mb-3">
                 {getStatusBadge()}
               </div>
+
+              {Data?.isFutureScheduled && (
+                <div className="mb-4 p-3.5 bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 rounded-xl border border-yellow-500/50 flex items-center gap-3">
+                  <FaClock className="w-5 h-5 text-yellow-400 animate-pulse flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-bold text-yellow-400">🚀 Scheduled Go-Live Product</h4>
+                    <p className="text-xs text-zinc-200 mt-0.5">
+                      {Data.scheduledMessage || `This book is approved and scheduled to go live on ${new Date(Data.goLiveDate).toLocaleString()}`}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <motion.h1
                 initial={{ opacity: 0, y: 10 }}

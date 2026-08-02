@@ -1,13 +1,32 @@
 const mongoose = require("mongoose");
 
-const conn= async () => {
-    try{
-await mongoose.connect(`${process.env.URI}`)
-console.log("connected to database");
-    } catch (error){
-        console.log(error)
-    }
+const mongoUri = process.env.MONGODB_URI || process.env.URI;
+
+const conn = async () => {
+  if (!mongoUri) {
+    console.error("❌ MongoDB Connection Error: MONGODB_URI or URI environment variable is missing.");
+    return;
+  }
+
+  try {
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log("✅ Connected to MongoDB database successfully");
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error.message);
+  }
 };
+
+mongoose.connection.on("error", (err) => {
+  console.error("❌ Mongoose connection error:", err.message);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.warn("⚠️ Mongoose disconnected from MongoDB");
+});
+
 conn();
 module.exports = conn;
 

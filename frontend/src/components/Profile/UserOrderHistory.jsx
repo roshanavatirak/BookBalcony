@@ -108,29 +108,101 @@ const UserOrderHistory = () => {
               </div>
             </div>
 
-            {/* Book Info */}
-            <Link to={getBookDetailPath(order.book?.title, order.book?._id)} className="mb-4 block relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="relative shrink-0 perspective-1000">
-                  <img
-                    src={order.book?.url || "https://via.placeholder.com/80x120?text=Book"}
-                    alt="Book Cover"
-                    className="w-16 h-24 sm:w-20 sm:h-28 object-cover rounded-md border border-white/10 shadow-[5px_5px_15px_rgba(0,0,0,0.5)] group-hover:rotate-y-12 group-hover:scale-105 transition-all duration-500"
-                  />
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <h3 className="text-sm sm:text-base font-bold text-white mb-1 line-clamp-2 group-hover:text-yellow-400 transition-colors leading-tight">
-                    {order.book?.title || "Unknown Title"}
-                  </h3>
-                  <p className="text-[10px] sm:text-xs text-zinc-400 mb-2 font-medium">
-                    Ord: {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </p>
-                  <div className="text-base sm:text-lg font-black bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent drop-shadow-sm">
-                    ₹{order.amountPayable || order.book?.price}
+            {/* Book Info / Multi-item Stack */}
+            <div className="mb-4 flex items-center gap-4">
+              {/* Stacked Covers */}
+              {(() => {
+                const itemList = (order.items && order.items.length > 0 ? order.items : [order.book]);
+                const count = Math.min(itemList.length, 3);
+                const widthClass = count === 1 ? 'w-16 sm:w-20' : count === 2 ? 'w-24 sm:w-28' : 'w-32 sm:w-36';
+
+                // Only show per-item cover overlay badges if:
+                // 1. Order has multiple items (itemList.length > 1)
+                // 2. Not all items are delivered and not all items are cancelled (mixed status)
+                const allCancelled = itemList.every(i => (i?.status || order.orderStatus) === 'Cancelled');
+                const allDelivered = itemList.every(i => (i?.status || order.orderStatus) === 'Delivered');
+                const showItemBadges = itemList.length > 1 && !allCancelled && !allDelivered;
+
+                return (
+                  <div className={`relative shrink-0 flex items-center justify-center h-24 sm:h-28 ${widthClass}`}>
+                    {itemList.slice(0, 3).map((item, idx) => {
+                      const bookObj = item?.book || (item?.title ? item : order.book);
+                      const imgUrl = bookObj?.url || "https://via.placeholder.com/80x120?text=Book";
+                      const bookId = bookObj?._id || item?.bookId;
+                      const title = item?.title || bookObj?.title || "Book";
+                      const itemStatus = item?.status || order.orderStatus;
+                      const isCancelled = itemStatus === 'Cancelled';
+                      const isDelivered = itemStatus === 'Delivered';
+
+                      return (
+                        <Link
+                          key={idx}
+                          to={bookId ? getBookDetailPath(title, bookId) : '#'}
+                          className={`${count === 1 ? 'relative' : 'absolute top-0'} transition-all duration-300 hover:!z-50 hover:-translate-y-1.5 hover:scale-115 hover:shadow-2xl hover:shadow-yellow-400/40 rounded-md overflow-hidden bg-zinc-800 border ${
+                            showItemBadges && isCancelled ? 'border-red-500/50' : showItemBadges && isDelivered ? 'border-green-500/50' : 'border-white/20 hover:border-yellow-400'
+                          }`}
+                          style={count === 1 ? {} : { left: `${idx * 20}px`, zIndex: 10 - idx }}
+                          title={`${title} (${itemStatus})`}
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={title}
+                            className={`w-14 h-20 sm:w-16 sm:h-24 object-cover ${showItemBadges && isCancelled ? 'grayscale opacity-60' : ''}`}
+                          />
+                          {/* Item Status Overlay Badge - ONLY shown for mixed multi-item orders */}
+                          {showItemBadges && isCancelled && (
+                            <div className="absolute inset-x-0 bottom-0 bg-red-600/90 text-white text-[7px] font-black uppercase text-center py-0.5 tracking-wider">
+                              Cancelled
+                            </div>
+                          )}
+                          {showItemBadges && isDelivered && (
+                            <div className="absolute inset-x-0 bottom-0 bg-green-600/90 text-white text-[7px] font-black uppercase text-center py-0.5 tracking-wider">
+                              Delivered
+                            </div>
+                          )}
+                        </Link>
+                      );
+                    })}
+                    {itemList.length > 3 && (
+                      <div className="absolute right-0 bottom-0 bg-yellow-400 text-black text-[9px] font-black px-2 py-0.5 rounded-full z-20 shadow-md">
+                        +{itemList.length - 3}
+                      </div>
+                    )}
                   </div>
+                );
+              })()}
+
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                {/* Book Titles with Commas */}
+                <div className="flex flex-wrap items-center gap-1 mb-1">
+                  {(order.items && order.items.length > 0 ? order.items : [order.book]).map((item, idx, arr) => {
+                    const bookObj = item?.book || (item?.title ? item : order.book);
+                    const bookId = bookObj?._id || item?.bookId;
+                    const title = item?.title || bookObj?.title || "Unknown Title";
+                    const isLast = idx === arr.length - 1;
+
+                    return (
+                      <React.Fragment key={idx}>
+                        <Link
+                          to={bookId ? getBookDetailPath(title, bookId) : '#'}
+                          className="inline text-xs sm:text-sm font-bold text-white hover:text-yellow-400 transition-colors leading-snug"
+                        >
+                          {title}
+                        </Link>
+                        {!isLast && <span className="text-zinc-400 text-xs font-bold mr-0.5">,</span>}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                <p className="text-[10px] sm:text-xs text-zinc-400 mb-1 font-medium">
+                  Ord: {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+                <div className="text-base sm:text-lg font-black bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent drop-shadow-sm">
+                  ₹{order.amountPayable || order.book?.price}
                 </div>
               </div>
-            </Link>
+            </div>
 
             {/* Order Details Pills */}
             <div className="flex gap-2 mb-4">
@@ -220,41 +292,110 @@ const UserOrderHistory = () => {
 
           {/* Group Items */}
           <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-            {group.orders.map((order) => (
-              <div key={order._id} className="bg-black/40 rounded-xl p-3 border border-white/5 hover:border-white/10 hover:bg-white/5 transition-all duration-300 flex flex-col justify-between group">
-                <Link to={getBookDetailPath(order.book?.title, order.book?._id)} className="block mb-3 flex-grow">
-                  <div className="flex gap-3 items-center">
-                    <div className="relative shrink-0">
-                      <img
-                        src={order.book?.url || "https://via.placeholder.com/60x80?text=Book"}
-                        alt="Book Cover"
-                        className="w-12 h-16 sm:w-14 sm:h-20 object-cover rounded-md shadow-md border border-white/10 group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-zinc-100 text-xs sm:text-sm line-clamp-2 mb-1 group-hover:text-yellow-400 transition-colors leading-tight">
-                        {order.book?.title || "Unknown Title"}
-                      </h4>
-                      <div className="text-xs text-green-400 font-black">
-                        ₹{order.amountPayable || order.book?.price}
+            {group.orders.map((order) => {
+              const itemList = (order.items && order.items.length > 0 ? order.items : [order.book]);
+              return (
+                <div key={order._id} className="bg-black/40 rounded-xl p-3 border border-white/5 hover:border-white/10 hover:bg-white/5 transition-all duration-300 flex flex-col justify-between group">
+                  <div className="block mb-3 flex-grow">
+                    <div className="flex gap-3 items-center">
+                      {/* Stacked Covers */}
+                      {(() => {
+                        const count = Math.min(itemList.length, 3);
+                        const widthClass = count === 1 ? 'w-12 sm:w-14' : count === 2 ? 'w-16 sm:w-20' : 'w-20 sm:w-28';
+                        const allCancelled = itemList.every(i => (i?.status || order.orderStatus) === 'Cancelled');
+                        const allDelivered = itemList.every(i => (i?.status || order.orderStatus) === 'Delivered');
+                        const showItemBadges = itemList.length > 1 && !allCancelled && !allDelivered;
+
+                        return (
+                          <div className={`relative shrink-0 flex items-center justify-center h-16 sm:h-20 ${widthClass}`}>
+                            {itemList.slice(0, 3).map((item, idx) => {
+                              const bookObj = item?.book || (item?.title ? item : order.book);
+                              const imgUrl = bookObj?.url || "https://via.placeholder.com/60x80?text=Book";
+                              const bookId = bookObj?._id || item?.bookId;
+                              const title = item?.title || bookObj?.title || "Book";
+                              const itemStatus = item?.status || order.orderStatus;
+                              const isCancelled = itemStatus === 'Cancelled';
+                              const isDelivered = itemStatus === 'Delivered';
+
+                              return (
+                                <Link
+                                  key={idx}
+                                  to={bookId ? getBookDetailPath(title, bookId) : '#'}
+                                  className={`${count === 1 ? 'relative' : 'absolute top-0'} transition-all duration-300 hover:!z-50 hover:-translate-y-1 hover:scale-115 hover:shadow-xl hover:shadow-yellow-400/40 rounded overflow-hidden bg-zinc-800 border ${
+                                    showItemBadges && isCancelled ? 'border-red-500/50' : showItemBadges && isDelivered ? 'border-green-500/50' : 'border-white/20 hover:border-yellow-400'
+                                  }`}
+                                  style={count === 1 ? {} : { left: `${idx * 14}px`, zIndex: 10 - idx }}
+                                  title={`${title} (${itemStatus})`}
+                                >
+                                  <img
+                                    src={imgUrl}
+                                    alt={title}
+                                    className={`w-10 h-14 sm:w-12 sm:h-16 object-cover ${showItemBadges && isCancelled ? 'grayscale opacity-60' : ''}`}
+                                  />
+                                  {showItemBadges && isCancelled && (
+                                    <div className="absolute inset-x-0 bottom-0 bg-red-600/90 text-white text-[6px] font-black uppercase text-center py-0.5">
+                                      Cancelled
+                                    </div>
+                                  )}
+                                  {showItemBadges && isDelivered && (
+                                    <div className="absolute inset-x-0 bottom-0 bg-green-600/90 text-white text-[6px] font-black uppercase text-center py-0.5">
+                                      Delivered
+                                    </div>
+                                  )}
+                                </Link>
+                              );
+                            })}
+                            {itemList.length > 3 && (
+                              <div className="absolute right-0 bottom-0 bg-yellow-400 text-black text-[8px] font-black px-1 py-0.5 rounded-full z-20 shadow-md">
+                                +{itemList.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1 mb-1">
+                          {itemList.map((item, idx, arr) => {
+                            const bookObj = item?.book || (item?.title ? item : order.book);
+                            const bookId = bookObj?._id || item?.bookId;
+                            const title = item?.title || bookObj?.title || "Unknown Title";
+                            const isLast = idx === arr.length - 1;
+
+                            return (
+                              <React.Fragment key={idx}>
+                                <Link
+                                  to={bookId ? getBookDetailPath(title, bookId) : '#'}
+                                  className="inline text-xs font-bold text-zinc-100 hover:text-yellow-400 transition-colors leading-tight"
+                                >
+                                  {title}
+                                </Link>
+                                {!isLast && <span className="text-zinc-400 text-xs font-bold mr-0.5">,</span>}
+                              </React.Fragment>
+                            );
+                          })}
+                        </div>
+                        <div className="text-xs text-green-400 font-black">
+                          ₹{order.amountPayable || order.book?.price}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </Link>
-                
-                <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                  <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${getStatusColor(order.orderStatus)}`}>
-                    {order.orderStatus}
-                  </span>
-                  <Link
-                    to={`/profile/orderHistory/order-details/${order._id}`}
-                    className="text-yellow-400 hover:text-black hover:bg-yellow-400 text-[10px] font-black flex items-center gap-1 bg-yellow-500/10 px-2.5 py-1 rounded-md border border-yellow-500/20 transition-all duration-300"
-                  >
-                    Track <FiChevronRight strokeWidth={3} />
-                  </Link>
+                  
+                  <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                    <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-wider ${getStatusColor(order.orderStatus)}`}>
+                      {order.orderStatus}
+                    </span>
+                    <Link
+                      to={`/profile/orderHistory/order-details/${order._id}`}
+                      className="text-yellow-400 hover:text-black hover:bg-yellow-400 text-[10px] font-black flex items-center gap-1 bg-yellow-500/10 px-2.5 py-1 rounded-md border border-yellow-500/20 transition-all duration-300"
+                    >
+                      Track <FiChevronRight strokeWidth={3} />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}

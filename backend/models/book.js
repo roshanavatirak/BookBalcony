@@ -494,6 +494,21 @@ const bookSchema = new mongoose.Schema(
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user"
+    },
+
+    // 🚀 NEW: Go-Live Scheduling Fields
+    goLiveOption: {
+      type: String,
+      enum: ["immediately", "scheduled"],
+      default: "immediately"
+    },
+    goLiveDate: {
+      type: Date,
+      default: null
+    },
+    isScheduled: {
+      type: Boolean,
+      default: false
     }
   },
   { 
@@ -509,10 +524,21 @@ bookSchema.index({ category: 1 });          // ✅ Keep this
 bookSchema.index({ productStatus: 1 });     // ✅ Keep this
 bookSchema.index({ productStatus: 1, isApproved: 1 }); // ✅ Keep this
 bookSchema.index({ adminApproval: 1, createdAt: -1 }); // ✅ Keep this
+bookSchema.index({ isScheduled: 1, goLiveDate: 1 });   // 🚀 Go-live index
 bookSchema.index({ title: 'text', author: 'text', desc: 'text' }); // ✅ Keep this
 
 // Virtual for checking if in stock
 bookSchema.virtual('inStock').get(function() {
+  return this.stock > 0 && this.productStatus === "Available";
+});
+
+// 🚀 Virtual for checking if currently live
+bookSchema.virtual('isLive').get(function() {
+  const isApproved = this.isApproved || this.adminApproval === 'Approved';
+  if (!isApproved) return false;
+  if (this.isScheduled && this.goLiveDate && new Date(this.goLiveDate) > new Date()) {
+    return false;
+  }
   return this.stock > 0 && this.productStatus === "Available";
 });
 

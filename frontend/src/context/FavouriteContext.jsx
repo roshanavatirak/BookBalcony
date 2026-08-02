@@ -41,8 +41,7 @@ export const FavouriteProvider = ({ children }) => {
       );
       setFavouriteIds(prev => [...prev, bookId]);
     } catch (err) {
-      alert("Error adding to favourites");
-      console.error(err);
+      console.error("Error adding to favourites", err);
     }
   };
 
@@ -57,8 +56,7 @@ export const FavouriteProvider = ({ children }) => {
       );
       setFavouriteIds(prev => prev.filter(id => id !== bookId));
     } catch (err) {
-      alert("Error removing from favourites");
-      console.error(err);
+      console.error("Error removing from favourites", err);
     }
   };
 

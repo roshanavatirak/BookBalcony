@@ -278,6 +278,62 @@ const SellerRouteGuard = ({ children }) => {
   return children;
 };
 
+// ✅ RBAC: Admin Route Guard — blocks non-admin users from admin pages
+const AdminRouteGuard = ({ children }) => {
+  const [checking, setChecking] = React.useState(true);
+  const [allowed, setAllowed] = React.useState(false);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    const id = localStorage.getItem('id');
+    if (!token || !id) {
+      setChecking(false);
+      setAllowed(false);
+      return;
+    }
+    const API = `${import.meta.env.VITE_API_URL}/api/v1`;
+    import('axios').then(({ default: ax }) => {
+      ax.get(`${API}/get-user-information`, {
+        headers: { authorization: `Bearer ${token}`, id }
+      }).then(res => {
+        const u = res.data?.data || res.data;
+        const isAdmin = u?.role === 'admin' || localStorage.getItem('role') === 'admin';
+        setAllowed(isAdmin);
+      }).catch(() => {
+        const isAdmin = localStorage.getItem('role') === 'admin';
+        setAllowed(isAdmin);
+      })
+        .finally(() => setChecking(false));
+    });
+  }, []);
+
+  if (checking) {
+    return <Loader fullPage text="Verifying admin privileges..." />;
+  }
+
+  if (!allowed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-gray-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-gray-800/60 border border-red-500/30 rounded-2xl p-8 text-center shadow-2xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Admin Access Restricted</h2>
+          <p className="text-gray-400 text-sm mb-1">Administrator privileges required.</p>
+          <p className="text-gray-500 text-xs mb-6">You do not have authorization to view this admin section.</p>
+          <a href="/" className="w-full inline-block py-2.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-black rounded-xl font-semibold text-sm hover:from-yellow-300 hover:to-orange-300 transition-all duration-300">
+            Back to Home
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+};
+
 
 
 const App = () => {
@@ -375,18 +431,18 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/view-book-details/:id" element={<ViewBookDetails />} />
 
-        {/* Admin Routes */}
-        <Route path="/Admin/profile" element={<AdminProfile />} />
-        <Route path="/Admin/AddBook" element={<AddBook />} />
-        <Route path="/Admin/Users-List" element={<AdminUsers />} />
-        <Route path="/Admin/Sellers-List" element={<AdminSellers />} />
-        <Route path="/Admin/Seller-Products" element={<SellerProduct />} />
-        <Route path="/Admin/Seller-Orders" element={<SellerOrdersDashboard />} />
-        <Route path="/Admin/Seller-Dashboard" element={<SellerDashboard />} />
-        <Route path="/Admin/Seller-AddProduct" element={<SellerAddBook />} />
-        <Route path="/Admin/Seller-Settings" element={<Settings />} />
+        {/* Admin Routes — RBAC Protected */}
+        <Route path="/Admin/profile" element={<AdminRouteGuard><AdminProfile /></AdminRouteGuard>} />
+        <Route path="/Admin/AddBook" element={<AdminRouteGuard><AddBook /></AdminRouteGuard>} />
+        <Route path="/Admin/Users-List" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
+        <Route path="/Admin/Sellers-List" element={<AdminRouteGuard><AdminSellers /></AdminRouteGuard>} />
+        <Route path="/Admin/Seller-Products" element={<AdminRouteGuard><SellerProduct /></AdminRouteGuard>} />
+        <Route path="/Admin/Seller-Orders" element={<AdminRouteGuard><SellerOrdersDashboard /></AdminRouteGuard>} />
+        <Route path="/Admin/Seller-Dashboard" element={<AdminRouteGuard><SellerDashboard /></AdminRouteGuard>} />
+        <Route path="/Admin/Seller-AddProduct" element={<AdminRouteGuard><SellerAddBook /></AdminRouteGuard>} />
+        <Route path="/Admin/Seller-Settings" element={<AdminRouteGuard><Settings /></AdminRouteGuard>} />
 
-        <Route path="/Admin/books" element={<AllBooks />} />
+        <Route path="/Admin/books" element={<AdminRouteGuard><AllBooks /></AdminRouteGuard>} />
 
         {/* Seller Form Routes */}
         <Route path="/seller/form" element={<SellerForm />} />

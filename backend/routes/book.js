@@ -286,35 +286,18 @@ const handleMulterError = (err, req, res, next) => {
 // Verify admin middleware
 const verifyAdmin = async (req, res, next) => {
   try {
-    const { id } = req.headers;
-
-    if (!id) {
+    if (!req.user) {
       return res.status(401).json({ 
-        message: "User ID is required in headers" 
+        message: "Authentication required" 
       });
     }
 
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ 
-        message: "Invalid user ID format" 
-      });
-    }
-
-    const user = await User.findById(id);
-
-    if (!user) {
-      return res.status(404).json({ 
-        message: "User not found. Please login again." 
-      });
-    }
-
-    if (user.role !== "admin") {
+    if (req.user.role !== "admin") {
       return res.status(403).json({ 
         message: "Access denied: Admin privileges required" 
       });
     }
 
-    req.user = user;
     next();
   } catch (error) {
     console.error("❌ Admin verification error:", error);
@@ -895,27 +878,43 @@ router.get("/get-editors-choice", async (req, res) => {
 });
 
 
+const inventoryReservationManager = require("../utils/inventoryReservationManager");
+
 // 📖 GET: Get Book By ID
 router.get("/get-book-by-id/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const cacheKey = `cache:book:${id}`;
-    const cachedData = await getCache(cacheKey);
-    if (cachedData) {
-      return res.json({
-        status: "Success",
-        data: cachedData,
-      });
+    let bookObj = await getCache(cacheKey);
+
+    if (!bookObj) {
+      const bookDoc = await Book.findById(id);
+      if (!bookDoc) {
+        return res.status(404).json({ message: "Book not found" });
+      }
+      bookObj = bookDoc.toObject();
+      await setCache(cacheKey, bookObj, 3600); // 1 hour TTL
     }
 
-    const book = await Book.findById(id);
-    if (book) {
-      await setCache(cacheKey, book, 2592000); // 30 days (2,592,000s) TTL
-    }
+    const isFutureScheduled = bookObj.isScheduled && bookObj.goLiveDate && new Date(bookObj.goLiveDate) > new Date();
+    const isApproved = bookObj.isApproved || bookObj.adminApproval === 'Approved';
+    const isLive = isApproved && !isFutureScheduled && (bookObj.stock > 0) && (bookObj.productStatus === "Available");
+
+    const availableStock = await inventoryReservationManager.getAvailableStock(id, bookObj.stock || 0);
 
     return res.json({
       status: "Success",
-      data: book,
+      isLive,
+      isScheduled: bookObj.isScheduled || false,
+      goLiveDate: bookObj.goLiveDate || null,
+      isFutureScheduled,
+      scheduledMessage: isFutureScheduled 
+        ? `This book is approved and scheduled to go live on ${new Date(bookObj.goLiveDate).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`
+        : null,
+      data: {
+        ...bookObj,
+        availableStock
+      },
     });
   } catch (error) {
     console.log(error);
