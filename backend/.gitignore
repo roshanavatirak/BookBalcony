@@ -1,3 +1,13 @@
+# Dependencies
+node_modules/
+
+# Environment Variables
 .env
-/generated/prisma
-node_modules
+.env.*
+
+# Generated Code
+generated/prisma/
+dist/
+
+# Logs
+*.log
