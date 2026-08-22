@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { FaUserCircle, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaCheckCircle, FaCrown, FaPlus, FaStar, FaShieldAlt } from "react-icons/fa";
+import { FaUserCircle, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaCheckCircle, FaCrown, FaPlus, FaStar, FaLock } from "react-icons/fa";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
 
@@ -9,18 +9,16 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
 const MyProfile = () => {
-  const { alert: alertData, hideAlert, success, error, warning, info } = useAlert();
+  const { alert: alertData, hideAlert, success, error, warning } = useAlert();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   
-  // Profile edit form state
+  // Profile edit form state (Only First Name & Last Name)
   const [infoForm, setInfoForm] = useState({
     firstName: "",
     lastName: "",
-    email: "",
-    phone: "",
   });
 
   // Address add form state
@@ -57,8 +55,6 @@ const MyProfile = () => {
       setInfoForm({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
-        email: (user.email && !user.email.includes("bookbalcony.local")) ? user.email : "",
-        phone: (user.phone && !user.phone.includes("00000000")) ? user.phone : "",
       });
     } catch (err) {
       console.error("Error fetching user profile:", err);
@@ -88,13 +84,11 @@ const MyProfile = () => {
         {
           firstName: infoForm.firstName,
           lastName: infoForm.lastName,
-          email: infoForm.email,
-          phone: infoForm.phone,
         },
         { headers: { id, authorization: `Bearer ${token}` } }
       );
 
-      success("Profile details updated successfully!", "Updated");
+      success("Name updated successfully!", "Updated");
       setIsEditingInfo(false);
       fetchProfileData();
     } catch (err) {
@@ -149,9 +143,9 @@ const MyProfile = () => {
 
   if (loading) {
     return (
-      <div className="bg-zinc-900/50 rounded-3xl min-h-[500px] p-6 flex flex-col items-center justify-center border border-zinc-700/50">
-        <div className="w-12 h-12 border-3 border-yellow-400 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-zinc-400 text-xs tracking-widest uppercase">Loading Profile...</p>
+      <div className="bg-zinc-900/50 rounded-2xl min-h-[400px] p-6 flex flex-col items-center justify-center border border-zinc-700/50">
+        <div className="w-10 h-10 border-3 border-yellow-400 border-t-transparent rounded-full animate-spin mb-2" />
+        <p className="text-zinc-400 text-[11px] tracking-widest uppercase">Loading Profile...</p>
       </div>
     );
   }
@@ -163,10 +157,10 @@ const MyProfile = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="bg-gradient-to-br from-zinc-900/90 via-zinc-800/90 to-zinc-900/90 backdrop-blur-md rounded-3xl p-4 sm:p-8 border border-zinc-700/50 shadow-2xl space-y-6 text-white"
+      transition={{ duration: 0.3 }}
+      className="bg-gradient-to-br from-zinc-900/95 via-zinc-850 to-zinc-900/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-zinc-700/50 shadow-xl space-y-4 text-white"
     >
       {alertData && (
         <Alert
@@ -180,162 +174,149 @@ const MyProfile = () => {
         />
       )}
 
-      {/* Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-purple-500/10 p-6 rounded-2xl border border-yellow-400/20 flex flex-col sm:flex-row items-center gap-5">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500">
-            {userData?.avatar ? (
-              <img
-                src={userData.avatar}
-                alt="Avatar"
-                className="w-full h-full rounded-full object-cover border-2 border-zinc-900"
-                onError={(e) => {
-                  e.target.src = "https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg";
-                }}
-              />
-            ) : (
-              <div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center">
-                <FaUserCircle className="text-zinc-400 text-4xl" />
-              </div>
-            )}
+      {/* Header Banner - Compact & Space Optimized */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-yellow-500/10 via-amber-500/10 to-purple-500/10 p-4 rounded-xl border border-yellow-400/20 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="relative flex-shrink-0">
+            <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500 shadow-md">
+              {userData?.avatar ? (
+                <img
+                  src={userData.avatar}
+                  alt="Avatar"
+                  className="w-full h-full rounded-full object-cover border-2 border-zinc-900"
+                  onError={(e) => {
+                    e.target.src = "https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg";
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center">
+                  <FaUserCircle className="text-zinc-400 text-3xl" />
+                </div>
+              )}
+            </div>
+            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900 shadow-sm" />
           </div>
-          <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-2 border-zinc-900 shadow-md" />
-        </div>
 
-        <div className="flex-1 text-center sm:text-left space-y-1">
-          <div className="flex items-center justify-center sm:justify-start gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent">
-              {displayName}
-            </h1>
-            {userData?.isPremium && (
-              <span className="bg-yellow-400/20 border border-yellow-400/40 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <FaCrown className="text-xs" /> Premium
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-zinc-400">@{userData?.username || "username"}</p>
-          <div className="flex items-center justify-center sm:justify-start gap-2 pt-1">
-            <span className="text-[11px] bg-zinc-800/80 border border-zinc-700 text-zinc-300 px-2.5 py-0.5 rounded-full">
-              Role: <strong className="text-yellow-400 capitalize">{userData?.role || "User"}</strong>
-            </span>
-            {userData?.isSeller && (
-              <span className="text-[11px] bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <FaCheckCircle className="text-xs text-green-400" /> Verified Seller
-              </span>
-            )}
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-bold bg-gradient-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent truncate">
+                {displayName}
+              </h1>
+              {userData?.isPremium && (
+                <span className="bg-yellow-400/20 border border-yellow-400/40 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
+                  <FaCrown className="text-[10px]" /> Premium
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <span>@{userData?.username || "user"}</span>
+              <span>•</span>
+              <span className="text-yellow-400 font-semibold capitalize">{userData?.role || "User"}</span>
+              {userData?.isSeller && (
+                <span className="text-green-400 flex items-center gap-0.5 text-[11px] font-medium">
+                  <FaCheckCircle className="text-[10px]" /> Verified Seller
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         <button
           onClick={() => setIsEditingInfo(!isEditingInfo)}
-          className="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-black font-semibold text-xs rounded-xl transition-all duration-200 shadow-md flex items-center gap-1.5 active:scale-95"
+          className="px-3.5 py-1.5 bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-xs rounded-lg transition-all duration-200 shadow-md flex items-center gap-1.5 flex-shrink-0 active:scale-95"
         >
-          <FaEdit /> {isEditingInfo ? "Cancel Edit" : "Edit Profile"}
+          <FaEdit className="text-xs" /> {isEditingInfo ? "Cancel Edit" : "Edit Profile"}
         </button>
       </div>
 
-      {/* Profile Details Edit Form / Display Grid */}
-      <div className="bg-zinc-800/50 rounded-2xl p-5 border border-zinc-700/50 space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-700/60 pb-3">
-          <h2 className="text-sm font-bold text-yellow-400 tracking-wide uppercase flex items-center gap-2">
-            <FaUserCircle className="text-base" /> Personal Details
+      {/* Personal Details Card */}
+      <div className="bg-zinc-800/40 rounded-xl p-4 border border-zinc-700/40 space-y-3">
+        <div className="flex items-center justify-between border-b border-zinc-700/50 pb-2.5">
+          <h2 className="text-xs font-bold text-yellow-400 tracking-wider uppercase flex items-center gap-1.5">
+            <FaUserCircle className="text-sm" /> Personal Details
           </h2>
-          <span className="text-[11px] text-zinc-400">Primary Account Contact</span>
+          <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+            <FaLock className="text-[9px] text-zinc-500" /> Account Security Credentials Locked
+          </span>
         </div>
 
         {isEditingInfo ? (
-          <form onSubmit={handleSaveInfo} className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div>
-              <label className="text-xs text-zinc-400 block mb-1">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                value={infoForm.firstName}
-                onChange={handleInfoChange}
-                placeholder="e.g. Roshan"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
+          <form onSubmit={handleSaveInfo} className="space-y-3 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-zinc-400 block mb-1">First Name</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={infoForm.firstName}
+                  onChange={handleInfoChange}
+                  placeholder="Enter first name"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-zinc-400 block mb-1">Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={infoForm.lastName}
+                  onChange={handleInfoChange}
+                  placeholder="Enter last name"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                />
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-zinc-400 block mb-1">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={infoForm.lastName}
-                onChange={handleInfoChange}
-                placeholder="e.g. Avatirak"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-400 block mb-1">Mobile Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={infoForm.phone}
-                onChange={handleInfoChange}
-                placeholder="10-digit mobile number"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-400 block mb-1">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={infoForm.email}
-                onChange={handleInfoChange}
-                placeholder="user@example.com"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-              />
-            </div>
-            <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setIsEditingInfo(false)}
-                className="px-4 py-2 rounded-xl text-xs text-zinc-300 bg-zinc-700 hover:bg-zinc-600 transition-colors"
+                className="px-3 py-1 rounded-lg text-xs text-zinc-300 bg-zinc-700 hover:bg-zinc-600 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-5 py-2 rounded-xl text-xs font-bold text-black bg-yellow-400 hover:bg-yellow-300 transition-colors disabled:opacity-50"
+                className="px-4 py-1 rounded-lg text-xs font-bold text-black bg-yellow-400 hover:bg-yellow-300 transition-colors disabled:opacity-50"
               >
-                {submitting ? "Saving..." : "Save Changes"}
+                {submitting ? "Saving..." : "Save Name"}
               </button>
             </div>
           </form>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-            <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-700/40">
-              <p className="text-[11px] text-zinc-400 font-medium">First Name</p>
-              <p className="text-sm font-semibold text-zinc-100 mt-0.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+            <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-700/30">
+              <p className="text-[10px] text-zinc-400 font-medium">First Name</p>
+              <p className="text-xs font-semibold text-zinc-100 mt-0.5 truncate">
                 {userData?.firstName || <span className="text-zinc-500 italic">Not set</span>}
               </p>
             </div>
-            <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-700/40">
-              <p className="text-[11px] text-zinc-400 font-medium">Last Name</p>
-              <p className="text-sm font-semibold text-zinc-100 mt-0.5">
+            <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-700/30">
+              <p className="text-[10px] text-zinc-400 font-medium">Last Name</p>
+              <p className="text-xs font-semibold text-zinc-100 mt-0.5 truncate">
                 {userData?.lastName || <span className="text-zinc-500 italic">Not set</span>}
               </p>
             </div>
-            <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-700/40 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-yellow-400/10 text-yellow-400 flex items-center justify-center flex-shrink-0">
-                <FaPhone className="text-xs" />
+            <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-700/30 flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-md bg-yellow-400/10 text-yellow-400 flex items-center justify-center flex-shrink-0">
+                <FaPhone className="text-[10px]" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] text-zinc-400 font-medium">Mobile Number</p>
-                <p className="text-sm font-semibold text-zinc-100 truncate mt-0.5">{displayPhone}</p>
+                <p className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+                  Mobile Number <FaLock className="text-[8px] text-zinc-500" />
+                </p>
+                <p className="text-xs font-semibold text-zinc-100 truncate mt-0.5">{displayPhone}</p>
               </div>
             </div>
-            <div className="bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-700/40 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-yellow-400/10 text-yellow-400 flex items-center justify-center flex-shrink-0">
-                <FaEnvelope className="text-xs" />
+            <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-700/30 flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-md bg-yellow-400/10 text-yellow-400 flex items-center justify-center flex-shrink-0">
+                <FaEnvelope className="text-[10px]" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] text-zinc-400 font-medium">Email Address</p>
-                <p className="text-sm font-semibold text-zinc-100 truncate mt-0.5">{displayEmail}</p>
+                <p className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+                  Email Address <FaLock className="text-[8px] text-zinc-500" />
+                </p>
+                <p className="text-xs font-semibold text-zinc-100 truncate mt-0.5">{displayEmail}</p>
               </div>
             </div>
           </div>
@@ -343,20 +324,20 @@ const MyProfile = () => {
       </div>
 
       {/* Delivery Addresses Section */}
-      <div className="bg-zinc-800/50 rounded-2xl p-5 border border-zinc-700/50 space-y-4">
-        <div className="flex items-center justify-between border-b border-zinc-700/60 pb-3">
-          <div className="flex items-center gap-2">
-            <FaMapMarkerAlt className="text-yellow-400 text-base" />
-            <h2 className="text-sm font-bold text-yellow-400 tracking-wide uppercase">
+      <div className="bg-zinc-800/40 rounded-xl p-4 border border-zinc-700/40 space-y-3">
+        <div className="flex items-center justify-between border-b border-zinc-700/50 pb-2.5">
+          <div className="flex items-center gap-1.5">
+            <FaMapMarkerAlt className="text-yellow-400 text-sm" />
+            <h2 className="text-xs font-bold text-yellow-400 tracking-wider uppercase">
               Delivery Addresses ({addresses.length}/3)
             </h2>
           </div>
           {addresses.length < 3 && !isAddingAddress && (
             <button
               onClick={() => setIsAddingAddress(true)}
-              className="px-3 py-1.5 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+              className="px-2.5 py-1 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20 text-[11px] font-semibold rounded-md transition-colors flex items-center gap-1"
             >
-              <FaPlus className="text-[10px]" /> Add Address
+              <FaPlus className="text-[9px]" /> Add Address
             </button>
           )}
         </div>
@@ -369,17 +350,17 @@ const MyProfile = () => {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               onSubmit={handleSaveAddress}
-              className="bg-zinc-900/90 p-4 rounded-xl border border-yellow-400/30 space-y-3"
+              className="bg-zinc-900/90 p-3 rounded-lg border border-yellow-400/30 space-y-2.5"
             >
               <h3 className="text-xs font-bold text-yellow-400">Add New Delivery Address</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <input
                   type="text"
                   name="fullName"
                   placeholder="Full Name *"
                   value={addressForm.fullName}
                   onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
                 />
                 <input
                   type="tel"
@@ -387,7 +368,7 @@ const MyProfile = () => {
                   placeholder="Mobile Number (10 digits) *"
                   value={addressForm.phone}
                   onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
                 />
                 <input
                   type="text"
@@ -395,7 +376,7 @@ const MyProfile = () => {
                   placeholder="House/Flat No. & Street *"
                   value={addressForm.addressLine1}
                   onChange={handleAddressChange}
-                  className="sm:col-span-2 w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
+                  className="sm:col-span-2 w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
                 />
                 <input
                   type="text"
@@ -403,7 +384,7 @@ const MyProfile = () => {
                   placeholder="Area / Locality *"
                   value={addressForm.locality}
                   onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
                 />
                 <input
                   type="text"
@@ -411,7 +392,7 @@ const MyProfile = () => {
                   placeholder="City *"
                   value={addressForm.city}
                   onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
                 />
                 <input
                   type="text"
@@ -419,7 +400,7 @@ const MyProfile = () => {
                   placeholder="State *"
                   value={addressForm.state}
                   onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
                 />
                 <input
                   type="text"
@@ -427,21 +408,21 @@ const MyProfile = () => {
                   placeholder="Pincode (6 digits) *"
                   value={addressForm.postalCode}
                   onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setIsAddingAddress(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                  className="px-2.5 py-1 rounded-md text-[11px] bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold text-black bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50"
+                  className="px-3 py-1 rounded-md text-[11px] font-bold text-black bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50"
                 >
                   {submitting ? "Saving..." : "Save Address"}
                 </button>
@@ -452,37 +433,37 @@ const MyProfile = () => {
 
         {/* Address Cards List */}
         {addresses.length === 0 ? (
-          <div className="bg-zinc-900/40 p-6 rounded-xl border border-dashed border-zinc-700 text-center space-y-2">
-            <FaMapMarkerAlt className="text-zinc-600 text-2xl mx-auto" />
-            <p className="text-xs text-zinc-400">No delivery addresses saved yet.</p>
+          <div className="bg-zinc-900/40 p-4 rounded-lg border border-dashed border-zinc-700/60 text-center space-y-1.5">
+            <FaMapMarkerAlt className="text-zinc-600 text-xl mx-auto" />
+            <p className="text-[11px] text-zinc-400">No delivery addresses saved yet.</p>
             {!isAddingAddress && (
               <button
                 onClick={() => setIsAddingAddress(true)}
-                className="px-4 py-2 bg-yellow-400 text-black font-bold text-xs rounded-xl hover:bg-yellow-300 transition-colors"
+                className="px-3 py-1.5 bg-yellow-400 text-black font-bold text-xs rounded-lg hover:bg-yellow-300 transition-colors"
               >
                 + Add Delivery Address
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {addresses.map((addr, idx) => (
               <div
                 key={addr._id || idx}
-                className={`p-4 rounded-xl border relative transition-all ${
+                className={`p-3 rounded-lg border relative transition-all ${
                   addr.isPrimary
-                    ? "bg-zinc-900/90 border-yellow-400/50 shadow-md shadow-yellow-400/5"
-                    : "bg-zinc-900/50 border-zinc-700/60"
+                    ? "bg-zinc-900/90 border-yellow-400/50 shadow-md"
+                    : "bg-zinc-900/50 border-zinc-700/50"
                 }`}
               >
                 {addr.isPrimary && (
-                  <span className="absolute top-3 right-3 bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <FaStar className="text-[9px]" /> Primary
+                  <span className="absolute top-2.5 right-2.5 bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                    <FaStar className="text-[8px]" /> Primary
                   </span>
                 )}
-                <p className="text-xs font-bold text-white">{addr.fullName}</p>
-                <p className="text-[11px] text-zinc-400 mt-0.5">{addr.phone}</p>
-                <p className="text-xs text-zinc-300 mt-2 leading-relaxed">
+                <p className="text-xs font-bold text-white truncate pr-16">{addr.fullName}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">{addr.phone}</p>
+                <p className="text-[11px] text-zinc-300 mt-1.5 leading-snug line-clamp-2">
                   {addr.addressLine1}
                   {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}, {addr.locality}, {addr.city}, {addr.state} - <strong className="text-yellow-400">{addr.postalCode}</strong>
                 </p>
