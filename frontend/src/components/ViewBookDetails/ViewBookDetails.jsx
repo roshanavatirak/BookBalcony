@@ -57,6 +57,12 @@ const ViewBookDetails = () => {
   const canViewSeller = role === "admin" || isPremium === true;
 
   // Get book images array (support both single url and multiple images)
+  useEffect(() => {
+    if (Data && Data.title) {
+      document.title = `${Data.title} - BookBalcony`;
+    }
+  }, [Data]);
+
   const getBookImages = () => {
     if (!Data) return [];
     

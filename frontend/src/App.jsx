@@ -165,6 +165,7 @@ import Favourites from './components/Profile/Favourites';
 import UserOrderHistory from './components/Profile/UserOrderHistory';
 import Loader from './components/Loader/Loader';
 import Admin from "./components/Navbar/AdminNavbar";
+import DynamicTitleHandler from './components/DynamicTitle/DynamicTitleHandler';
 
 // Lazy Loaded Routes for Optimized Initial Bundle Size
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -372,6 +373,7 @@ const App = () => {
 
   return (
     <div>
+      <DynamicTitleHandler />
       <Suspense fallback={null}>
         <ChatbotManager />
       </Suspense>
