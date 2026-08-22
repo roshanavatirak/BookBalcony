@@ -777,7 +777,9 @@ router.get(
 // PUBLIC ROUTES (No Auth Required)
 // ============================================
 
-// 📚 GET: Get All Books
+const viewBatcher = require("../utils/viewBatcher");
+
+// 📚 GET: Get All Books (Lean Projection & Paginated Redis Caching)
 router.get("/get-all-books", async (req, res) => {
   try {
     const cacheKey = "cache:books:all";
@@ -789,8 +791,12 @@ router.get("/get-all-books", async (req, res) => {
       });
     }
 
-    const books = await Book.find().sort({ createdAt: -1 });
-    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+    const books = await Book.find()
+      .select("title author price desc url category editionOrPublishYear productStatus stock views sold images adminApproval isApproved isScheduled goLiveDate createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    await setCache(cacheKey, books, 900); // 15 mins TTL
 
     return res.json({
       status: "Success",
@@ -814,8 +820,13 @@ router.get("/get-recent-books", async (req, res) => {
       });
     }
 
-    const books = await Book.find().sort({ createdAt: -1 }).limit(20);
-    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+    const books = await Book.find()
+      .select("title author price desc url category editionOrPublishYear productStatus stock views sold images adminApproval isApproved isScheduled goLiveDate createdAt")
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    await setCache(cacheKey, books, 900); // 15 mins TTL
 
     return res.json({
       status: "Success",
@@ -839,8 +850,13 @@ router.get("/get-trending-books", async (req, res) => {
       });
     }
 
-    const books = await Book.find().sort({ views: -1 }).limit(10);
-    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+    const books = await Book.find()
+      .select("title author price desc url category editionOrPublishYear productStatus stock views sold images adminApproval isApproved isScheduled goLiveDate createdAt")
+      .sort({ views: -1 })
+      .limit(10)
+      .lean();
+
+    await setCache(cacheKey, books, 900); // 15 mins TTL
 
     return res.json({
       status: "Success",
@@ -864,8 +880,13 @@ router.get("/get-editors-choice", async (req, res) => {
       });
     }
 
-    const books = await Book.find().sort({ sold: -1 }).limit(4);
-    await setCache(cacheKey, books, 2592000); // 30 days (2,592,000s) TTL
+    const books = await Book.find()
+      .select("title author price desc url category editionOrPublishYear productStatus stock views sold images adminApproval isApproved isScheduled goLiveDate createdAt")
+      .sort({ sold: -1 })
+      .limit(4)
+      .lean();
+
+    await setCache(cacheKey, books, 900); // 15 mins TTL
 
     return res.json({
       status: "Success",
@@ -888,12 +909,12 @@ router.get("/get-book-by-id/:id", async (req, res) => {
     let bookObj = await getCache(cacheKey);
 
     if (!bookObj) {
-      const bookDoc = await Book.findById(id);
+      const bookDoc = await Book.findById(id).lean();
       if (!bookDoc) {
         return res.status(404).json({ message: "Book not found" });
       }
-      bookObj = bookDoc.toObject();
-      await setCache(cacheKey, bookObj, 3600); // 1 hour TTL
+      bookObj = bookDoc;
+      await setCache(cacheKey, bookObj, 1800); // 30 mins TTL
     }
 
     const isFutureScheduled = bookObj.isScheduled && bookObj.goLiveDate && new Date(bookObj.goLiveDate) > new Date();
@@ -923,7 +944,7 @@ router.get("/get-book-by-id/:id", async (req, res) => {
 });
 
 
-// 🔥 POST: Track Unique Book View
+// 🔥 POST: Track Unique Book View (Non-blocking Batcher)
 const crypto = require("crypto");
 const JWT_SECRET = process.env.JWT_SECRET || "bookStore123";
 
@@ -939,7 +960,6 @@ router.post("/track-view/:id", async (req, res) => {
     // Solve for viewerId using standard 3-tier strategy
     let viewerId = null;
 
-    // 1. JWT verification
     try {
       const authHeader = req.headers["authorization"];
       const token = authHeader && authHeader.split(" ")[1];
@@ -949,57 +969,40 @@ router.post("/track-view/:id", async (req, res) => {
         if (userId) viewerId = userId.toString();
       }
     } catch (err) {
-      // Ignored - fallback to guest headers
+      // Ignored
     }
 
-    // 2. Custom header x-visitor-id
     if (!viewerId) {
       viewerId = req.headers["x-visitor-id"];
     }
 
-    // 3. Fallback: Hashed IP + UserAgent
     if (!viewerId) {
       const ip = req.ip || req.connection.remoteAddress || "anonymous";
       const userAgent = req.headers["user-agent"] || "";
       viewerId = crypto.createHash("sha256").update(`${ip}-${userAgent}`).digest("hex");
     }
 
-    // Create unique BookView record to atomically deduplicate
     try {
       const newView = new BookView({ book: bookId, viewerId });
       await newView.save();
 
-      // Successfully saved unique view! Increment book's view count
-      const updatedBook = await Book.findByIdAndUpdate(
-        bookId,
-        { $inc: { views: 1 } },
-        { new: true }
-      );
-
-      // 🧹 Invalidate trending books & single book cache so view counts reflect in real-time
-      await delCache("cache:books:trending");
-      await invalidateBookDetailCache(bookId);
-
+      // Record in-memory view count increment (flushed asynchronously via bulkWrite)
+      viewBatcher.recordView(bookId);
 
       return res.status(200).json({
         success: true,
         message: "Unique view recorded successfully",
-        views: updatedBook ? updatedBook.views : 0,
         isUnique: true
       });
     } catch (dbError) {
-      // Catch MongoDB duplicate key error code 11000
       if (dbError.code === 11000) {
-        // Fetch current views count to return accurate dashboard updates
-        const book = await Book.findById(bookId).select("views");
         return res.status(200).json({
           success: true,
           message: "Duplicate view ignored",
-          views: book ? book.views : 0,
           isUnique: false
         });
       }
-      throw dbError; // rethrow other DB exceptions
+      throw dbError;
     }
   } catch (error) {
     console.error("❌ Error in view tracking route:", error);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope, FaCheckCircle } from 'react-icons/fa';
 import Alert from '../Alert/Alert';
 import { useAlert } from '../Alert/useAlert';
@@ -342,24 +343,29 @@ function Footer() {
             <h2 className="text-lg font-semibold mb-3">Quick Links</h2>
             <ul className="space-y-2 text-zinc-400 text-sm">
               <li>
-                <a href="/privacy-policy" className="hover:text-yellow-400 transition">
+                <Link to="/about-us" className="hover:text-yellow-400 transition">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy-policy" className="hover:text-yellow-400 transition">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/terms-of-service" className="hover:text-yellow-400 transition">
+                <Link to="/terms-of-service" className="hover:text-yellow-400 transition">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/refund-policy" className="hover:text-yellow-400 transition">
+                <Link to="/refund-policy" className="hover:text-yellow-400 transition">
                   Refund Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="/support" className="hover:text-yellow-400 transition">
+                <Link to="/support" className="hover:text-yellow-400 transition">
                   Support
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -421,12 +427,12 @@ function Footer() {
                 <p className="text-zinc-300 text-sm mb-3">
                   Please login to subscribe to our newsletter and get exclusive updates!
                 </p>
-                <a
-                  href="/login"
+                <Link
+                  to="/account/login"
                   className="block w-full px-4 py-2 bg-yellow-400 text-black font-semibold rounded-md hover:bg-yellow-300 transition-all transform hover:scale-105 text-center"
                 >
                   Login to Subscribe
-                </a>
+                </Link>
                 <p className="text-xs text-zinc-500 mt-3">
                   🔒 Your email will be used only for newsletter updates
                 </p>

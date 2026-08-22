@@ -398,7 +398,7 @@ function MobileBottomNav() {
           {/* Sign In button for logged-out */}
           {!isLoggedIn && (
             <Link
-              to="/signin"
+              to="/account/login"
               className="flex flex-col items-center justify-center min-w-[60px] px-3 py-2 rounded-2xl text-[10px] font-semibold tracking-wide text-yellow-400 border border-yellow-400/40 bg-yellow-400/5 hover:bg-yellow-400/15 transition-all duration-200"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >

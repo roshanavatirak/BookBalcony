@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
+import TurnstileWidget from "../components/Security/TurnstileWidget";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -24,6 +25,7 @@ const ForgotPassword = () => {
   const [success, setSuccess] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
   const [autoLoginLoading, setAutoLoginLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   // Timer for resend OTP
   const [resendTimer, setResendTimer] = useState(0);
@@ -41,7 +43,7 @@ const ForgotPassword = () => {
       return () => clearTimeout(timer);
     } else if (step === 4 && redirectCountdown === 0) {
       // Auto logout after 10 seconds
-      navigate("/signin");
+      navigate("/account/login");
     }
   }, [step, redirectCountdown, navigate]);
 
@@ -82,12 +84,20 @@ const ForgotPassword = () => {
       return;
     }
 
+    if (!turnstileToken) {
+      setError("Please complete the security check.");
+      return;
+    }
+
     try {
       setLoading(true);
 
       const response = await axios.post(
         `${API_URL}/forgot-password/request-otp`,
-        { emailOrMobile: email.trim() }
+        {
+          emailOrMobile: email.trim(),
+          cfTurnstileToken: turnstileToken,
+        }
       );
 
       setSuccess(response.data.message);
@@ -294,7 +304,7 @@ const handleStayLoggedIn = async () => {
     localStorage.clear();
     
     setTimeout(() => {
-      navigate("/signin");
+      navigate("/account/login");
     }, 2000);
   } finally {
     setAutoLoginLoading(false);
@@ -303,7 +313,7 @@ const handleStayLoggedIn = async () => {
 
   // Handle logout (go to login page)
   const handleGoToLogin = () => {
-    navigate("/signin");
+    navigate("/account/login");
   };
 
   return (
@@ -390,6 +400,12 @@ const handleStayLoggedIn = async () => {
                 We'll send a 6-digit OTP to your email
               </p>
             </div>
+
+            {/* Cloudflare Turnstile Verification Widget */}
+            <TurnstileWidget
+              onSuccess={(token) => setTurnstileToken(token)}
+              onExpire={() => setTurnstileToken("")}
+            />
 
             <button
               type="submit"
@@ -627,7 +643,7 @@ const handleStayLoggedIn = async () => {
         {/* Footer */}
         {step !== 4 && (
           <div className="mt-6 text-center">
-            <Link to="/signin" className="text-zinc-400 hover:text-yellow-400 text-sm transition">
+            <Link to="/account/login" className="text-zinc-400 hover:text-yellow-400 text-sm transition">
               ← Back to Login
             </Link>
           </div>

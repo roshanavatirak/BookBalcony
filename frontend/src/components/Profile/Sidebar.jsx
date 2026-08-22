@@ -25,8 +25,8 @@ const Sidebar = ({ data, seller }) => {
   console.groupEnd();
 
   const isActive = (path) => {
-    if (path === "/profile") {
-      return location.pathname === "/profile";
+    if (path === "/account/profile") {
+      return location.pathname === "/account/profile";
     }
     return location.pathname.startsWith(path);
   };
@@ -67,13 +67,8 @@ const Sidebar = ({ data, seller }) => {
 
   // ✅ Enhanced user data extraction
   const getUserInfo = () => {
-    console.group('👤 User Info Extraction Debug');
-    
     try {
-      // Check if data exists
       if (!data) {
-        console.warn('⚠️ No data prop provided');
-        console.groupEnd();
         return {
           username: 'Profile',
           email: 'Not available',
@@ -81,43 +76,37 @@ const Sidebar = ({ data, seller }) => {
         };
       }
 
-      // Extract username - check multiple possible locations
-      let username = null;
-      if (data.username) {
-        username = data.username;
-        console.log('✅ Username found at data.username:', username);
-      } else if (data.data?.username) {
-        username = data.data.username;
-        console.log('✅ Username found at data.data.username:', username);
-      } else if (data.name) {
-        username = data.name;
-        console.log('✅ Username found at data.name:', username);
-      }
+      const rawUser = data.data || data;
+      const firstName = rawUser.firstName || '';
+      const lastName = rawUser.lastName || '';
+      const username = rawUser.username || rawUser.name || 'Profile';
 
-      // Extract email - check multiple possible locations
-      let email = null;
-      if (data.email) {
-        email = data.email;
-        console.log('✅ Email found at data.email:', email);
-      } else if (data.data?.email) {
-        email = data.data.email;
-        console.log('✅ Email found at data.data.email:', email);
-      }
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      const displayName = fullName || username;
+
+      const phone = rawUser.phone || '';
+      const email = rawUser.email || '';
+
+      const validPhone = (phone && !phone.includes('00000000')) ? phone : '';
+      const validEmail = (email && !email.includes('bookbalcony.local')) ? email : '';
+
+      // Contact subtitle logic:
+      // If phone is available -> show phone
+      // Else if email is available -> show email
+      // If both available -> show phone!
+      const contactInfo = validPhone || validEmail || 'Not available';
 
       const userInfo = {
-        username: username || 'Profile',
-        email: email || 'Not available',
-        hasData: !!(username || email),
-        isPremium: data.isPremium || data.data?.isPremium || false,
-        isSeller: data.isSeller || data.data?.isSeller || false
+        username: displayName,
+        email: contactInfo,
+        hasData: !!(displayName !== 'Profile' || validPhone || validEmail),
+        isPremium: rawUser.isPremium || false,
+        isSeller: rawUser.isSeller || false
       };
 
-      console.log('📦 Extracted user info:', userInfo);
-      console.groupEnd();
       return userInfo;
     } catch (error) {
       console.error('❌ Error extracting user info:', error);
-      console.groupEnd();
       return {
         username: 'Profile',
         email: 'Not available',
@@ -191,7 +180,7 @@ const Sidebar = ({ data, seller }) => {
     console.log('👋 Logging out from sidebar...');
     localStorage.clear();
     dispatch(authActions.logout());
-    navigate("/signin");
+    navigate("/account/login");
   };
 
   // ✅ Error handler for image loading
@@ -331,10 +320,10 @@ const Sidebar = ({ data, seller }) => {
       {/* Navigation */}
       <nav className="mt-8 sm:mt-10 w-full flex flex-col gap-2 px-1">
         {[
-          { to: "/profile", icon: <FaHeart />, label: "Favourites", gradient: "from-red-400 to-pink-400" },
-          { to: "/profile/orderHistory", icon: <FaHistory />, label: "Order History", gradient: "from-blue-400 to-cyan-400" },
-          { to: "/profile/my-subscriptions", icon: <FaBell />, label: "My Subscriptions", gradient: "from-green-400 to-emerald-400" },
-          { to: "/profile/settings", icon: <FaCog />, label: "Settings", gradient: "from-purple-400 to-pink-400" },
+          { to: "/account/profile", icon: <FaHeart />, label: "Favourites", gradient: "from-red-400 to-pink-400" },
+          { to: "/account/profile/orderHistory", icon: <FaHistory />, label: "Order History", gradient: "from-blue-400 to-cyan-400" },
+          { to: "/account/profile/my-subscriptions", icon: <FaBell />, label: "My Subscriptions", gradient: "from-green-400 to-emerald-400" },
+          { to: "/account/profile/settings", icon: <FaCog />, label: "Settings", gradient: "from-purple-400 to-pink-400" },
         ].map((item, index) => {
           const active = isActive(item.to);
           return (
@@ -403,7 +392,7 @@ const Sidebar = ({ data, seller }) => {
             </div>
           ) : sellerStatus.type === 'verified' ? (
             <Link
-              to="/profile/verified-seller-info"
+              to="/account/profile/verified-seller-info"
               className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-500 
                 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 
                 shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/50 hover:shadow-xl
@@ -427,7 +416,7 @@ const Sidebar = ({ data, seller }) => {
             </Link>
           ) : sellerStatus.type === 'pending' ? (
             <Link
-              to="/profile/seller-application-submitted"
+              to="/account/profile/seller-application-submitted"
               className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-300 
                 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 
                 text-orange-700 hover:text-orange-800 shadow-md hover:shadow-lg 
@@ -446,7 +435,7 @@ const Sidebar = ({ data, seller }) => {
             </Link>
           ) : sellerStatus.type === 'rejected' ? (
             <Link
-              to="/profile/become-seller"
+              to="/account/profile/become-seller"
               className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-300 
                 bg-gradient-to-r from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 
                 text-red-700 hover:text-red-800 shadow-md hover:shadow-lg 
@@ -464,7 +453,7 @@ const Sidebar = ({ data, seller }) => {
             </Link>
           ) : sellerStatus.type === 'inconsistent' ? (
             <Link
-              to="/profile/become-seller"
+              to="/account/profile/become-seller"
               className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-300 
                 bg-gradient-to-r from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 
                 text-red-700 hover:text-red-800 shadow-md hover:shadow-lg 
@@ -482,7 +471,7 @@ const Sidebar = ({ data, seller }) => {
             </Link>
           ) : (
             <Link
-              to="/profile/become-seller"
+              to="/account/profile/become-seller"
               className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-500
                 bg-gradient-to-r from-zinc-800 to-zinc-700 hover:from-yellow-400 hover:to-yellow-500
                 border border-yellow-400/30 hover:border-yellow-400

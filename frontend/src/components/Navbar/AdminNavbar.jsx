@@ -51,7 +51,7 @@ const AdminNavbar = () => {
   const handleLogout = () => {
     dispatch(authActions.logout());
     localStorage.clear();
-    navigate("/signin");
+    navigate("/account/login");
   };
 
   useEffect(() => {

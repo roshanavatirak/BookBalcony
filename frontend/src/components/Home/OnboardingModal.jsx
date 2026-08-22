@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import Rao from "../../assets/Rao.png";
-import AddressForm from "../Forms/AddressForm";
 import { 
   FaBookOpen, 
   FaShoppingCart, 
@@ -10,11 +9,10 @@ import {
   FaStore, 
   FaChartLine, 
   FaUsers,
-  FaMapMarkerAlt,
+  FaUser,
   FaCheckCircle,
   FaArrowRight,
-  FaArrowLeft,
-  FaSpinner
+  FaArrowLeft
 } from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -141,21 +139,14 @@ const pages = [
     ),
   },
   {
-    title: "Complete Your Profile",
-    subtitle: "Add your delivery address",
-    icon: <FaMapMarkerAlt className="text-4xl text-yellow-400" />,
+    title: "Tell Us Your Name",
+    subtitle: "Personalize your BookBalcony experience",
+    icon: <FaUser className="text-4xl text-yellow-400" />,
     desc: (
       <div className="space-y-3">
-        <div className="bg-gradient-to-r from-yellow-400/10 to-orange-400/10 p-3 rounded-lg border border-yellow-400/30">
-          <p className="text-xs text-zinc-300 leading-relaxed">
-            To provide you with a seamless delivery experience, we need your address. 
-            This information is securely stored and only used for order fulfillment.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-[10px] text-zinc-400">
-          <FaCheckCircle className="text-green-400" />
-          <span>Your data is encrypted and protected</span>
-        </div>
+        <p className="text-xs text-zinc-300 leading-relaxed text-center">
+          Welcome to the community! Please enter your first and last name so we can personalize your profile.
+        </p>
       </div>
     ),
     isFinal: true,
@@ -164,60 +155,24 @@ const pages = [
 
 const OnboardingModal = ({ onClose }) => {
   const [page, setPage] = useState(0);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [address, setAddress] = useState({
-    fullName: "",
-    phone: "",
-    addressLine1: "",
-    addressLine2: "",
-    locality: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "India",
-  });
 
   const isFinalPage = pages[page].isFinal;
 
   const next = async () => {
     if (isFinalPage) {
-      // Check required fields (matching backend validation)
-      const requiredFields = [
-        { key: "fullName", label: "Full Name" },
-        { key: "phone", label: "Phone Number" },
-        { key: "addressLine1", label: "Address Line 1" },
-        { key: "locality", label: "Locality" },
-        { key: "city", label: "City" },
-        { key: "state", label: "State" },
-        { key: "postalCode", label: "Postal Code" }
-      ];
-      
-      const emptyField = requiredFields.find((field) => !address[field.key]?.trim());
-      
-      if (emptyField) {
-        alert(`Please fill in: ${emptyField.label}`);
+      if (!firstName.trim()) {
+        alert("Please enter your First Name");
         return;
       }
-
-      // Validate phone number (10 digits)
-      if (!/^\d{10}$/.test(address.phone.trim())) {
-        alert("Please enter a valid 10-digit phone number");
-        return;
-      }
-
-      // Validate postal code (6 digits)
-      if (!/^\d{6}$/.test(address.postalCode.trim())) {
-        alert("Please enter a valid 6-digit postal code");
-        return;
-      }
-
-      console.log("📦 Sending address:", address);
 
       setLoading(true);
       try {
-        const response = await axios.post(
-          `${API_URL}/add-address`,
-          address,
+        await axios.post(
+          `${API_URL}/update-name`,
+          { firstName: firstName.trim(), lastName: lastName.trim() },
           {
             headers: {
               id: localStorage.getItem("id"),
@@ -226,15 +181,13 @@ const OnboardingModal = ({ onClose }) => {
           }
         );
 
-        console.log("✅ Address saved successfully:", response.data);
-        
         localStorage.removeItem("showOnboarding");
+        window.dispatchEvent(new CustomEvent("userInfoUpdated"));
         onClose();
       } catch (err) {
-        console.error("❌ Failed to save address:", err);
-        
-        const errorMessage = err.response?.data?.message || "Failed to save address. Please try again.";
-        alert(errorMessage);
+        console.error("❌ Failed to update name:", err);
+        localStorage.removeItem("showOnboarding");
+        onClose();
       } finally {
         setLoading(false);
       }
@@ -379,15 +332,40 @@ const OnboardingModal = ({ onClose }) => {
                 {pages[page].desc}
               </motion.div>
 
-              {/* Address Form */}
+              {/* Name Inputs on Step 4 */}
               {isFinalPage && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  className="mt-4"
+                  className="mt-4 space-y-3 max-w-md mx-auto"
                 >
-                  <AddressForm address={address} setAddress={setAddress} />
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      First Name <span className="text-yellow-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Roshan"
+                      className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-zinc-800 border border-zinc-700 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white transition-all"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-300 mb-1">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Avatirak"
+                      className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl bg-zinc-800 border border-zinc-700 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-white transition-all"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
                 </motion.div>
               )}
             </motion.div>
@@ -402,8 +380,7 @@ const OnboardingModal = ({ onClose }) => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 onClick={handlePrevious}
-                disabled={loading}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-zinc-700 hover:border-zinc-600 group"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-semibold rounded-lg transition-all duration-300 border border-zinc-700 hover:border-zinc-600 group"
               >
                 <FaArrowLeft className="text-xs group-hover:-translate-x-1 transition-transform" />
                 <span>Previous</span>
@@ -414,17 +391,11 @@ const OnboardingModal = ({ onClose }) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               onClick={handleNext}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-300 hover:to-orange-300 text-black text-sm font-bold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-400/25 hover:shadow-yellow-400/40 hover:scale-[1.02] transform group"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-300 hover:to-orange-300 text-black text-sm font-bold rounded-lg transition-all duration-300 shadow-lg shadow-yellow-400/25 hover:shadow-yellow-400/40 hover:scale-[1.02] transform group"
             >
-              {loading ? (
+              {isFinalPage ? (
                 <>
-                  <FaSpinner className="animate-spin text-sm" />
-                  <span>Saving...</span>
-                </>
-              ) : isFinalPage ? (
-                <>
-                  <span>Complete Setup</span>
+                  <span>Get Started 🎉</span>
                   <FaCheckCircle className="text-sm group-hover:scale-110 transition-transform" />
                 </>
               ) : (
@@ -439,7 +410,7 @@ const OnboardingModal = ({ onClose }) => {
       </motion.div>
 
       {/* Custom scrollbar styles */}
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 5px;
         }

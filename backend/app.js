@@ -1,5 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
+const helmet = require("helmet");
+const { apiLimiter } = require("./middleware/rateLimiter");
 require("dotenv").config();
 require("./conn/conn"); // MongoDB Connection
 require("./conn/prisma"); // PostgreSQL Supabase Connection
@@ -21,8 +24,14 @@ const services =require("./routes/services")
 
 const app = express();
 
+// Security HTTP headers and performance compression
+app.use(helmet());
+app.use(compression());
 app.use(cors());
 app.use(express.json());
+
+// Apply global rate limiter to all API routes
+app.use("/api/v1", apiLimiter);
 
 // API routes
 app.use("/api/v1", userRoutes);

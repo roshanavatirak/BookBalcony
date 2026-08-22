@@ -105,7 +105,7 @@ const SellerSidebar = ({ initialData = null, userProfile = null }) => {
   const handleLogout = () => {
     localStorage.clear();
     dispatch(authActions.logout());
-    navigate("/signin");
+    navigate("/account/login");
   };
 
   const handleRefresh = async () => {

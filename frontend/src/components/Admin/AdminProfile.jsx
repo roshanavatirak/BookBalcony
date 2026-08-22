@@ -65,7 +65,7 @@ const AdminProfile = () => {
           localStorage.removeItem("token");
           localStorage.removeItem("role");
           localStorage.removeItem("id");
-          navigate("/signin", { replace: true });
+          navigate("/account/login", { replace: true });
           return;
         }
 
@@ -79,7 +79,7 @@ const AdminProfile = () => {
         if (err.response?.status === 401) {
           alert("Session expired. Please login again.");
           localStorage.clear();
-          navigate("/signin", { replace: true });
+          navigate("/account/login", { replace: true });
         } else if (err.response?.status === 403) {
           alert("Access denied. Not an admin.");
           navigate("/", { replace: true });

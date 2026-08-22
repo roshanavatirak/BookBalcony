@@ -178,27 +178,27 @@ const Alert = ({
         className={`fixed ${positionClasses[position]} z-[9999] pointer-events-auto ${
           isExiting ? 'animate-slideOut' : 'animate-slideIn'
         }`}
-        style={{ minWidth: '350px', maxWidth: '450px' }}
+        style={{ maxWidth: '320px', minWidth: '240px' }}
       >
         <div 
           className={`
             relative
             ${config.bgLight} ${config.bgDark}
             ${config.borderLight} ${config.borderDark}
-            border-2
-            rounded-2xl
+            border
+            rounded-xl
             ${config.shadow}
             overflow-hidden
-            backdrop-blur-xl
-            transition-all duration-300
+            backdrop-blur-md
+            transition-all duration-200
           `}
         >
-          {/* Gradient Top Border */}
-          <div className={`h-1.5 ${config.gradient}`} />
+          {/* Accent Line */}
+          <div className={`h-1 ${config.gradient}`} />
 
-          {/* Main Content */}
-          <div className="p-5">
-            <div className="flex items-start gap-4">
+          {/* Main Content (Compact Toast) */}
+          <div className="px-3.5 py-2.5">
+            <div className="flex items-center gap-2.5">
               {/* Icon */}
               {showIcon && (
                 <div
@@ -206,37 +206,23 @@ const Alert = ({
                     flex-shrink-0 
                     ${config.iconBgLight} ${config.iconBgDark}
                     ${config.iconColorLight} ${config.iconColorDark}
-                    w-12 h-12
-                    rounded-xl
+                    w-7 h-7
+                    rounded-lg
                     flex items-center justify-center
-                    shadow-lg
-                    transition-transform duration-300 hover:scale-110
+                    shadow-sm
                   `}
                 >
-                  <Icon size={24} strokeWidth={2.5} />
+                  <Icon size={16} strokeWidth={2.2} />
                 </div>
               )}
 
-              {/* Text Content */}
-              <div className="flex-1 min-w-0 pt-1">
-                {title && (
-                  <h4 
-                    className={`
-                      font-bold 
-                      text-lg 
-                      ${config.titleColorLight} ${config.titleColorDark}
-                      mb-1.5
-                      leading-tight
-                    `}
-                  >
-                    {title}
-                  </h4>
-                )}
+              {/* Text Message Content (No technical title headers) */}
+              <div className="flex-1 min-w-0">
                 <p 
                   className={`
-                    text-sm 
+                    text-xs sm:text-sm 
                     ${config.textColorLight} ${config.textColorDark}
-                    leading-relaxed
+                    leading-snug
                     font-medium
                   `}
                 >
@@ -244,34 +230,30 @@ const Alert = ({
                 </p>
               </div>
 
-              {/* Close Button */}
+              {/* Compact Close Button */}
               {showCloseButton && onClose && (
                 <button
                   onClick={handleClose}
                   className="
                     flex-shrink-0 
                     text-gray-400 
-                    hover:text-gray-600
-                    dark:text-gray-500
-                    dark:hover:text-gray-300
+                    hover:text-gray-200
                     transition-all duration-200
-                    p-1.5
-                    rounded-lg
-                    hover:bg-black/5
-                    dark:hover:bg-white/5
-                    hover:scale-110
+                    p-1
+                    rounded-md
+                    hover:bg-white/10
                   "
                   aria-label="Close alert"
                 >
-                  <X size={18} strokeWidth={2.5} />
+                  <X size={14} strokeWidth={2} />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Progress Bar */}
+          {/* Minimalist Progress Bar */}
           {autoClose && !isExiting && (
-            <div className="h-1 bg-black/5 dark:bg-white/5">
+            <div className="h-0.5 bg-black/5 dark:bg-white/5">
               <div 
                 className={`h-full ${config.progressBg} animate-shrink`}
                 style={{ animationDuration: `${duration}ms` }}

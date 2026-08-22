@@ -74,12 +74,22 @@ const Profile = () => {
   const handleLogout = () => {
     localStorage.clear();
     dispatch(authActions.logout());
-    navigate("/signin");
+    navigate("/account/login");
   };
 
   // Extract user info safely
-  const username = userData?.username || userData?.data?.username || userData?.name || 'Profile';
-  const email = userData?.email || userData?.data?.email || '';
+  const rawUser = userData?.data || userData || {};
+  const firstName = rawUser.firstName || '';
+  const lastName = rawUser.lastName || '';
+  const username = rawUser.username || rawUser.name || 'Profile';
+  const fullName = [firstName, lastName].filter(Boolean).join(' ');
+  const displayName = fullName || username;
+
+  const phone = rawUser.phone || '';
+  const rawEmail = rawUser.email || '';
+  const validPhone = (phone && !phone.includes('00000000')) ? phone : '';
+  const validEmail = (rawEmail && !rawEmail.includes('bookbalcony.local')) ? rawEmail : '';
+  const contactInfo = validPhone || validEmail || 'Not Available';
   const avatarSrc = userData?.avatar
     ? (userData.avatar.startsWith('http') ? userData.avatar : `${BASE_URL}/${userData.avatar}`)
     : "https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg?w=740";
@@ -131,8 +141,8 @@ const Profile = () => {
                     <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3.5 h-3.5 rounded-full border-2 border-zinc-900" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-base font-bold text-white truncate">{username}</h1>
-                    <p className="text-xs text-zinc-400 truncate">{email}</p>
+                    <h1 className="text-base font-bold text-white truncate">{displayName}</h1>
+                    <p className="text-xs text-zinc-400 truncate">{contactInfo}</p>
                   </div>
                 </div>
 

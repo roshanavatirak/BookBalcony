@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const verifyTurnstile = require("../middleware/turnstileMiddleware");
+const { authLimiter } = require("../middleware/rateLimiter");
 const {
   requestOTP,
   verifyOTP,
@@ -12,8 +14,8 @@ const {
  * Base path: /api/v1/forgot-password
  */
 
-// STEP 1: Request OTP (via Email or SMS)
-router.post("/request-otp", requestOTP);
+// STEP 1: Request OTP (via Email or SMS) - Secured with Turnstile & Auth Rate Limiter
+router.post("/request-otp", authLimiter, verifyTurnstile, requestOTP);
 
 // STEP 2: Verify OTP
 router.post("/verify-otp", verifyOTP);

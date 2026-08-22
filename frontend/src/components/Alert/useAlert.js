@@ -38,35 +38,35 @@ export const useAlert = () => {
     setAlert(null);
   }, []);
 
-  // Helper methods for different alert types
-  const success = useCallback((message, title = 'Success!') => {
+  // Helper methods for different alert types (Titles removed for clean non-tech user experience)
+  const success = useCallback((message) => {
     showAlert({
       type: 'success',
-      title,
+      title: '',
       message
     });
   }, [showAlert]);
 
-  const error = useCallback((message, title = 'Error!') => {
+  const error = useCallback((message) => {
     showAlert({
       type: 'error',
-      title,
+      title: '',
       message
     });
   }, [showAlert]);
 
-  const warning = useCallback((message, title = 'Warning!') => {
+  const warning = useCallback((message) => {
     showAlert({
       type: 'warning',
-      title,
+      title: '',
       message
     });
   }, [showAlert]);
 
-  const info = useCallback((message, title = 'Info') => {
+  const info = useCallback((message) => {
     showAlert({
       type: 'info',
-      title,
+      title: '',
       message
     });
   }, [showAlert]);

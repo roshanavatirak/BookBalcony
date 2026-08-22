@@ -145,9 +145,8 @@
 // export default App
 
 
-import React, { useEffect } from 'react'
+import React, { useEffect, Suspense, lazy } from 'react'
 import Home from "./pages/Home"
-import ForgotPassword from './pages/ForgotPassword';
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
 import './App.css';
@@ -164,55 +163,52 @@ import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "./store/auth"
 import Favourites from './components/Profile/Favourites';
 import UserOrderHistory from './components/Profile/UserOrderHistory';
-import MySubscriptions from './components/Profile/MySubscriptions';
-import Settings from './components/Profile/Settings';
-import Admin from "./components/Navbar/AdminNavbar"
-import AdminProfile from './components/Admin/AdminProfile';
-import AddBook from './components/Admin/AdminAddBook';
-import AdminUsers from './components/Admin/AdminUsers';
-import ServicesComingSoon from './components/Service/ServicesComingSoon';
-
-
-// footer
-import PrivacyPolicy from './components/Footer/PrivacyPolicy';
-import TermsOfService from './components/Footer/TermsOfService';
-import RefundPolicy from './components/Footer/RefundPolicy';
-import Support from './components/Footer/Support';
-
-
-
-
-import BecomeSeller from './components/Profile/BecomeSeller';
-import SellerForm from './components/Seller/SellerForm';
-import BankDetailsForm from './components/Seller/BankDetailsForm';
-import SellerAddressForm from './components/Seller/SellerAddressForm';
-import SellerPreview from './components/Seller/SellerPreview';
-import VerifiedSeller from './components/Profile/VerifiedSeller';
-import SellerAccountInfo from './components/SellerProfile/SellerAccountInfo';
-import SellerAddBook from './components/SellerNavbar/SellerAddBook';
-import MyProducts from './components/SellerNavbar/MyProducts';
-import SellerDashboard from './components/SellerNavbar/SellerDashboard';
-import SellerWallet from './components/SellerNavbar/SellerWallet'
-
-import SellerSidebar from './components/SellerProfile/SellerSidebar';
-import SellerProfile1 from './pages/SellerProfile';
-import SellerBankInfo from './components/SellerProfile/SellerBankInfo';
-import SellerViewBookDetails from './components/ViewBookDetails/SellerViewBookDetails';
-import SellerApplicationSubmitted from './components/Profile/SellerApplicationSubmitted';
-import AdminSellers from './components/Admin/Seller/AdminSeller';
-import SubmittedPop from './components/Profile/SubmittedPop';
-import OrderDetailsPage from './components/Profile/OrderDetailsPage';
-
-import CheckoutLayout from "./components/checkout/CheckoutLayout";
-import COD_Page from './components/checkout/COD_Page';
-
-import PremiumPage from './components/Premium/PremiumPage';
-
-import SellerOrdersDashboard from './components/SellerOrder/SellerOrdersDashboard';
-import EditBook from './components/Seller/EditBook';
-import SellerProduct from './components/Admin/Seller/SellerProduct';
-import ChatbotManager from './components/ChatbotManager/ChatbotManager';
 import Loader from './components/Loader/Loader';
+import Admin from "./components/Navbar/AdminNavbar";
+
+// Lazy Loaded Routes for Optimized Initial Bundle Size
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const MySubscriptions = lazy(() => import('./components/Profile/MySubscriptions'));
+const Settings = lazy(() => import('./components/Profile/Settings'));
+const AdminProfile = lazy(() => import('./components/Admin/AdminProfile'));
+const AddBook = lazy(() => import('./components/Admin/AdminAddBook'));
+const AdminUsers = lazy(() => import('./components/Admin/AdminUsers'));
+const ServicesComingSoon = lazy(() => import('./components/Service/ServicesComingSoon'));
+
+// Footer Lazy Routes
+const PrivacyPolicy = lazy(() => import('./components/Footer/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./components/Footer/TermsOfService'));
+const RefundPolicy = lazy(() => import('./components/Footer/RefundPolicy'));
+const Support = lazy(() => import('./components/Footer/Support'));
+
+// Seller Lazy Routes
+const BecomeSeller = lazy(() => import('./components/Profile/BecomeSeller'));
+const SellerForm = lazy(() => import('./components/Seller/SellerForm'));
+const BankDetailsForm = lazy(() => import('./components/Seller/BankDetailsForm'));
+const SellerAddressForm = lazy(() => import('./components/Seller/SellerAddressForm'));
+const SellerPreview = lazy(() => import('./components/Seller/SellerPreview'));
+const VerifiedSeller = lazy(() => import('./components/Profile/VerifiedSeller'));
+const SellerAccountInfo = lazy(() => import('./components/SellerProfile/SellerAccountInfo'));
+const SellerAddBook = lazy(() => import('./components/SellerNavbar/SellerAddBook'));
+const MyProducts = lazy(() => import('./components/SellerNavbar/MyProducts'));
+const SellerDashboard = lazy(() => import('./components/SellerNavbar/SellerDashboard'));
+const SellerWallet = lazy(() => import('./components/SellerNavbar/SellerWallet'));
+const SellerProfile1 = lazy(() => import('./pages/SellerProfile'));
+const SellerBankInfo = lazy(() => import('./components/SellerProfile/SellerBankInfo'));
+const SellerViewBookDetails = lazy(() => import('./components/ViewBookDetails/SellerViewBookDetails'));
+const SellerApplicationSubmitted = lazy(() => import('./components/Profile/SellerApplicationSubmitted'));
+const AdminSellers = lazy(() => import('./components/Admin/Seller/AdminSeller'));
+const SubmittedPop = lazy(() => import('./components/Profile/SubmittedPop'));
+const OrderDetailsPage = lazy(() => import('./components/Profile/OrderDetailsPage'));
+
+// Checkout & Premium Lazy Routes
+const CheckoutLayout = lazy(() => import("./components/checkout/CheckoutLayout"));
+const COD_Page = lazy(() => import('./components/checkout/COD_Page'));
+const PremiumPage = lazy(() => import('./components/Premium/PremiumPage'));
+const SellerOrdersDashboard = lazy(() => import('./components/SellerOrder/SellerOrdersDashboard'));
+const EditBook = lazy(() => import('./components/Seller/EditBook'));
+const SellerProduct = lazy(() => import('./components/Admin/Seller/SellerProduct'));
+const ChatbotManager = lazy(() => import('./components/ChatbotManager/ChatbotManager'));
 
 
 // ✅ RBAC: Seller Route Guard — blocks Buyer-only users from seller pages
@@ -376,93 +372,103 @@ const App = () => {
 
   return (
     <div>
-      <ChatbotManager />
+      <Suspense fallback={null}>
+        <ChatbotManager />
+      </Suspense>
       <ScrollToTop />
       {role === "admin" ? <Admin /> : <Navbar />}
 
-      <Routes>
-        <Route exact path="/" element={<Home />} />
-        <Route path="/all-books" element={<AllBooks />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/about-us" element={<AboutUs />} />
-        <Route path="/services" element={<ServicesComingSoon />} />
+      <Suspense fallback={<Loader fullPage text="Loading BookBalcony..." />}>
+        <Routes>
+          <Route exact path="/" element={<Home />} />
+          <Route path="/all-books" element={<AllBooks />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/services" element={<ServicesComingSoon />} />
 
-        {/* Profile Routes - Fixed nested routing */}
-        <Route path="/profile" element={<Profile />}>
-          <Route index element={<Favourites />} />
-          <Route path="orderHistory" element={<UserOrderHistory />} />
-          <Route path="orderHistory/order-details/:orderId" element={<OrderDetailsPage />} />
-          <Route path="become-seller" element={<BecomeSeller />} />
-          <Route path="my-subscriptions" element={<MySubscriptions />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="verified-seller-info" element={<VerifiedSeller />} />
-          <Route path="seller-application-submitted" element={<SellerApplicationSubmitted />} />
-        </Route>
+          {/* Profile Routes - Fixed nested routing */}
+          <Route path="/account/profile" element={<Profile />}>
+            <Route index element={<Favourites />} />
+            <Route path="orderHistory" element={<UserOrderHistory />} />
+            <Route path="orderHistory/order-details/:orderId" element={<OrderDetailsPage />} />
+            <Route path="become-seller" element={<BecomeSeller />} />
+            <Route path="my-subscriptions" element={<MySubscriptions />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="verified-seller-info" element={<VerifiedSeller />} />
+            <Route path="seller-application-submitted" element={<SellerApplicationSubmitted />} />
+          </Route>
 
+          {/* Legacy route redirects for seamless backward compatibility */}
+          <Route path="/profile" element={<Navigate to="/account/profile" replace />} />
+          <Route path="/profile/*" element={<Navigate to="/account/profile" replace />} />
 
-//footer
-        {/* footer */}
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/refund-policy" element={<RefundPolicy />} />
-        <Route path="/support" element={<Support />} />
+          {/* footer */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+          <Route path="/support" element={<Support />} />
 
+          {/* Seller Routes — RBAC Protected */}
+          <Route path="/seller/myproducts" element={<SellerRouteGuard><MyProducts /></SellerRouteGuard>} />
+          <Route path="/seller/add-product" element={<SellerRouteGuard><SellerAddBook /></SellerRouteGuard>} />
+          <Route path="/seller/dashboard" element={<SellerRouteGuard><SellerDashboard /></SellerRouteGuard>} />
+          <Route path="/seller/mywallet" element={<SellerRouteGuard><SellerWallet /></SellerRouteGuard>} />
 
+          {/* Seller Profile Routes - WITH SIDEBAR — RBAC Protected */}
+          <Route path="/seller/profile" element={<SellerRouteGuard><SellerProfile1 /></SellerRouteGuard>}>
+            <Route index element={<SellerAccountInfo />} />
+            <Route path="bank-info" element={<SellerBankInfo />} />
+            <Route path="add-book" element={<SellerAddBook />} />
+            <Route path="my-products" element={<MyProducts />} />
+          </Route>
 
-        {/* Seller Routes — RBAC Protected */}
-        <Route path="/seller/myproducts" element={<SellerRouteGuard><MyProducts /></SellerRouteGuard>} />
-        <Route path="/seller/add-product" element={<SellerRouteGuard><SellerAddBook /></SellerRouteGuard>} />
-        <Route path="/seller/dashboard" element={<SellerRouteGuard><SellerDashboard /></SellerRouteGuard>} />
-        <Route path="/seller/mywallet" element={<SellerRouteGuard><SellerWallet /></SellerRouteGuard>} />
+          {/* Individual Seller Routes that don't need sidebar — RBAC Protected */}
+          <Route path="/seller/viewproduct/:id" element={<SellerRouteGuard><SellerViewBookDetails /></SellerRouteGuard>} />
 
-        {/* Seller Profile Routes - WITH SIDEBAR — RBAC Protected */}
-        <Route path="/seller/profile" element={<SellerRouteGuard><SellerProfile1 /></SellerRouteGuard>}>
-          <Route index element={<SellerAccountInfo />} />
-          <Route path="bank-info" element={<SellerBankInfo />} />
-          <Route path="add-book" element={<SellerAddBook />} />
-          <Route path="my-products" element={<MyProducts />} />
-        </Route>
+          <Route path="/account/login" element={<Login />} />
+          <Route path="/account/signup" element={<SignUp />} />
 
-        {/* Individual Seller Routes that don't need sidebar — RBAC Protected */}
-        <Route path="/seller/viewproduct/:id" element={<SellerRouteGuard><SellerViewBookDetails /></SellerRouteGuard>} />
+          {/* Legacy path redirects for seamless backward compatibility */}
+          <Route path="/signin" element={<Navigate to="/account/login" replace />} />
+          <Route path="/login" element={<Navigate to="/account/login" replace />} />
+          <Route path="/signup" element={<Navigate to="/account/signup" replace />} />
+          <Route path="/Signup" element={<Navigate to="/account/signup" replace />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/view-book-details/:id" element={<ViewBookDetails />} />
 
-        <Route path="/signin" element={<Login />} />
-        <Route path="/Signup" element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/view-book-details/:id" element={<ViewBookDetails />} />
+          {/* Admin Routes — RBAC Protected */}
+          <Route path="/Admin/profile" element={<AdminRouteGuard><AdminProfile /></AdminRouteGuard>} />
+          <Route path="/Admin/AddBook" element={<AdminRouteGuard><AddBook /></AdminRouteGuard>} />
+          <Route path="/Admin/Users-List" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
+          <Route path="/Admin/Sellers-List" element={<AdminRouteGuard><AdminSellers /></AdminRouteGuard>} />
+          <Route path="/Admin/Seller-Products" element={<AdminRouteGuard><SellerProduct /></AdminRouteGuard>} />
+          <Route path="/Admin/Seller-Orders" element={<AdminRouteGuard><SellerOrdersDashboard /></AdminRouteGuard>} />
+          <Route path="/Admin/Seller-Dashboard" element={<AdminRouteGuard><SellerDashboard /></AdminRouteGuard>} />
+          <Route path="/Admin/Seller-AddProduct" element={<AdminRouteGuard><SellerAddBook /></AdminRouteGuard>} />
+          <Route path="/Admin/Seller-Settings" element={<AdminRouteGuard><Settings /></AdminRouteGuard>} />
 
-        {/* Admin Routes — RBAC Protected */}
-        <Route path="/Admin/profile" element={<AdminRouteGuard><AdminProfile /></AdminRouteGuard>} />
-        <Route path="/Admin/AddBook" element={<AdminRouteGuard><AddBook /></AdminRouteGuard>} />
-        <Route path="/Admin/Users-List" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
-        <Route path="/Admin/Sellers-List" element={<AdminRouteGuard><AdminSellers /></AdminRouteGuard>} />
-        <Route path="/Admin/Seller-Products" element={<AdminRouteGuard><SellerProduct /></AdminRouteGuard>} />
-        <Route path="/Admin/Seller-Orders" element={<AdminRouteGuard><SellerOrdersDashboard /></AdminRouteGuard>} />
-        <Route path="/Admin/Seller-Dashboard" element={<AdminRouteGuard><SellerDashboard /></AdminRouteGuard>} />
-        <Route path="/Admin/Seller-AddProduct" element={<AdminRouteGuard><SellerAddBook /></AdminRouteGuard>} />
-        <Route path="/Admin/Seller-Settings" element={<AdminRouteGuard><Settings /></AdminRouteGuard>} />
+          <Route path="/Admin/books" element={<AdminRouteGuard><AllBooks /></AdminRouteGuard>} />
 
-        <Route path="/Admin/books" element={<AdminRouteGuard><AllBooks /></AdminRouteGuard>} />
+          {/* Seller Form Routes */}
+          <Route path="/seller/form" element={<SellerForm />} />
+          <Route path="/seller/bank-details" element={<BankDetailsForm />} />
+          <Route path="/seller/pickup-address" element={<SellerAddressForm />} />
+          <Route path="/seller/form-preview" element={<SellerPreview />} />
+          <Route path="/profile/Submitted" element={<SubmittedPop />} />
+          <Route path="/seller/edit-product/:id" element={<SellerRouteGuard><EditBook /></SellerRouteGuard>} />
 
-        {/* Seller Form Routes */}
-        <Route path="/seller/form" element={<SellerForm />} />
-        <Route path="/seller/bank-details" element={<BankDetailsForm />} />
-        <Route path="/seller/pickup-address" element={<SellerAddressForm />} />
-        <Route path="/seller/form-preview" element={<SellerPreview />} />
-        <Route path="/profile/Submitted" element={<SubmittedPop />} />
-        <Route path="/seller/edit-product/:id" element={<SellerRouteGuard><EditBook /></SellerRouteGuard>} />
+          {/* Checkout Routes */}
+          <Route path="/checkout/:id" element={<CheckoutLayout />} />
+          <Route path="/cod-confirmation" element={<COD_Page />} />
 
-        {/* Checkout Routes */}
-        <Route path="/checkout/:id" element={<CheckoutLayout />} />
-        <Route path="/cod-confirmation" element={<COD_Page />} />
+          {/* PremiumPage */}
+          <Route path="/premium" element={<PremiumPage />} />
 
-        {/* PremiumPage */}
-        <Route path="/premium" element={<PremiumPage />} />
+          {/* SellerOrdersDashboard — RBAC Protected */}
+          <Route path="/seller/orders" element={<SellerRouteGuard><SellerOrdersDashboard /></SellerRouteGuard>} />
 
-        {/* SellerOrdersDashboard — RBAC Protected */}
-        <Route path="/seller/orders" element={<SellerRouteGuard><SellerOrdersDashboard /></SellerRouteGuard>} />
-
-      </Routes>
+        </Routes>
+      </Suspense>
       <Footer />
     </div>
   )

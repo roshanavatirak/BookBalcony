@@ -345,8 +345,10 @@ const premiumSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema(
   {
     username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true, unique: true },
+    firstName: { type: String, default: "" },
+    lastName: { type: String, default: "" },
+    email: { type: String, unique: true, sparse: true },
+    phone: { type: String, unique: true, sparse: true },
     password: { type: String, required: true },
     
     // Multiple addresses support (up to 3)

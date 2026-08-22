@@ -28,7 +28,7 @@ export default function CheckoutLayout() {
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("id");
     if (!token || !userId) {
-      navigate("/signin", { state: { from: location.pathname }, replace: true });
+      navigate("/account/login", { state: { from: location.pathname }, replace: true });
     }
   }, [navigate, location]);
 

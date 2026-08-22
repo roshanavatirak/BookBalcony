@@ -25,6 +25,10 @@ class InventoryReservationManager {
     const key = this.getReservationKey(bookId, userId);
     await setCache(key, { quantity, reservedAt: Date.now() }, ttlSeconds);
 
+    const totalKey = `reservation:total:${bookId}`;
+    const currentTotal = (await getCache(totalKey)) || 0;
+    await setCache(totalKey, Number(currentTotal) + quantity, ttlSeconds);
+
     // Track memory fallback
     memoryReservations.set(`${bookId}:${userId}`, {
       quantity,
@@ -40,25 +44,22 @@ class InventoryReservationManager {
   async getReservedQuantity(bookId) {
     let totalReserved = 0;
     try {
-      const keys = await getCache(`reservation:book:${bookId}:user:*`);
-      if (Array.isArray(keys)) {
-        for (const key of keys) {
-          const data = await getCache(key);
-          if (data && data.quantity) {
-            totalReserved += Number(data.quantity);
-          }
-        }
+      const totalVal = await getCache(`reservation:total:${bookId}`);
+      if (totalVal !== null && totalVal !== undefined) {
+        return Math.max(0, Number(totalVal));
       }
     } catch (err) {
-      // Fallback memory calculation
-      const now = Date.now();
-      for (const [key, val] of memoryReservations.entries()) {
-        if (key.startsWith(`${bookId}:`)) {
-          if (val.expiresAt > now) {
-            totalReserved += val.quantity;
-          } else {
-            memoryReservations.delete(key);
-          }
+      // Ignore and fallback to memory
+    }
+
+    // Fallback memory calculation
+    const now = Date.now();
+    for (const [key, val] of memoryReservations.entries()) {
+      if (key.startsWith(`${bookId}:`)) {
+        if (val.expiresAt > now) {
+          totalReserved += val.quantity;
+        } else {
+          memoryReservations.delete(key);
         }
       }
     }
@@ -70,7 +71,24 @@ class InventoryReservationManager {
    */
   async releaseReservation(bookId, userId) {
     const key = this.getReservationKey(bookId, userId);
+    const existing = await getCache(key);
+    const qtyToRelease = existing?.quantity || 1;
+
     await delCache(key);
+
+    try {
+      const totalKey = `reservation:total:${bookId}`;
+      const currentTotal = (await getCache(totalKey)) || 0;
+      const newTotal = Math.max(0, Number(currentTotal) - qtyToRelease);
+      if (newTotal > 0) {
+        await setCache(totalKey, newTotal, 600);
+      } else {
+        await delCache(totalKey);
+      }
+    } catch (err) {
+      // Ignore
+    }
+
     memoryReservations.delete(`${bookId}:${userId}`);
   }
 

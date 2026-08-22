@@ -325,18 +325,37 @@ function Navbar({ seller }) {
     };
   }, [isLoggedIn, fetchUserData]);
 
-  // âœ… CUSTOM EVENT LISTENER FOR MANUAL STATUS REFRESH
+  // ✅ CUSTOM EVENT LISTENER FOR MANUAL STATUS & USER INFO REFRESH
   useEffect(() => {
-    const handleSellerStatusUpdate = () => {
+    const handleStatusUpdate = () => {
       fetchUserData(false);
     };
 
-    window.addEventListener('sellerStatusUpdated', handleSellerStatusUpdate);
+    window.addEventListener('sellerStatusUpdated', handleStatusUpdate);
+    window.addEventListener('userInfoUpdated', handleStatusUpdate);
 
     return () => {
-      window.removeEventListener('sellerStatusUpdated', handleSellerStatusUpdate);
+      window.removeEventListener('sellerStatusUpdated', handleStatusUpdate);
+      window.removeEventListener('userInfoUpdated', handleStatusUpdate);
     };
   }, [fetchUserData]);
+
+  const getNavDisplayName = (profile) => {
+    if (!profile) return 'Buyer';
+    const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
+    return fullName || profile.username || 'Buyer';
+  };
+
+  const getNavDisplayContact = (profile) => {
+    if (!profile) return '';
+    const validPhone = (profile.phone && !profile.phone.includes('00000000')) ? profile.phone : '';
+    const validEmail = (profile.email && !profile.email.includes('bookbalcony.local')) ? profile.email : '';
+    
+    // If phone is available -> show phone
+    // Else if email is available -> show email
+    // If both available -> show phone!
+    return validPhone || validEmail || '';
+  };
 
   const handleToggleMode = () => {
     if (!isSellerApproved) return;
@@ -477,7 +496,6 @@ function Navbar({ seller }) {
   } else {
     links = [
       { title: 'Home', link: '/', icon: <FiHome />, activeIcon: <FaHome /> },
-      { title: 'About Us', link: '/about-us', icon: <FiInfo />, activeIcon: <FaInfoCircle /> },
       { title: 'All Books', link: '/all-books', icon: <FiBookOpen />, activeIcon: <FaBook /> },
       { title: 'Services', link: '/services', icon: <FiBriefcase />, activeIcon: <FaBriefcase /> }
     ];
@@ -485,6 +503,8 @@ function Navbar({ seller }) {
       links.push({ title: 'Cart', link: '/cart', icon: <FiShoppingCart />, activeIcon: <FaShoppingCart /> });
     }
   }
+
+  const isAuthPage = currentPath === '/account/login' || currentPath === '/account/signup' || currentPath === '/signin' || currentPath === '/signup' || currentPath === '/forgot-password';
 
   const handleRipple = (e, key) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -613,7 +633,7 @@ function Navbar({ seller }) {
                   </div>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-semibold text-white group-hover:text-yellow-400 transition-colors duration-300">
-                      {loading ? 'Loading...' : error ? 'Profile Error' : (userProfile?.username || 'Buyer')}
+                      {loading ? 'Loading...' : error ? 'Profile Error' : getNavDisplayName(userProfile)}
                     </p>
                     <p className="text-xs text-gray-400">
                       {sellerMode && isSellerApproved ? 'Seller Mode' : 'Buyer'}
@@ -637,16 +657,11 @@ function Navbar({ seller }) {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">
-                            {userProfile?.username || 'Buyer'}
+                            {getNavDisplayName(userProfile)}
                           </p>
                           <p className="text-xs text-gray-600 truncate">
-                            {userProfile?.email || 'No email available'}
+                            {getNavDisplayContact(userProfile)}
                           </p>
-                          {userProfile?.phone && (
-                            <p className="text-xs text-gray-500 truncate">
-                              {userProfile.phone}
-                            </p>
-                          )}
                           {sellerUIStatus.type === 'verified' && (
                             <div className="flex items-center gap-1 mt-1">
                               <FaStore className="text-xs text-yellow-600" />
@@ -718,7 +733,7 @@ function Navbar({ seller }) {
                     {/* Navigation Links */}
                     <div className="py-2">
                       <Link
-                        to={sellerMode ? '/seller/profile' : '/profile'}
+                        to={sellerMode ? '/seller/profile' : '/account/profile'}
                         onClick={handleLinkClick}
                         className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
                       >
@@ -729,7 +744,7 @@ function Navbar({ seller }) {
                       {!sellerMode && (
                         <>
                           <Link
-                            to="/profile"
+                            to="/account/profile"
                             onClick={handleLinkClick}
                             className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
                           >
@@ -737,7 +752,7 @@ function Navbar({ seller }) {
                             <span className="text-sm">Favourites</span>
                           </Link>
                           <Link
-                            to="/profile/orderHistory"
+                            to="/account/profile/orderHistory"
                             onClick={handleLinkClick}
                             className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
                           >
@@ -745,7 +760,7 @@ function Navbar({ seller }) {
                             <span className="text-sm">Order History</span>
                           </Link>
                           <Link
-                            to="/profile/settings"
+                            to="/account/profile/settings"
                             onClick={handleLinkClick}
                             className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
                           >
@@ -767,7 +782,7 @@ function Navbar({ seller }) {
                         </div>
                       ) : sellerUIStatus.type === 'verified' ? (
                         <Link
-                          to="/profile/verified-seller-info"
+                          to="/account/profile/verified-seller-info"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 transition-all duration-200"
                         >
@@ -778,7 +793,7 @@ function Navbar({ seller }) {
                         </Link>
                       ) : sellerUIStatus.type === 'pending' ? (
                         <Link
-                          to="/profile/seller-application-submitted"
+                          to="/account/profile/seller-application-submitted"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-orange-700 bg-orange-50 hover:bg-orange-100 transition-all duration-200"
                         >
@@ -789,7 +804,7 @@ function Navbar({ seller }) {
                         </Link>
                       ) : sellerUIStatus.type === 'rejected' ? (
                         <Link
-                          to="/profile/become-seller"
+                          to="/account/profile/become-seller"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-red-700 bg-red-50 hover:bg-red-100 transition-all duration-200"
                         >
@@ -800,7 +815,7 @@ function Navbar({ seller }) {
                         </Link>
                       ) : sellerUIStatus.type === 'inconsistent' ? (
                         <Link
-                          to="/profile/become-seller"
+                          to="/account/profile/become-seller"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-red-700 bg-red-50 hover:bg-red-100 transition-all duration-200"
                           title={sellerUIStatus.errorMessage}
@@ -813,7 +828,7 @@ function Navbar({ seller }) {
                         </Link>
                       ) : sellerUIStatus.type === 'not_seller' ? (
                         <Link
-                          to="/profile/become-seller"
+                          to="/account/profile/become-seller"
                           onClick={handleLinkClick}
                           className="flex items-center gap-3 px-4 py-2 text-green-700 bg-green-50 hover:bg-green-100 transition-all duration-200"
                         >
@@ -838,22 +853,22 @@ function Navbar({ seller }) {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : !isAuthPage ? (
               <div className="hidden lg:flex items-center gap-3">
                 <Link
-                  to="/signin"
+                  to="/account/login"
                   className="px-6 py-2 border-2 border-yellow-400/80 text-yellow-400 rounded-xl hover:bg-yellow-400 hover:text-black transition-all duration-300 font-medium transform hover:scale-105 hover:shadow-lg hover:shadow-yellow-400/25"
                 >
                   Log In
                 </Link>
                 <Link
-                  to="/signup"
+                  to="/account/signup"
                   className="px-6 py-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-black rounded-xl hover:from-yellow-300 hover:to-orange-300 transition-all duration-300 font-medium transform hover:scale-105 shadow-lg hover:shadow-yellow-400/25"
                 >
                   Sign Up
                 </Link>
               </div>
-            )}
+            ) : null}
 
 
 
@@ -1156,14 +1171,14 @@ function Navbar({ seller }) {
               {!isLoggedIn && (
                 <div className="mt-8 space-y-3">
                   <Link
-                    to="/signin"
+                    to="/account/login"
                     onClick={handleLinkClick}
                     className="block w-full py-3 text-center border-2 border-yellow-400 text-yellow-400 rounded-xl hover:bg-yellow-400 hover:text-black transition-all duration-300 font-medium"
                   >
                     Log In
                   </Link>
                   <Link
-                    to="/signup"
+                    to="/account/signup"
                     onClick={handleLinkClick}
                     className="block w-full py-3 text-center bg-gradient-to-r from-yellow-400 to-orange-400 text-black rounded-xl hover:from-yellow-300 hover:to-orange-300 transition-all duration-300 font-medium"
                   >

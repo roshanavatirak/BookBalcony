@@ -85,82 +85,55 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {authenticateToken} = require("./userAuth");
 const axios = require("axios"); // Used for Google Access Token verification
+const verifyTurnstile = require("../middleware/turnstileMiddleware");
+const { authLimiter } = require("../middleware/rateLimiter");
 
 // ==========================================
-// Sign-Up Route (Updated)
+// Sign-Up Route (Updated with Turnstile & Rate Limiter)
 // ==========================================
 require("dotenv").config();
-router.post("/sign-up", async (req, res) => {
+router.post("/sign-up", authLimiter, verifyTurnstile, async (req, res) => {
   try {
-    const { username, email, password, phone } = req.body;
-
-    // Validate required fields
-    if (!username || !email || !password || !phone) {
-      return res.status(400).json({ 
-        success: false,
-        message: "All fields are required" 
-      });
-    }
-
-    // Username validation
-    if (username.length < 4) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Username length should be greater than 3" 
-      });
-    }
-
-    // Check for existing username
-    if (await User.findOne({ username })) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Username already exists" 
-      });
-    }
-
-    // Check for existing email
-    if (await User.findOne({ email })) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Email already exists" 
-      });
-    }
-
-    // Check for existing phone
-    if (await User.findOne({ phone })) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Phone number already exists" 
-      });
-    }
+    let { username, email, password, phone } = req.body;
 
     // Password validation
-    if (password.length < 8) {
+    if (!password || password.length < 6) {
       return res.status(400).json({ 
         success: false,
-        message: "Password must be at least 8 characters long" 
+        message: "Password must be at least 6 characters long" 
       });
     }
 
-    // Phone validation
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(phone)) {
+    // Ensure at least email or phone is provided
+    if (!email && !phone) {
       return res.status(400).json({ 
         success: false,
-        message: "Invalid phone number format. Must be 10 digits" 
+        message: "Please enter your Email Address or Mobile Number" 
       });
+    }
+
+    // Auto-generate username if omitted: use phone directly if mobile sign-up, or email prefix if email sign-up
+    if (!username || username.trim().length < 3) {
+      if (phone && (!email || email.includes('bookbalcony.local'))) {
+        username = phone; // Use mobile number directly as username
+      } else if (email) {
+        const baseName = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').slice(0, 12);
+        username = baseName;
+      }
+    }
+
+    // Ensure generated username is strictly unique
+    if (await User.findOne({ username })) {
+      username = `${username}_${Math.floor(1000 + Math.random() * 9000)}`;
     }
 
     // Hash Password
     const salt = await bcrypt.genSalt(12);
     const hashPass = await bcrypt.hash(password, salt);
 
-    // ✅ Create New User with default premium settings
-    const newUser = new User({
+    const userData = {
       username,
-      email,
       password: hashPass,
-      phone,
       premium: {
         isPremium: false,
         membershipType: "free",
@@ -172,13 +145,51 @@ router.post("/sign-up", async (req, res) => {
           adFree: false,
         },
       },
-    });
+    };
+
+    if (email && email.trim() && !email.includes('@bookbalcony.local')) {
+      if (await User.findOne({ email })) {
+        return res.status(400).json({ success: false, message: "Email is already registered" });
+      }
+      userData.email = email.trim();
+    }
+
+    if (phone && phone.trim()) {
+      const phoneDigits = phone.replace(/[^0-9]/g, '');
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(phoneDigits)) {
+        return res.status(400).json({ success: false, message: "Invalid phone number format. Must be 10 digits" });
+      }
+      if (await User.findOne({ phone: phoneDigits })) {
+        return res.status(400).json({ success: false, message: "Phone number is already registered" });
+      }
+      userData.phone = phoneDigits;
+    }
+
+    // ✅ Create New User
+    const newUser = new User(userData);
 
     await newUser.save();
 
+    // ✅ Generate JWT token for instant auto-login after sign-up
+    const authClaims = [
+      { name: newUser.username },
+      { role: newUser.role },
+    ];
+    const token = jwt.sign(
+      authClaims,
+      process.env.JWT_SECRET || "bookbalcony123",
+      { expiresIn: "30d" }
+    );
+
     return res.status(201).json({ 
       success: true,
-      message: "Signup successful! Welcome to Book Balcony." 
+      message: "Signup successful! Welcome to BookBalcony.",
+      id: newUser._id,
+      role: newUser.role,
+      token: token,
+      email: newUser.email,
+      username: newUser.username
     });
   } catch (error) {
     console.error("Error during signup:", error);
@@ -190,9 +201,9 @@ router.post("/sign-up", async (req, res) => {
 });
 
 // ==========================================
-// Sign-In Route (Updated with Premium Info)
+// Sign-In Route (Updated with Turnstile & Rate Limiter)
 // ==========================================
-router.post("/sign-in", async (req, res) => {
+router.post("/sign-in", authLimiter, verifyTurnstile, async (req, res) => {
   try {
     const { emailOrMobile, password, rememberMe } = req.body;
 
@@ -666,6 +677,38 @@ router.get("/get-user-information", authenticateToken, async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Update user name (firstName & lastName)
+router.post("/update-name", authenticateToken, async (req, res) => {
+  try {
+    const id = req.user?.id || req.headers.id;
+    const { firstName, lastName } = req.body;
+
+    if (!firstName || !firstName.trim()) {
+      return res.status(400).json({ success: false, message: "First name is required" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.firstName = firstName.trim();
+    if (lastName) user.lastName = lastName.trim();
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Name updated successfully",
+      firstName: user.firstName,
+      lastName: user.lastName
+    });
+  } catch (error) {
+    console.error("Error updating user name:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
