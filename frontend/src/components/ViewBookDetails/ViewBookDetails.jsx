@@ -19,6 +19,7 @@ import { HiSparkles } from "react-icons/hi";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
 import { useBookDetails } from '../../hooks/useBooksQuery';
+import AuthModal from '../Auth/AuthModal';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -43,6 +44,10 @@ const ViewBookDetails = () => {
   const [descExpanded, setDescExpanded] = useState(false);
   const [isDescClamped, setIsDescClamped] = useState(false);
   const descRef = useRef(null);
+
+  // Auth modal states for non-logged-in users
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'buy' | 'cart' | 'favourite'
 
   const { alert, showAlert, hideAlert, success, error, warning, info } = useAlert();
 
@@ -195,7 +200,46 @@ const ViewBookDetails = () => {
     }
   }, [Data]);
 
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    
+    // Automatically trigger pending action after successful authentication
+    if (pendingAction === "buy") {
+      setTimeout(() => {
+        if (Data) {
+          const bookSlug = createBookSlug(Data.title, Data._id || id);
+          navigate(`/checkout/${bookSlug}`, {
+            state: {
+              book: {
+                id: Data._id,
+                title: Data.title,
+                price: Data.price,
+                discount: Data.discount,
+                image: Data.image,
+              },
+            },
+          });
+        }
+      }, 400);
+    } else if (pendingAction === "cart") {
+      setTimeout(() => {
+        handleCart();
+      }, 400);
+    } else if (pendingAction === "favourite") {
+      setTimeout(() => {
+        handleFavourite();
+      }, 400);
+    }
+    setPendingAction(null);
+  };
+
   const handleFavourite = async () => {
+    if (!isLoggedIn) {
+      setPendingAction("favourite");
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     if (isFavourite) {
       await removeFromFavourites(id);
     } else {
@@ -230,6 +274,12 @@ const ViewBookDetails = () => {
   };
 
   const handleBuyNow = () => {
+    if (!isLoggedIn) {
+      setPendingAction("buy");
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     if (Data?.isFutureScheduled) {
       info(Data?.scheduledMessage || `This book is approved and scheduled to go live on ${new Date(Data.goLiveDate).toLocaleString()}`, "Scheduled Release");
       return;
@@ -265,6 +315,12 @@ const ViewBookDetails = () => {
 
 
   const handleCart = async () => {
+    if (!isLoggedIn) {
+      setPendingAction("cart");
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     if (Data?.isFutureScheduled) {
       info(Data?.scheduledMessage || `This book is approved and scheduled to go live on ${new Date(Data.goLiveDate).toLocaleString()}`, "Scheduled Release");
       return;
@@ -956,6 +1012,16 @@ const ViewBookDetails = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Auth Modal for non-logged-in users trying to Buy, Add to Cart, or Favourite */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingAction(null);
+        }}
+        onSuccess={handleAuthSuccess}
+      />
     </>
   );
 };

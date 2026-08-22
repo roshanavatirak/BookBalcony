@@ -13,7 +13,7 @@ import logo from '../assets/logo.png';
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
-const SignUp = () => {
+const SignUp = ({ onSuccess, onSwitchToLogin, isModal = false }) => {
   const [signUpMode, setSignUpMode] = useState("email"); // 'email' | 'phone'
   const [form, setForm] = useState({
     email: "",
@@ -58,8 +58,8 @@ const SignUp = () => {
         return setError("Please enter your 10-digit mobile number.");
       }
       const phoneDigits = phone.replace(/[^0-9]/g, '');
-      if (phoneDigits.length !== 10) {
-        return setError("Please enter a valid 10-digit mobile number.");
+      if (phoneDigits.length < 10) {
+        return setError("Mobile number must be at least 10 digits.");
       }
     }
 
@@ -68,7 +68,7 @@ const SignUp = () => {
     }
 
     if (password !== confirmPassword) {
-      return setError("Passwords do not match. Please re-enter.");
+      return setError("Passwords do not match.");
     }
 
     if (!turnstileToken) {
@@ -76,27 +76,20 @@ const SignUp = () => {
     }
 
     try {
-      setError("");
       setLoading(true);
-
-      console.log("📝 Attempting signup...");
+      setError("");
+      setSuccess("");
 
       const payload = {
+        email: signUpMode === "email" ? email : undefined,
+        phone: signUpMode === "phone" ? phone : undefined,
         password,
         cfTurnstileToken: turnstileToken,
       };
 
-      if (signUpMode === "email") {
-        payload.email = email;
-      } else {
-        payload.phone = phone.replace(/[^0-9]/g, '');
-      }
-
       const response = await axios.post(`${API_URL}/sign-up`, payload);
 
-      console.log("✅ Signup successful:", response.data);
-
-      const { token, role, id, email: returnedEmail, username: returnedUsername } = response.data;
+      const { token, role, id, email: returnedEmail } = response.data;
 
       // Set onboarding flag
       localStorage.setItem("showOnboarding", "true");
@@ -122,13 +115,25 @@ const SignUp = () => {
 
         setSuccess("Account created successfully! Logging you in...");
 
+        if (onSuccess) {
+          onSuccess(response.data);
+          return;
+        }
+
         setTimeout(() => {
           navigate("/", { replace: true });
         }, 1200);
       } else {
-        setSuccess(response.data.message || "Account created! Redirecting to login...");
+        setSuccess(response.data.message || "Account created!");
+
+        if (onSuccess) {
+          onSuccess(response.data);
+          return;
+        }
+
         setTimeout(() => {
-          navigate("/account/login", { replace: true });
+          if (onSwitchToLogin) onSwitchToLogin();
+          else navigate("/account/login", { replace: true });
         }, 1500);
       }
     } catch (err) {
@@ -233,12 +238,12 @@ const SignUp = () => {
 
   return (
     <motion.div
-      className="min-h-[calc(100vh-90px)] bg-gradient-to-br from-gray-900 via-zinc-800 to-gray-900 flex items-center justify-center p-3 transition-all duration-500"
+      className={isModal ? "w-full text-white" : "min-h-[calc(100vh-90px)] bg-gradient-to-br from-gray-900 via-zinc-800 to-gray-900 flex items-center justify-center p-3 transition-all duration-500"}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="bg-zinc-900 p-5 sm:p-6 rounded-2xl shadow-2xl w-full max-w-[350px] text-white border border-zinc-800 transition-all duration-300 hover:shadow-yellow-500/10">
+      <div className={isModal ? "bg-zinc-900 p-4 sm:p-5 rounded-2xl w-full text-white" : "bg-zinc-900 p-5 sm:p-6 rounded-2xl shadow-2xl w-full max-w-[350px] text-white border border-zinc-800 transition-all duration-300 hover:shadow-yellow-500/10"}>
         
         {/* Logo Header with Signature Yellow Brand Title */}
         <div className="flex flex-col items-center justify-center mb-3 space-y-1">
@@ -392,15 +397,25 @@ const SignUp = () => {
 
         {/* Terms & Privacy Legal Statement */}
         <p className="text-[11px] text-zinc-400 text-center my-2 leading-tight">
-          By continuing, you agree to <Link to="/terms" className="text-yellow-400 hover:underline hover:text-yellow-300">Terms</Link> & <Link to="/privacy" className="text-yellow-400 hover:underline hover:text-yellow-300">Privacy Policy</Link>.
+          By continuing, you agree to <Link to="/terms-of-service" className="text-yellow-400 hover:underline hover:text-yellow-300">Terms</Link> & <Link to="/privacy-policy" className="text-yellow-400 hover:underline hover:text-yellow-300">Privacy Policy</Link>.
         </p>
 
         {/* Links Row */}
         <div className="flex items-center justify-between text-xs text-zinc-400 my-2 pt-1 border-t border-zinc-800">
           <span>Already have an account?</span>
-          <Link to="/account/login" className="text-yellow-400 hover:underline hover:text-yellow-300 font-semibold transition-colors">
-            Sign In
-          </Link>
+          {onSwitchToLogin ? (
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="text-yellow-400 hover:underline hover:text-yellow-300 font-semibold transition-colors focus:outline-none"
+            >
+              Sign In
+            </button>
+          ) : (
+            <Link to="/account/login" className="text-yellow-400 hover:underline hover:text-yellow-300 font-semibold transition-colors">
+              Sign In
+            </Link>
+          )}
         </div>
 
         {/* Social Auth Icons Section */}

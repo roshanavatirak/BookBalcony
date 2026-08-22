@@ -15,7 +15,7 @@ import logo from '../assets/logo.png';
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
 
-const Login = () => {
+const Login = ({ onSuccess, onSwitchToSignUp, isModal = false }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { alert, showAlert, hideAlert, success, error, warning, info } = useAlert();
@@ -110,12 +110,17 @@ const Login = () => {
 
       // Show success alert
       success(
-        `Welcome back! Redirecting to your ${role === "admin" ? "admin panel" : "dashboard"}...`,
+        `Welcome back! ${isModal ? "" : "Redirecting..."}`,
         "Login Successful"
       );
 
+      if (onSuccess) {
+        onSuccess(response.data);
+        return;
+      }
+
       // Force a small delay to ensure Redux state propagates
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1200));
 
       // Navigate based on role
       if (role === "admin") {
@@ -165,11 +170,17 @@ const Login = () => {
           });
           window.dispatchEvent(loginEvent);
 
-          success(`Welcome back! Redirecting...`, "Login Successful");
+          success(`Welcome back!`, "Login Successful");
+
+          if (onSuccess) {
+            onSuccess(response.data);
+            return;
+          }
+
           setTimeout(() => {
             if (role === "admin") navigate("/Admin/profile", { replace: true });
             else navigate("/", { replace: true });
-          }, 1500);
+          }, 1200);
         }
       } catch (err) {
         console.error("Google Auth Error:", err);
@@ -207,9 +218,14 @@ const Login = () => {
       success(`Account created successfully!`, "Welcome");
       setShowPhoneModal(false);
 
+      if (onSuccess) {
+        onSuccess(response.data);
+        return;
+      }
+
       setTimeout(() => {
         navigate("/", { replace: true });
-      }, 1500);
+      }, 1200);
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Sign up failed.";
       error(errorMessage, "Error");
@@ -226,23 +242,18 @@ const Login = () => {
     }
   }, []);
 
-  // Keep user logged in on reload
+  // Keep user logged in on reload (only when not in modal mode)
   useEffect(() => {
+    if (isModal) return;
+
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     const id = localStorage.getItem("id");
 
-    console.log("🔍 Login Page - Checking existing session...");
-    console.log("Token exists:", !!token);
-    console.log("Role:", role);
-    console.log("ID:", id);
-
     if (token && role && id) {
-      console.log("✅ Session found, user already logged in");
       dispatch(authActions.login());
       dispatch(authActions.changeRole(role));
 
-      // Redirect if already logged in
       info("You're already logged in. Redirecting...", "Session Active");
 
       setTimeout(() => {
@@ -253,7 +264,7 @@ const Login = () => {
         }
       }, 1500);
     }
-  }, [dispatch, navigate, info]);
+  }, [dispatch, navigate, info, isModal]);
 
   return (
     <>
@@ -271,8 +282,8 @@ const Login = () => {
       )}
 
       {/* Login Form */}
-      <div className="min-h-[calc(100vh-90px)] bg-gradient-to-br from-gray-900 via-zinc-800 to-gray-900 flex items-center justify-center p-3 transition-all duration-500">
-        <div className="bg-zinc-900 p-5 sm:p-6 rounded-2xl shadow-2xl w-full max-w-[350px] text-white border border-zinc-800 transition-all duration-300 hover:shadow-yellow-500/10">
+      <div className={isModal ? "w-full text-white" : "min-h-[calc(100vh-90px)] bg-gradient-to-br from-gray-900 via-zinc-800 to-gray-900 flex items-center justify-center p-3 transition-all duration-500"}>
+        <div className={isModal ? "bg-zinc-900 p-4 sm:p-5 rounded-2xl w-full text-white" : "bg-zinc-900 p-5 sm:p-6 rounded-2xl shadow-2xl w-full max-w-[350px] text-white border border-zinc-800 transition-all duration-300 hover:shadow-yellow-500/10"}>
           
           {/* Logo Header with Signature Yellow Brand Title */}
           <div className="flex flex-col items-center justify-center mb-4 space-y-1">
@@ -344,7 +355,7 @@ const Login = () => {
 
           {/* Terms & Privacy Legal Statement */}
           <p className="text-[11px] text-zinc-400 text-center my-2.5 leading-tight">
-            By continuing, you agree to <Link to="/terms" className="text-yellow-400 hover:underline hover:text-yellow-300">Terms</Link> & <Link to="/privacy" className="text-yellow-400 hover:underline hover:text-yellow-300">Privacy Policy</Link>.
+            By continuing, you agree to <Link to="/terms-of-service" className="text-yellow-400 hover:underline hover:text-yellow-300">Terms</Link> & <Link to="/privacy-policy" className="text-yellow-400 hover:underline hover:text-yellow-300">Privacy Policy</Link>.
           </p>
 
           {/* Links Row: Forgot Password & Sign Up */}
@@ -352,9 +363,19 @@ const Login = () => {
             <Link to="/forgot-password" className="text-yellow-400 hover:underline hover:text-yellow-300 transition-colors">
               Forgot Password?
             </Link>
-            <Link to="/account/signup" className="text-yellow-400 hover:underline hover:text-yellow-300 font-semibold transition-colors">
-              Sign Up
-            </Link>
+            {onSwitchToSignUp ? (
+              <button
+                type="button"
+                onClick={onSwitchToSignUp}
+                className="text-yellow-400 hover:underline hover:text-yellow-300 font-semibold transition-colors focus:outline-none"
+              >
+                Sign Up
+              </button>
+            ) : (
+              <Link to="/account/signup" className="text-yellow-400 hover:underline hover:text-yellow-300 font-semibold transition-colors">
+                Sign Up
+              </Link>
+            )}
           </div>
 
           {/* Social Auth Icons Section */}
