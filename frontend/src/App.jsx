@@ -389,9 +389,10 @@ const App = () => {
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/services" element={<ServicesComingSoon />} />
 
-          {/* Profile Routes - Fixed nested routing */}
+          {/* Profile Routes - Clean single profile URL structure */}
           <Route path="/account/profile" element={<Profile />}>
-            <Route index element={<Favourites />} />
+            <Route index element={<MyProfile />} />
+            <Route path="favourites" element={<Favourites />} />
             <Route path="my-profile" element={<MyProfile />} />
             <Route path="orderHistory" element={<UserOrderHistory />} />
             <Route path="orderHistory/order-details/:orderId" element={<OrderDetailsPage />} />
