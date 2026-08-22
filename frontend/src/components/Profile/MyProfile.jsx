@@ -79,8 +79,8 @@ const MyProfile = () => {
       const token = localStorage.getItem("token");
       const id = localStorage.getItem("id");
 
-      await axios.put(
-        `${API_URL}/update-profile`,
+      await axios.post(
+        `${API_URL}/update-name`,
         {
           firstName: infoForm.firstName,
           lastName: infoForm.lastName,

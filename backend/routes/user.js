@@ -689,8 +689,8 @@ router.get("/get-user-information", authenticateToken, async (req, res) => {
   }
 });
 
-// Update user name (firstName & lastName)
-router.post("/update-name", authenticateToken, async (req, res) => {
+// Update user name (firstName & lastName) - supports POST /update-name, PUT /update-name, PUT /update-profile
+const handleUpdateName = async (req, res) => {
   try {
     const id = req.user?.id || req.headers.id;
     const { firstName, lastName } = req.body;
@@ -705,7 +705,7 @@ router.post("/update-name", authenticateToken, async (req, res) => {
     }
 
     user.firstName = firstName.trim();
-    if (lastName) user.lastName = lastName.trim();
+    if (lastName !== undefined) user.lastName = lastName ? lastName.trim() : "";
 
     await user.save();
 
@@ -719,7 +719,11 @@ router.post("/update-name", authenticateToken, async (req, res) => {
     console.error("Error updating user name:", error);
     return res.status(500).json({ success: false, message: "Server error" });
   }
-});
+};
+
+router.post("/update-name", authenticateToken, handleUpdateName);
+router.put("/update-name", authenticateToken, handleUpdateName);
+router.put("/update-profile", authenticateToken, handleUpdateName);
 
 // Add new address (up to 3)
 router.post("/add-address", authenticateToken, async (req, res) => {
