@@ -1,10 +1,12 @@
 {
+  "name": "bookbalcony-root",
+  "version": "1.0.0",
+  "scripts": {
+    "postinstall": "npm --prefix backend install",
+    "start": "node backend/app.js"
+  },
   "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "crypto": "^1.0.1",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "mongoose": "^8.16.0",
-    "nodemailer": "^7.0.3"
+    "compression": "^1.8.1"
   }
 }
+
