@@ -372,6 +372,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    tokenVersion: {
+      type: Number,
+      default: 0
+    },
 
      sellerApplicationStatus: {
       type: String,
@@ -479,4 +483,9 @@ userSchema.methods.activatePremium = function (type, paymentId) {
   return this.save();
 };
 
-module.exports = mongoose.model("user", userSchema)
+userSchema.methods.incrementTokenVersion = function () {
+  this.tokenVersion = (this.tokenVersion || 0) + 1;
+  return this.save();
+};
+
+module.exports = mongoose.model("user", userSchema);

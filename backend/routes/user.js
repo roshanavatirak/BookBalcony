@@ -236,20 +236,29 @@ router.post("/sign-in", authLimiter, verifyTurnstile, async (req, res) => {
       });
     }
 
+    // Check if account is blocked
+    if (existingUser.blocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been suspended. Please contact support."
+      });
+    }
+
     // ✅ Check premium status using the method from User model
     const isPremiumActive = existingUser.isPremiumActive 
       ? existingUser.isPremiumActive() 
       : false;
 
-    // Generate JWT token
+    // Generate JWT token with tokenVersion claim
     const token = jwt.sign(
       {
         id: existingUser._id,
         role: existingUser.role,
         name: existingUser.username,
+        tokenVersion: existingUser.tokenVersion || 0,
         isPremium: isPremiumActive, // ✅ Include premium status in token
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || "bookStore123",
       { expiresIn: rememberMe ? "30d" : "7d" }
     );
 

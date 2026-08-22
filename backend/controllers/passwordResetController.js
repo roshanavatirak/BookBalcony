@@ -2,6 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const { sendEmailOTP } = require("../services/emailService");
 const { sendSMSOTP } = require("../services/smsService");
+const { invalidateUserAuthCache } = require("../services/authCacheService");
 
 // In-memory OTP storage (for production, use Redis)
 const otpStore = new Map();
@@ -251,11 +252,13 @@ const resetPassword = async (req, res) => {
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password
+    // Update password and invalidate all active sessions
     user.password = hashedPassword;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
 
-    // Clean up OTP data
+    // Clean up cache & OTP data
+    await invalidateUserAuthCache(user._id.toString());
     otpStore.delete(otpKey);
 
     console.log(`✅ Password reset successful for user: ${user._id}`);

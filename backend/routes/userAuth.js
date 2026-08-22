@@ -21,7 +21,9 @@
 // module.exports = {authenticateToken};
 
 const jwt = require("jsonwebtoken");
-const User = require("../models/user"); // Import User model
+const User = require("../models/user");
+const { getUserAuthClaims } = require("../services/authCacheService");
+const authorize = require("../middleware/authorize");
 
 const JWT_SECRET = process.env.JWT_SECRET || "bookStore123";
 
@@ -53,7 +55,7 @@ const authenticateToken = async (req, res, next) => {
         });
       }
 
-      // ✅ Securely resolve user ID strictly from verified JWT payload (prevent header spoofing)
+      // ✅ Securely resolve user ID strictly from verified JWT payload
       const userId = decoded.id || decoded._id || decoded.userId || decoded.authClaims?.[0]?.id;
       
       if (!userId) {
@@ -63,26 +65,48 @@ const authenticateToken = async (req, res, next) => {
         });
       }
 
-      const user = await User.findById(userId).select("-password");
+      // ✅ High performance auth claim lookup (Upstash Redis 300s TTL -> Mongo Fallback)
+      const userClaims = await getUserAuthClaims(userId);
 
-      if (!user) {
+      if (!userClaims) {
         return res.status(404).json({
           success: false,
-          message: "User not found"
+          message: "User account not found"
         });
       }
 
-      // ✅ Attach user info including premium status to request
+      // ✅ Enforce Real-time Security Blockage
+      if (userClaims.blocked) {
+        return res.status(403).json({
+          success: false,
+          message: "Your account has been suspended. Please contact support."
+        });
+      }
+
+      // ✅ Enforce Token Revocation / Password Reset invalidation
+      if (
+        decoded.tokenVersion !== undefined &&
+        userClaims.tokenVersion !== undefined &&
+        decoded.tokenVersion < userClaims.tokenVersion
+      ) {
+        return res.status(401).json({
+          success: false,
+          message: "Session expired due to a security update. Please sign in again."
+        });
+      }
+
+      // ✅ Attach verified user claims to request
       req.user = {
         ...decoded,
-        id: user._id.toString(),
-        _id: user._id,
-        role: user.role,
-        isSeller: user.isSeller,
-        isPremium: user.isPremiumActive ? user.isPremiumActive() : false,
-        premiumType: user.premium?.membershipType || "free",
-        premiumExpiry: user.premium?.expiryDate || null,
-        userData: user // Full user object if needed
+        id: userClaims.id,
+        _id: userClaims.id,
+        email: userClaims.email,
+        role: userClaims.role,
+        isSeller: userClaims.isSeller,
+        isPremium: userClaims.isPremium,
+        premiumType: userClaims.premiumType,
+        premiumExpiry: userClaims.premiumExpiry,
+        blocked: userClaims.blocked
       };
 
       next();
@@ -147,7 +171,8 @@ module.exports = {
   authenticateToken,
   authenticatePremium,
   authenticateAdmin,
-  authenticateSeller
+  authenticateSeller,
+  authorize
 };
 
 
