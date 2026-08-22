@@ -201,6 +201,7 @@ const SellerApplicationSubmitted = lazy(() => import('./components/Profile/Selle
 const AdminSellers = lazy(() => import('./components/Admin/Seller/AdminSeller'));
 const SubmittedPop = lazy(() => import('./components/Profile/SubmittedPop'));
 const OrderDetailsPage = lazy(() => import('./components/Profile/OrderDetailsPage'));
+const MyProfile = lazy(() => import('./components/Profile/MyProfile'));
 
 // Checkout & Premium Lazy Routes
 const CheckoutLayout = lazy(() => import("./components/checkout/CheckoutLayout"));
@@ -391,6 +392,7 @@ const App = () => {
           {/* Profile Routes - Fixed nested routing */}
           <Route path="/account/profile" element={<Profile />}>
             <Route index element={<Favourites />} />
+            <Route path="my-profile" element={<MyProfile />} />
             <Route path="orderHistory" element={<UserOrderHistory />} />
             <Route path="orderHistory/order-details/:orderId" element={<OrderDetailsPage />} />
             <Route path="become-seller" element={<BecomeSeller />} />

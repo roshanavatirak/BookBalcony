@@ -10,6 +10,7 @@ const ROUTE_TITLES = [
   { path: '/premium', title: 'BookBalcony - Premium Membership' },
   
   // Account / Profile routes
+  { path: '/account/profile/my-profile', title: 'BookBalcony - My Profile' },
   { path: '/account/profile/orderHistory', title: 'BookBalcony - Order History' },
   { path: '/account/profile/my-subscriptions', title: 'BookBalcony - My Subscriptions' },
   { path: '/account/profile/settings', title: 'BookBalcony - Account Settings' },

@@ -320,6 +320,7 @@ const Sidebar = ({ data, seller }) => {
       {/* Navigation */}
       <nav className="mt-8 sm:mt-10 w-full flex flex-col gap-2 px-1">
         {[
+          { to: "/account/profile/my-profile", icon: <FaUserCircle />, label: "My Profile", gradient: "from-yellow-400 to-amber-500" },
           { to: "/account/profile", icon: <FaHeart />, label: "Favourites", gradient: "from-red-400 to-pink-400" },
           { to: "/account/profile/orderHistory", icon: <FaHistory />, label: "Order History", gradient: "from-blue-400 to-cyan-400" },
           { to: "/account/profile/my-subscriptions", icon: <FaBell />, label: "My Subscriptions", gradient: "from-green-400 to-emerald-400" },

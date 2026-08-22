@@ -733,12 +733,12 @@ function Navbar({ seller }) {
                     {/* Navigation Links */}
                     <div className="py-2">
                       <Link
-                        to={sellerMode ? '/seller/profile' : '/account/profile'}
+                        to={sellerMode ? '/seller/profile' : '/account/profile/my-profile'}
                         onClick={handleLinkClick}
                         className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
                       >
                         <FaUser className="text-sm" />
-                        <span className="text-sm">Profile</span>
+                        <span className="text-sm">My Profile</span>
                       </Link>
 
                       {!sellerMode && (
