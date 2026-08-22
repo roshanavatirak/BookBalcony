@@ -85,12 +85,40 @@ export default function CheckoutLayout() {
     fetchCheckoutData();
   }, [id, cartItems]);
 
+  // 🏡 Fetch logged-in user's delivery addresses directly from MongoDB
   useEffect(() => {
-    const savedAddress = JSON.parse(localStorage.getItem("userAddress"));
-    if (savedAddress) {
-      setAddress(savedAddress);
-      setStep(2);
+    async function fetchUserAddressFromDB() {
+      try {
+        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("id");
+
+        if (!token || !userId) return;
+
+        // Clean up legacy localStorage key if present
+        localStorage.removeItem("userAddress");
+
+        const res = await axios.get(`${API_URL}/get-user-information`, {
+          headers: { id: userId, authorization: `Bearer ${token}` }
+        });
+
+        const userData = res.data?.data || res.data;
+        const addresses = userData?.addresses || [];
+
+        if (addresses && addresses.length > 0) {
+          const primary = addresses.find(a => a.isPrimary) || addresses[0];
+          setAddress(primary);
+          setStep(2);
+        } else {
+          setAddress(null);
+          setStep(1);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user addresses from DB for checkout:", err);
+        setStep(1);
+      }
     }
+
+    fetchUserAddressFromDB();
   }, []);
 
   const goToStep = (num) => setStep(num);

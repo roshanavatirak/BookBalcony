@@ -54,14 +54,9 @@ export default function Step1_Address({ onNext }) {
 
         if (selectAddressIdToSet) {
           setSelectedAddressId(selectAddressIdToSet);
-          const target = fetchedAddresses.find(a => a._id === selectAddressIdToSet);
-          if (target) {
-            localStorage.setItem("userAddress", JSON.stringify(target));
-          }
         } else if (!selectedAddressId && fetchedAddresses.length > 0) {
           const primary = fetchedAddresses.find(a => a.isPrimary) || fetchedAddresses[0];
           setSelectedAddressId(primary._id);
-          localStorage.setItem("userAddress", JSON.stringify(primary));
         }
       }
     } catch (err) {
@@ -79,10 +74,6 @@ export default function Step1_Address({ onNext }) {
     setSelectedAddressId(addressId);
     setIsAddingNew(false);
     setEditingAddressId(null);
-    const selected = addresses.find(a => a._id === addressId);
-    if (selected) {
-      localStorage.setItem("userAddress", JSON.stringify(selected));
-    }
   };
 
   const handleAddNew = () => {
@@ -210,7 +201,6 @@ export default function Step1_Address({ onNext }) {
       return;
     }
 
-    localStorage.setItem("userAddress", JSON.stringify(selected));
     onNext(selected);
   };
 
