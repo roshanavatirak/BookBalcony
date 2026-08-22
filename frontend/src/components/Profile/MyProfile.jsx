@@ -241,13 +241,15 @@ const MyProfile = () => {
         </div>
 
         {isEditingInfo ? (
-          <form onSubmit={handleSaveInfo} className="space-y-3 pt-1">
+          <form onSubmit={handleSaveInfo} autoComplete="off" className="space-y-3 pt-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] text-zinc-400 block mb-1">First Name</label>
                 <input
                   type="text"
                   name="firstName"
+                  id="user_first_name"
+                  autoComplete="given-name"
                   value={infoForm.firstName}
                   onChange={handleInfoChange}
                   placeholder="Enter first name"
@@ -259,6 +261,8 @@ const MyProfile = () => {
                 <input
                   type="text"
                   name="lastName"
+                  id="user_last_name"
+                  autoComplete="family-name"
                   value={infoForm.lastName}
                   onChange={handleInfoChange}
                   placeholder="Enter last name"
