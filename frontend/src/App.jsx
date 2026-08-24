@@ -404,6 +404,7 @@ const App = () => {
           </Route>
 
           {/* Legacy route redirects for seamless backward compatibility */}
+          <Route path="/profile/favourites" element={<Navigate to="/account/profile/favourites" replace />} />
           <Route path="/profile" element={<Navigate to="/account/profile" replace />} />
           <Route path="/profile/*" element={<Navigate to="/account/profile" replace />} />
 

@@ -4,6 +4,7 @@ import Loader from "../Loader/Loader";
 import { FiEdit2 } from "react-icons/fi";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import AddressForm from "../Forms/AddressForm";
 
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -109,6 +110,33 @@ export default function Step1_Address({ onNext }) {
       postalCode: addr.postalCode || ""
     });
     setIsAddingNew(true);
+  };
+
+  const handleSetPrimary = async (e, addressId) => {
+    e.stopPropagation();
+    try {
+      const id = localStorage.getItem("id");
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/set-primary-address`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          id,
+          authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ addressId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        success("Primary address updated", "Success");
+        await fetchUserAddresses(addressId);
+      } else {
+        error(data.message || "Failed to set primary address");
+      }
+    } catch (err) {
+      console.error("Error setting primary address:", err);
+      error("Failed to set primary address");
+    }
   };
 
   const validateForm = () => {
@@ -275,10 +303,18 @@ export default function Step1_Address({ onNext }) {
                         >
                           <FiEdit2 className="w-3 h-3" />
                         </button>
-                        {addr.isPrimary && (
+                        {addr.isPrimary ? (
                           <span className="text-[9px] bg-yellow-400/20 text-yellow-300 px-1.5 py-0.5 rounded font-semibold border border-yellow-400/30">
                             Primary
                           </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => handleSetPrimary(e, addr._id)}
+                            className="text-[9px] bg-zinc-700/80 hover:bg-yellow-400/20 text-zinc-300 hover:text-yellow-300 px-1.5 py-0.5 rounded font-medium transition-colors"
+                          >
+                            Set Primary
+                          </button>
                         )}
                       </div>
                     </div>
@@ -333,105 +369,7 @@ export default function Step1_Address({ onNext }) {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            <div>
-              <label className="text-[10px] text-zinc-400 block mb-0.5">Full Name *</label>
-              <input
-                type="text"
-                name="fullName"
-                placeholder="Roshan Avatirak"
-                value={formData.fullName}
-                onChange={handleChange}
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] text-zinc-400 block mb-0.5">Phone *</label>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="10-digit mobile"
-                value={formData.phone}
-                onChange={handleChange}
-                maxLength="10"
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] text-zinc-400 block mb-0.5">Postal Code *</label>
-              <input
-                type="text"
-                name="postalCode"
-                placeholder="6-digit PIN"
-                value={formData.postalCode}
-                onChange={handleChange}
-                maxLength="6"
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-
-            <div className="col-span-2 sm:col-span-2">
-              <label className="text-[10px] text-zinc-400 block mb-0.5">Address Line 1 *</label>
-              <input
-                type="text"
-                name="addressLine1"
-                placeholder="Flat No, Building, Street"
-                value={formData.addressLine1}
-                onChange={handleChange}
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] text-zinc-400 block mb-0.5">Locality / Area *</label>
-              <input
-                type="text"
-                name="locality"
-                placeholder="Locality"
-                value={formData.locality}
-                onChange={handleChange}
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] text-zinc-400 block mb-0.5">City *</label>
-              <input
-                type="text"
-                name="city"
-                placeholder="City"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] text-zinc-400 block mb-0.5">State *</label>
-              <input
-                type="text"
-                name="state"
-                placeholder="State"
-                value={formData.state}
-                onChange={handleChange}
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] text-zinc-400 block mb-0.5">Landmark (Optional)</label>
-              <input
-                type="text"
-                name="addressLine2"
-                placeholder="Near hospital/park"
-                value={formData.addressLine2}
-                onChange={handleChange}
-                className="w-full bg-zinc-950/80 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-              />
-            </div>
-          </div>
+          <AddressForm formData={formData} onChange={handleChange} inputSize="sm" className="my-2" />
 
           <div className="flex gap-2 pt-1">
             <button

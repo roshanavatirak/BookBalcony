@@ -99,15 +99,14 @@ const Profile = () => {
 
   // Mobile tab navigation items
   const tabs = [
-    { to: "/profile", icon: <FaHeart />, label: "Favourites", exact: true },
-    { to: "/profile/orderHistory", icon: <FaHistory />, label: "Orders" },
-    { to: "/profile/my-subscriptions", icon: <FaBell />, label: "Subscriptions" },
-    { to: "/profile/settings", icon: <FaCog />, label: "Settings" },
+    { to: "/account/profile/favourites", icon: <FaHeart />, label: "Favourites" },
+    { to: "/account/profile/orderHistory", icon: <FaHistory />, label: "Orders" },
+    { to: "/account/profile/my-subscriptions", icon: <FaBell />, label: "Subscriptions" },
+    { to: "/account/profile/settings", icon: <FaCog />, label: "Settings" },
   ];
 
   const isTabActive = (tab) => {
-    if (tab.exact) return location.pathname === tab.to;
-    return location.pathname.startsWith(tab.to);
+    return location.pathname === tab.to || location.pathname.startsWith(tab.to + '/');
   };
 
   return (
@@ -251,11 +250,11 @@ const Profile = () => {
           {/* ═══════════════════════════════════════════
               DESKTOP LAYOUT (hidden on mobile)
           ═══════════════════════════════════════════ */}
-          <div className="hidden md:flex flex-row px-8 lg:px-12 py-8 gap-4">
-            <div className="w-1/4 xl:w-1/5 min-h-screen">
+          <div className="hidden md:flex flex-row px-6 lg:px-10 py-6 gap-6 items-start">
+            <div className="w-64 xl:w-60 flex-shrink-0 sticky top-24 h-fit">
               <Sidebar data={userData} seller={sellerData} />
             </div>
-            <div className="w-3/4 xl:w-4/5">
+            <div className="flex-1 min-w-0">
               <Outlet />
             </div>
           </div>

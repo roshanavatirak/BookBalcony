@@ -16,8 +16,8 @@ const ROUTE_TITLES = [
   { path: '/account/profile/settings', title: 'BookBalcony - Account Settings' },
   { path: '/account/profile/become-seller', title: 'BookBalcony - Become a Seller' },
   { path: '/account/profile/verified-seller-info', title: 'BookBalcony - Seller Verification' },
-  { path: '/account/profile/seller-application-submitted', title: 'BookBalcony - Application Submitted' },
-  { path: '/account/profile', title: 'BookBalcony - My Favourites' },
+  { path: '/account/profile/favourites', title: 'BookBalcony - My Favourites' },
+  { path: '/account/profile', title: 'BookBalcony - My Profile', exact: true },
   
   // Auth routes
   { path: '/account/login', title: 'BookBalcony - Sign In' },

@@ -194,22 +194,22 @@ const Sidebar = ({ data, seller }) => {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 rounded-3xl text-white 
+      className="relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 rounded-2xl text-white 
         w-full sm:w-80 md:w-72 lg:w-64 xl:w-60 
-        h-auto sm:min-h-screen p-6 sm:p-8 
+        h-auto p-4 sm:p-5 
         flex flex-col justify-start items-center 
-        shadow-2xl border border-zinc-700/50 backdrop-blur-sm
-        before:absolute before:inset-0 before:rounded-3xl before:p-[1px] 
+        shadow-xl border border-zinc-700/50 backdrop-blur-sm
+        before:absolute before:inset-0 before:rounded-2xl before:p-[1px] 
         before:bg-gradient-to-br before:from-yellow-400/20 before:via-transparent before:to-purple-500/20 
         before:-z-10 before:blur-sm"
     >
       {/* Decorative elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/5 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl"></div>
+      <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-400/5 rounded-full blur-2xl"></div>
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl"></div>
 
       {/* ✅ Error Display Banner */}
       {(!userInfo.hasData || userInfo.error) && (
-        <div className="w-full mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-2 text-red-400 text-xs">
+        <div className="w-full mb-3 p-2 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2 text-red-400 text-xs">
           <FaExclamationTriangle className="flex-shrink-0" />
           <span>Profile data loading issue. Some info may be unavailable.</span>
         </div>
@@ -220,7 +220,7 @@ const Sidebar = ({ data, seller }) => {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="w-full sm:hidden mb-6 bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 rounded-2xl p-4 flex items-center gap-4 shadow-lg backdrop-blur-md border border-zinc-700/30"
+        className="w-full sm:hidden mb-4 bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 rounded-xl p-3 flex items-center gap-3 shadow-lg backdrop-blur-md border border-zinc-700/30"
       >
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400 via-yellow-300 to-yellow-500 rounded-full blur-md opacity-50 animate-pulse"></div>
@@ -229,24 +229,24 @@ const Sidebar = ({ data, seller }) => {
               <img
                 src={avatarSrc}
                 alt="User Avatar"
-                className="w-16 h-16 rounded-full object-cover border-2 border-zinc-900"
+                className="w-12 h-12 rounded-full object-cover border border-zinc-900"
                 onError={handleImageError}
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center">
-                <FaUserCircle className="text-zinc-400 text-3xl" />
+              <div className="w-12 h-12 rounded-full bg-zinc-700 border border-zinc-900 flex items-center justify-center">
+                <FaUserCircle className="text-zinc-400 text-2xl" />
               </div>
             )}
           </div>
-          <div className="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-zinc-900 animate-pulse"></div>
+          <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3.5 h-3.5 rounded-full border border-zinc-900 animate-pulse"></div>
         </div>
         <div className="flex flex-col flex-1 min-w-0">
-          <h2 className="text-base font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent truncate">
+          <h2 className="text-sm font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent truncate">
             {userInfo.username}
           </h2>
-          <p className="text-xs text-zinc-400 truncate">{userInfo.email}</p>
+          <p className="text-[11px] text-zinc-400 truncate">{userInfo.email}</p>
           {!userInfo.hasData && (
-            <p className="text-xs text-red-400 mt-1">⚠️ Limited data</p>
+            <p className="text-[10px] text-red-400 mt-0.5">⚠️ Limited data</p>
           )}
         </div>
       </motion.div>
@@ -256,35 +256,35 @@ const Sidebar = ({ data, seller }) => {
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-        className="hidden sm:flex flex-col items-center mt-4"
+        className="hidden sm:flex flex-col items-center mt-1"
       >
         <div className="relative group">
           {/* Animated glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400 via-yellow-300 to-yellow-500 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-500 animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400 via-yellow-300 to-yellow-500 rounded-full blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300 animate-pulse"></div>
           
           {/* Avatar container with gradient border */}
-          <div className="relative rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-yellow-300 to-yellow-500 group-hover:scale-105 transition-transform duration-300">
+          <div className="relative rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-yellow-300 to-yellow-500 group-hover:scale-105 transition-transform duration-300">
             {avatarSrc ? (
               <img
                 src={avatarSrc}
                 alt="User Avatar"
-                className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-zinc-900"
+                className="w-16 h-16 md:w-16 md:h-16 rounded-full object-cover border-2 border-zinc-900"
                 onError={handleImageError}
               />
             ) : (
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-zinc-700 border-4 border-zinc-900 flex items-center justify-center">
-                <FaUserCircle className="text-zinc-400 text-5xl" />
+              <div className="w-16 h-16 md:w-16 md:h-16 rounded-full bg-zinc-700 border-2 border-zinc-900 flex items-center justify-center">
+                <FaUserCircle className="text-zinc-400 text-3xl" />
               </div>
             )}
           </div>
           
           {/* Online status indicator */}
-          <div className="absolute bottom-1 right-1 bg-green-500 w-6 h-6 rounded-full border-3 border-zinc-900 shadow-lg shadow-green-500/50 animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 bg-green-500 w-4 h-4 rounded-full border-2 border-zinc-900 shadow-md shadow-green-500/50 animate-pulse"></div>
           
           {/* Premium badge if applicable */}
           {userInfo.isPremium && (
-            <div className="absolute -top-2 -right-2 bg-gradient-to-br from-yellow-400 to-yellow-600 w-8 h-8 rounded-full flex items-center justify-center shadow-lg shadow-yellow-500/50 animate-bounce">
-              <FaCrown className="text-white text-xs" />
+            <div className="absolute -top-1 -right-1 bg-gradient-to-br from-yellow-400 to-yellow-600 w-6 h-6 rounded-full flex items-center justify-center shadow-md shadow-yellow-500/50 animate-bounce">
+              <FaCrown className="text-white text-[10px]" />
             </div>
           )}
         </div>
@@ -293,32 +293,32 @@ const Sidebar = ({ data, seller }) => {
           initial={{ y: 10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mt-4 text-lg md:text-xl font-bold bg-gradient-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent text-center px-2"
+          className="mt-2 text-sm md:text-base font-bold bg-gradient-to-r from-white via-zinc-100 to-zinc-300 bg-clip-text text-transparent text-center px-1"
         >
           {userInfo.username}
         </motion.h2>
-        <p className="text-sm text-zinc-400 mt-1 text-center px-2 truncate w-full max-w-full">
+        <p className="text-[11px] text-zinc-400 mt-0.5 text-center px-1 truncate w-full max-w-[180px]">
           {userInfo.email}
         </p>
         
         {/* Warning for limited data */}
         {!userInfo.hasData && (
-          <div className="mt-2 px-3 py-1 bg-red-500/10 border border-red-500/30 rounded-full">
-            <span className="text-xs text-red-400">⚠️ Limited data</span>
+          <div className="mt-1 px-2.5 py-0.5 bg-red-500/10 border border-red-500/30 rounded-full">
+            <span className="text-[10px] text-red-400">⚠️ Limited data</span>
           </div>
         )}
         
         {/* Stats or badge */}
-        <div className="mt-3 flex gap-2">
-          <div className="px-3 py-1 bg-zinc-800/50 rounded-full border border-zinc-700/50 backdrop-blur-sm flex items-center gap-1">
-            <FaStar className="text-yellow-400 text-xs" />
-            <span className="text-xs text-zinc-300">Member</span>
+        <div className="mt-1.5 flex gap-1">
+          <div className="px-2.5 py-0.5 bg-zinc-800/60 rounded-full border border-zinc-700/50 backdrop-blur-sm flex items-center gap-1">
+            <FaStar className="text-yellow-400 text-[10px]" />
+            <span className="text-[10px] font-medium text-zinc-300">Member</span>
           </div>
         </div>
       </motion.div>
 
       {/* Navigation */}
-      <nav className="mt-8 sm:mt-10 w-full flex flex-col gap-2 px-1">
+      <nav className="mt-3 w-full flex flex-col gap-1 px-0.5">
         {[
           { to: "/account/profile", icon: <FaUserCircle />, label: "My Profile", gradient: "from-yellow-400 to-amber-500" },
           { to: "/account/profile/favourites", icon: <FaHeart />, label: "Favourites", gradient: "from-red-400 to-pink-400" },
@@ -332,30 +332,30 @@ const Sidebar = ({ data, seller }) => {
               key={item.to}
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5 + index * 0.1 }}
+              transition={{ delay: 0.5 + index * 0.05 }}
             >
               <Link
                 to={item.to}
-                className={`relative group flex items-center gap-3 pl-5 pr-4 py-3.5 rounded-xl transition-all duration-300 overflow-hidden
+                className={`relative group flex items-center gap-2.5 pl-3.5 pr-3 py-2 rounded-lg transition-all duration-200 overflow-hidden
                 ${active
-                    ? "bg-gradient-to-r from-zinc-800 to-zinc-700 border-l-[5px] border-yellow-400 shadow-lg shadow-yellow-400/20"
-                    : "hover:bg-zinc-800/50 hover:translate-x-1"
+                    ? "bg-gradient-to-r from-zinc-800 to-zinc-700/90 border-l-[3px] border-yellow-400 shadow-md shadow-yellow-400/10"
+                    : "hover:bg-zinc-800/50 hover:translate-x-0.5"
                   }`}
               >
                 {/* Animated background on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-200`}></div>
                 
                 {/* Icon with glow effect */}
-                <div className={`relative text-lg z-10 transition-all duration-300 
+                <div className={`relative text-base z-10 transition-all duration-200 
                   ${active 
-                    ? "text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" 
-                    : "text-zinc-400 group-hover:text-yellow-300 group-hover:drop-shadow-[0_0_6px_rgba(253,224,71,0.3)]"
+                    ? "text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.4)]" 
+                    : "text-zinc-400 group-hover:text-yellow-300"
                   }`}
                 >
                   {item.icon}
                 </div>
                 
-                <span className={`text-sm font-medium z-10 transition-all duration-300 
+                <span className={`text-xs font-semibold z-10 transition-all duration-200 
                   ${active 
                     ? "text-white" 
                     : "text-zinc-300 group-hover:text-yellow-100"
@@ -368,7 +368,7 @@ const Sidebar = ({ data, seller }) => {
                 {active && (
                   <motion.div 
                     layoutId="activeIndicator"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full shadow-lg shadow-yellow-400/50"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-yellow-400 rounded-full shadow-md shadow-yellow-400/50"
                   />
                 )}
               </Link>
@@ -376,158 +376,134 @@ const Sidebar = ({ data, seller }) => {
           );
         })}
 
-        {/* ✅ Enhanced Seller Section with Error Handling */}
+        {/* ✅ Enhanced Seller Section */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
+          initial={{ y: 15, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="mt-4"
+          transition={{ delay: 0.7 }}
+          className="mt-2"
         >
           {sellerStatus.error ? (
-            <div className="flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400">
-              <FaExclamationTriangle className="text-lg" />
+            <div className="flex items-center gap-2 pl-3.5 pr-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400">
+              <FaExclamationTriangle className="text-base" />
               <div className="flex flex-col">
-                <span className="text-sm font-semibold">Status Error</span>
-                <span className="text-xs opacity-70">Unable to load seller status</span>
+                <span className="text-xs font-semibold">Status Error</span>
+                <span className="text-[10px] opacity-70">Unable to load seller status</span>
               </div>
             </div>
           ) : sellerStatus.type === 'verified' ? (
             <Link
               to="/account/profile/verified-seller-info"
-              className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-500 
+              className="relative group flex items-center gap-2.5 pl-3.5 pr-3 py-2 rounded-lg transition-all duration-300 
                 bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 
-                shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/50 hover:shadow-xl
-                text-black overflow-hidden transform hover:scale-[1.02]"
+                shadow-md shadow-yellow-500/20 hover:shadow-yellow-500/40
+                text-black overflow-hidden transform hover:scale-[1.01]"
             >
-              {/* Animated shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
               
-              {/* Sparkle effects */}
-              <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
-              <div className="absolute bottom-1 left-1 w-1.5 h-1.5 bg-white rounded-full opacity-0 group-hover:opacity-100 animate-ping animation-delay-200"></div>
-              
-              <div className="text-xl text-black group-hover:scale-110 transition-transform duration-300 z-10 drop-shadow-md">
+              <div className="text-base text-black group-hover:scale-105 transition-transform duration-200 z-10 drop-shadow-sm">
                 <FaStore />
               </div>
-              <div className="flex flex-col z-10">
-                <span className="text-sm font-bold drop-shadow-sm">Verified Seller</span>
-                <span className="text-xs opacity-80">Manage your store</span>
+              <div className="flex flex-col z-10 leading-tight">
+                <span className="text-xs font-bold drop-shadow-sm">Verified Seller</span>
+                <span className="text-[10px] opacity-80">Manage your store</span>
               </div>
-              <FaCrown className="ml-auto text-lg opacity-80 group-hover:rotate-12 transition-transform duration-300 z-10" />
+              <FaCrown className="ml-auto text-sm opacity-80 group-hover:rotate-12 transition-transform duration-200 z-10" />
             </Link>
           ) : sellerStatus.type === 'pending' ? (
             <Link
               to="/account/profile/seller-application-submitted"
-              className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-300 
-                bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 
-                text-orange-700 hover:text-orange-800 shadow-md hover:shadow-lg 
-                border border-orange-200 overflow-hidden transform hover:scale-[1.02]"
+              className="relative group flex items-center gap-2.5 pl-3.5 pr-3 py-2 rounded-lg transition-all duration-200 
+                bg-gradient-to-r from-orange-500/20 to-amber-500/20 hover:from-orange-500/30 hover:to-amber-500/30 
+                text-orange-300 shadow-sm border border-orange-500/30 overflow-hidden"
             >
-              {/* Pulsing background */}
-              <div className="absolute inset-0 bg-orange-200 opacity-0 group-hover:opacity-20 animate-pulse"></div>
-              
-              <div className="text-lg z-10 animate-pulse">
+              <div className="text-base z-10 animate-pulse text-orange-400">
                 <FaStore />
               </div>
-              <div className="flex flex-col z-10">
-                <span className="text-sm font-semibold">Under Review</span>
-                <span className="text-xs opacity-70">We're checking your application</span>
+              <div className="flex flex-col z-10 leading-tight">
+                <span className="text-xs font-semibold text-orange-300">Under Review</span>
+                <span className="text-[10px] text-orange-400/80">Checking application</span>
               </div>
             </Link>
           ) : sellerStatus.type === 'rejected' ? (
             <Link
               to="/account/profile/become-seller"
-              className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-300 
-                bg-gradient-to-r from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 
-                text-red-700 hover:text-red-800 shadow-md hover:shadow-lg 
-                border border-red-200 overflow-hidden transform hover:scale-[1.02]"
+              className="relative group flex items-center gap-2.5 pl-3.5 pr-3 py-2 rounded-lg transition-all duration-200 
+                bg-gradient-to-r from-red-500/20 to-rose-500/20 hover:from-red-500/30 hover:to-rose-500/30 
+                text-red-300 shadow-sm border border-red-500/30 overflow-hidden"
             >
-              <div className="absolute inset-0 bg-red-200 opacity-0 group-hover:opacity-20 animate-pulse"></div>
-              
-              <div className="text-lg z-10">
+              <div className="text-base z-10 text-red-400">
                 <FaExclamationTriangle />
               </div>
-              <div className="flex flex-col z-10">
-                <span className="text-sm font-semibold">Application Rejected</span>
-                <span className="text-xs opacity-70">Please re-apply</span>
+              <div className="flex flex-col z-10 leading-tight">
+                <span className="text-xs font-semibold text-red-300">Application Rejected</span>
+                <span className="text-[10px] text-red-400/80">Click to re-apply</span>
               </div>
             </Link>
           ) : sellerStatus.type === 'inconsistent' ? (
             <Link
               to="/account/profile/become-seller"
-              className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-300 
-                bg-gradient-to-r from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 
-                text-red-700 hover:text-red-800 shadow-md hover:shadow-lg 
-                border border-red-200 overflow-hidden transform hover:scale-[1.02]"
+              className="relative group flex items-center gap-2.5 pl-3.5 pr-3 py-2 rounded-lg transition-all duration-200 
+                bg-gradient-to-r from-red-500/20 to-rose-500/20 hover:from-red-500/30 
+                text-red-300 shadow-sm border border-red-500/30 overflow-hidden"
             >
-              <div className="absolute inset-0 bg-red-200 opacity-0 group-hover:opacity-20 animate-pulse"></div>
-              
-              <div className="text-lg z-10 animate-bounce">
+              <div className="text-base z-10 text-red-400 animate-bounce">
                 <FaExclamationTriangle />
               </div>
-              <div className="flex flex-col z-10">
-                <span className="text-sm font-semibold">Data Issue</span>
-                <span className="text-xs opacity-70">Please re-apply</span>
+              <div className="flex flex-col z-10 leading-tight">
+                <span className="text-xs font-semibold text-red-300">Data Issue</span>
+                <span className="text-[10px] text-red-400/80">Click to re-apply</span>
               </div>
             </Link>
           ) : (
             <Link
               to="/account/profile/become-seller"
-              className="relative group flex items-center gap-3 pl-5 pr-4 py-4 rounded-xl transition-all duration-500
-                bg-gradient-to-r from-zinc-800 to-zinc-700 hover:from-yellow-400 hover:to-yellow-500
+              className="relative group flex items-center gap-2.5 pl-3.5 pr-3 py-2 rounded-lg transition-all duration-300
+                bg-gradient-to-r from-zinc-800 to-zinc-700/80 hover:from-yellow-400 hover:to-yellow-500
                 border border-yellow-400/30 hover:border-yellow-400
-                shadow-md hover:shadow-xl hover:shadow-yellow-400/20
-                overflow-hidden transform hover:scale-[1.02]"
+                shadow-sm hover:shadow-md hover:shadow-yellow-400/20
+                overflow-hidden transform hover:scale-[1.01]"
             >
-              {/* Animated gradient background */}
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/0 via-yellow-400/10 to-yellow-400/0 
-                translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
               
-              <div className="text-lg text-yellow-400 group-hover:text-black transition-colors duration-300 z-10 
-                group-hover:scale-110 group-hover:rotate-12 transform">
+              <div className="text-base text-yellow-400 group-hover:text-black transition-colors duration-200 z-10">
                 <FaStore />
               </div>
-              <div className="flex flex-col z-10">
-                <span className="text-sm font-semibold text-yellow-300 group-hover:text-black transition-colors duration-300">
+              <div className="flex flex-col z-10 leading-tight">
+                <span className="text-xs font-bold text-yellow-300 group-hover:text-black transition-colors duration-200">
                   Become a Seller
                 </span>
-                <span className="text-xs text-yellow-400/70 group-hover:text-black/70 transition-colors duration-300">
+                <span className="text-[10px] text-yellow-400/70 group-hover:text-black/80 transition-colors duration-200">
                   Start selling on BookBalcony
                 </span>
               </div>
-              <FaStar className="ml-auto text-yellow-400 group-hover:text-black opacity-50 group-hover:opacity-100 
-                transition-all duration-300 z-10 group-hover:rotate-180 transform" />
+              <FaStar className="ml-auto text-xs text-yellow-400 group-hover:text-black opacity-60 group-hover:opacity-100 
+                transition-all duration-200 z-10" />
             </Link>
           )}
         </motion.div>
       </nav>
 
-      {/* ✅ Spacer for proper spacing between seller section and logout */}
-      <div className="flex-grow min-h-[24px] mt-6"></div>
-
       {/* Logout Button */}
       <motion.button
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.9 }}
+        transition={{ delay: 0.8 }}
         onClick={handleLogout}
-        className="mt-6 mb-4 flex items-center gap-3 px-4 py-3
-          bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 
-          text-white rounded-xl transition-all duration-300 w-full justify-center 
-          shadow-lg shadow-red-500/30 hover:shadow-red-500/50 hover:shadow-xl
-          transform hover:scale-[1.02] active:scale-95
-          border border-red-400/30 group overflow-hidden relative"
+        className="mt-3 mb-0.5 flex items-center gap-2 px-3 py-2
+          bg-gradient-to-r from-red-500/90 to-red-600/90 hover:from-red-600 hover:to-red-700 
+          text-white rounded-lg transition-all duration-200 w-full justify-center 
+          shadow-md shadow-red-500/20 hover:shadow-red-500/40
+          transform hover:scale-[1.01] active:scale-95
+          border border-red-400/30 group overflow-hidden relative cursor-pointer"
       >
-        {/* Animated background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 translate-y-full 
-          group-hover:translate-y-0 transition-transform duration-300"></div>
-        
-        <FaSignOutAlt className="z-10 group-hover:rotate-180 transition-transform duration-500" />
-        <span className="text-sm font-semibold z-10">Log Out</span>
+        <FaSignOutAlt className="text-xs z-10 group-hover:rotate-180 transition-transform duration-300" />
+        <span className="text-xs font-semibold z-10">Log Out</span>
       </motion.button>
 
       {/* Bottom decorative line */}
-      <div className="w-full h-1 bg-gradient-to-r from-transparent via-yellow-400/50 to-transparent rounded-full"></div>
+      <div className="w-full h-0.5 mt-2 bg-gradient-to-r from-transparent via-yellow-400/40 to-transparent rounded-full"></div>
     </motion.div>
   );
 };

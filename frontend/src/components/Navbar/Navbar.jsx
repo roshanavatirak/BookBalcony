@@ -744,7 +744,7 @@ function Navbar({ seller }) {
                       {!sellerMode && (
                         <>
                           <Link
-                            to="/account/profile"
+                            to="/account/profile/favourites"
                             onClick={handleLinkClick}
                             className="flex items-center gap-3 px-4 py-2 text-gray-800 hover:bg-yellow-400/10 hover:text-yellow-600 transition-all duration-200"
                           >

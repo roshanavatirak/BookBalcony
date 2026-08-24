@@ -482,71 +482,81 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import AddressForm from "../Forms/AddressForm";
 
 const SellerAddressForm = () => {
   const [addressData, setAddressData] = useState({
-    street: "",
-    village: "",
+    addressLine1: "",
+    addressLine2: "",
+    locality: "",
     city: "",
     state: "",
-    pincode: "",
+    postalCode: "",
     country: "India"
   });
 
   const navigate = useNavigate();
-  const { alert, hideAlert, success, error, warning } = useAlert();
+  const { alert, hideAlert, success, error } = useAlert();
 
   useEffect(() => {
     const sellerInfo = JSON.parse(localStorage.getItem("sellerDetails"));
 
     if (sellerInfo && sellerInfo.pickupAddress) {
-      setAddressData((prev) => ({
-        ...prev,
-        ...sellerInfo.pickupAddress,
-      }));
+      const addr = sellerInfo.pickupAddress;
+      setAddressData({
+        addressLine1: addr.addressLine1 || addr.street || "",
+        addressLine2: addr.addressLine2 || "",
+        locality: addr.locality || addr.village || "",
+        city: addr.city || "",
+        state: addr.state || "",
+        postalCode: addr.postalCode || addr.pincode || "",
+        country: addr.country || "India"
+      });
     }
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setAddressData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const validatePincode = (pincode) => {
     const pincodeRegex = /^\d{6}$/;
-    return pincodeRegex.test(pincode);
+    return pincodeRegex.test(pincode || "");
   };
 
   const handleSave = (e) => {
     e.preventDefault();
 
-    if (!addressData.street.trim()) {
-      error("Street address is required", "Missing Field");
+    if (!addressData.addressLine1?.trim()) {
+      error("Street address (Address Line 1) is required", "Missing Field");
       return;
     }
 
-    if (!addressData.city.trim()) {
+    if (!addressData.locality?.trim()) {
+      error("Area / Locality is required", "Missing Field");
+      return;
+    }
+
+    if (!addressData.city?.trim()) {
       error("City is required", "Missing Field");
       return;
     }
 
-    if (!addressData.state.trim()) {
+    if (!addressData.state?.trim()) {
       error("State is required", "Missing Field");
       return;
     }
 
-    if (!validatePincode(addressData.pincode)) {
+    if (!validatePincode(addressData.postalCode)) {
       error("Please enter a valid 6-digit pincode", "Invalid Pincode");
       return;
     }
 
-    if (!addressData.country.trim()) {
-      error("Country is required", "Missing Field");
-      return;
-    }
+    const savedAddress = {
+      ...addressData,
+      street: addressData.addressLine1,
+      village: addressData.locality,
+      pincode: addressData.postalCode
+    };
 
     const sellerDetails = JSON.parse(localStorage.getItem("sellerDetails")) || {};
-    sellerDetails.pickupAddress = addressData;
+    sellerDetails.pickupAddress = savedAddress;
     localStorage.setItem("sellerDetails", JSON.stringify(sellerDetails));
 
     success("Pickup address saved successfully!", "Step 3 Complete");
@@ -554,8 +564,14 @@ const SellerAddressForm = () => {
   };
 
   const handleBack = () => {
+    const savedAddress = {
+      ...addressData,
+      street: addressData.addressLine1,
+      village: addressData.locality,
+      pincode: addressData.postalCode
+    };
     const sellerDetails = JSON.parse(localStorage.getItem("sellerDetails")) || {};
-    sellerDetails.pickupAddress = addressData;
+    sellerDetails.pickupAddress = savedAddress;
     localStorage.setItem("sellerDetails", JSON.stringify(sellerDetails));
     
     navigate("/seller/bank-details");
@@ -648,126 +664,8 @@ const SellerAddressForm = () => {
             </div>
           </div>
 
-          {/* Street Address */}
-          <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300">
-            <label className="block text-base font-semibold text-yellow-300 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Street / Building / Landmark <span className="text-red-400 ml-1">*</span>
-            </label>
-            <textarea
-              name="street"
-              value={addressData.street}
-              onChange={handleChange}
-              placeholder="e.g. Building No. 5, 2nd Floor, Near Book Tower"
-              required
-              rows={3}
-              className="w-full px-4 py-3 bg-zinc-700/80 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all resize-none"
-            />
-            <p className="text-xs text-zinc-400 mt-2">Provide detailed address including building name, floor, and nearby landmarks</p>
-          </div>
-
-          {/* Village/Town (Optional) */}
-          <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300">
-            <label className="block text-base font-semibold text-yellow-300 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Village / Town <span className="text-zinc-500 text-xs">(Optional)</span>
-            </label>
-            <input
-              type="text"
-              name="village"
-              value={addressData.village}
-              onChange={handleChange}
-              placeholder="e.g. Shirpur or leave blank if not applicable"
-              className="w-full px-4 py-3 bg-zinc-700/80 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-            />
-            <p className="text-xs text-zinc-400 mt-2">For rural areas or small towns - skip if you're in a major city</p>
-          </div>
-
-          {/* City and State */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300">
-              <label className="block text-base font-semibold text-yellow-300 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                City <span className="text-red-400 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={addressData.city}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Mumbai"
-                className="w-full px-4 py-3 bg-zinc-700/80 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-              />
-            </div>
-
-            <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300">
-              <label className="block text-base font-semibold text-yellow-300 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                State <span className="text-red-400 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                name="state"
-                value={addressData.state}
-                onChange={handleChange}
-                required
-                placeholder="e.g. Maharashtra"
-                className="w-full px-4 py-3 bg-zinc-700/80 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-              />
-            </div>
-          </div>
-
-          {/* Pincode and Country */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300">
-              <label className="block text-base font-semibold text-yellow-300 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                Pincode <span className="text-red-400 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                name="pincode"
-                value={addressData.pincode}
-                onChange={handleChange}
-                required
-                placeholder="e.g. 444601"
-                pattern="^\d{6}$"
-                maxLength={6}
-                className="w-full px-4 py-3 bg-zinc-700/80 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all font-mono text-lg tracking-wider"
-                inputMode="numeric"
-              />
-              <p className="text-xs text-zinc-400 mt-2">6-digit postal code</p>
-            </div>
-
-            <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50 hover:border-zinc-600/50 transition-all duration-300">
-              <label className="block text-base font-semibold text-yellow-300 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Country <span className="text-red-400 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                name="country"
-                value={addressData.country}
-                onChange={handleChange}
-                required
-                placeholder="India"
-                className="w-full px-4 py-3 bg-zinc-700/80 border border-zinc-600 rounded-xl text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-              />
-            </div>
+          <div className="bg-zinc-800/50 rounded-2xl p-6 border border-zinc-700/50">
+            <AddressForm address={addressData} setAddress={setAddressData} showContact={false} inputSize="md" />
           </div>
 
           {/* Action Buttons */}

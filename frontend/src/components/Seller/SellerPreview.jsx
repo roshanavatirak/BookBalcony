@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import AddressForm from "../Forms/AddressForm";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -49,20 +50,26 @@ const SellerPreview = () => {
 
   const handleAddressChange = (e) => {
     const { name, value } = e.target;
+    const currentAddr = sellerData?.pickupAddress || {};
+    const updatedAddr = {
+      ...currentAddr,
+      [name]: value,
+      street: name === "addressLine1" ? value : (currentAddr.street || currentAddr.addressLine1 || ""),
+      village: name === "locality" ? value : (currentAddr.village || currentAddr.locality || ""),
+      pincode: name === "postalCode" ? value : (currentAddr.pincode || currentAddr.postalCode || ""),
+      addressLine1: name === "street" ? value : (currentAddr.addressLine1 || currentAddr.street || ""),
+      locality: name === "village" ? value : (currentAddr.locality || currentAddr.village || ""),
+      postalCode: name === "pincode" ? value : (currentAddr.postalCode || currentAddr.pincode || ""),
+    };
+
     setSellerData((prev) => ({
       ...prev,
-      pickupAddress: {
-        ...prev.pickupAddress,
-        [name]: value,
-      },
+      pickupAddress: updatedAddr,
     }));
 
     const updated = {
       ...sellerData,
-      pickupAddress: {
-        ...sellerData.pickupAddress,
-        [name]: value,
-      },
+      pickupAddress: updatedAddr,
     };
     localStorage.setItem("sellerDetails", JSON.stringify(updated));
   };
@@ -381,63 +388,7 @@ const SellerPreview = () => {
                 </svg>
                 Pickup Address
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs text-zinc-400 mb-1.5 font-medium">Street Address *</label>
-                  <textarea
-                    name="street"
-                    value={sellerData.pickupAddress?.street || ""}
-                    onChange={handleAddressChange}
-                    rows={2}
-                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-700/80 border border-zinc-600 text-white text-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all resize-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5 font-medium">Village/Town</label>
-                  <input
-                    name="village"
-                    value={sellerData.pickupAddress?.village || ""}
-                    onChange={handleAddressChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-700/80 border border-zinc-600 text-white text-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5 font-medium">City *</label>
-                  <input
-                    name="city"
-                    value={sellerData.pickupAddress?.city || ""}
-                    onChange={handleAddressChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-700/80 border border-zinc-600 text-white text-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5 font-medium">State *</label>
-                  <input
-                    name="state"
-                    value={sellerData.pickupAddress?.state || ""}
-                    onChange={handleAddressChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-700/80 border border-zinc-600 text-white text-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5 font-medium">Pincode *</label>
-                  <input
-                    name="pincode"
-                    value={sellerData.pickupAddress?.pincode || ""}
-                    onChange={handleAddressChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-700/80 border border-zinc-600 text-white text-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5 font-medium">Country *</label>
-                  <input
-                    name="country"
-                    value={sellerData.pickupAddress?.country || ""}
-                    onChange={handleAddressChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-zinc-700/80 border border-zinc-600 text-white text-sm focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 transition-all"
-                  />
-                </div>
-              </div>
+              <AddressForm address={sellerData.pickupAddress || {}} onChange={handleAddressChange} showContact={false} inputSize="sm" />
             </section>
 
             {/* Important Notice */}

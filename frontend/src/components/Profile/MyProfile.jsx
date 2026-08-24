@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { FaUserCircle, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaCheckCircle, FaCrown, FaPlus, FaStar, FaLock } from "react-icons/fa";
+import { FaUserCircle, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaCheckCircle, FaCrown, FaPlus, FaStar, FaLock, FaTrash } from "react-icons/fa";
 import Alert from "../Alert/Alert";
 import { useAlert } from "../Alert/useAlert";
+import AddressForm from "../Forms/AddressForm";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/v1`;
@@ -14,6 +15,7 @@ const MyProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
   
   // Profile edit form state (Only First Name & Last Name)
   const [infoForm, setInfoForm] = useState({
@@ -21,7 +23,7 @@ const MyProfile = () => {
     lastName: "",
   });
 
-  // Address add form state
+  // Address add/edit form state
   const [addressForm, setAddressForm] = useState({
     fullName: "",
     phone: "",
@@ -114,14 +116,24 @@ const MyProfile = () => {
       const token = localStorage.getItem("token");
       const id = localStorage.getItem("id");
 
-      await axios.post(
-        `${API_URL}/add-address`,
-        addressForm,
-        { headers: { id, authorization: `Bearer ${token}` } }
-      );
+      if (editingAddressId) {
+        await axios.put(
+          `${API_URL}/edit-address/${editingAddressId}`,
+          addressForm,
+          { headers: { id, authorization: `Bearer ${token}` } }
+        );
+        success("Delivery address updated successfully!", "Address Updated");
+      } else {
+        await axios.post(
+          `${API_URL}/add-address`,
+          addressForm,
+          { headers: { id, authorization: `Bearer ${token}` } }
+        );
+        success("New delivery address added successfully!", "Address Saved");
+      }
 
-      success("New delivery address added successfully!", "Address Saved");
       setIsAddingAddress(false);
+      setEditingAddressId(null);
       setAddressForm({
         fullName: "",
         phone: "",
@@ -134,11 +146,77 @@ const MyProfile = () => {
       });
       fetchProfileData();
     } catch (err) {
-      console.error("Error adding address:", err);
+      console.error("Error saving address:", err);
       error(err.response?.data?.message || "Failed to save address.", "Error");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSetPrimaryAddress = async (addressId) => {
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem("token");
+      const id = localStorage.getItem("id");
+
+      const res = await axios.put(
+        `${API_URL}/set-primary-address`,
+        { addressId },
+        { headers: { id, authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data?.success) {
+        success("Primary delivery address updated successfully!", "Primary Updated");
+        fetchProfileData();
+      } else {
+        error(res.data?.message || "Failed to set primary address.", "Error");
+      }
+    } catch (err) {
+      console.error("Error setting primary address:", err);
+      error(err.response?.data?.message || "Failed to set primary address.", "Error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    try {
+      setSubmitting(true);
+      const token = localStorage.getItem("token");
+      const id = localStorage.getItem("id");
+
+      const res = await axios.delete(
+        `${API_URL}/delete-address/${addressId}`,
+        { headers: { id, authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data?.success) {
+        success("Address deleted successfully!", "Deleted");
+        fetchProfileData();
+      } else {
+        error(res.data?.message || "Failed to delete address.", "Error");
+      }
+    } catch (err) {
+      console.error("Error deleting address:", err);
+      error(err.response?.data?.message || "Failed to delete address.", "Error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditAddress = (addr) => {
+    setEditingAddressId(addr._id);
+    setAddressForm({
+      fullName: addr.fullName || "",
+      phone: addr.phone || "",
+      addressLine1: addr.addressLine1 || "",
+      addressLine2: addr.addressLine2 || "",
+      locality: addr.locality || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      postalCode: addr.postalCode || "",
+    });
+    setIsAddingAddress(true);
   };
 
   if (loading) {
@@ -338,15 +416,28 @@ const MyProfile = () => {
           </div>
           {addresses.length < 3 && !isAddingAddress && (
             <button
-              onClick={() => setIsAddingAddress(true)}
-              className="px-2.5 py-1 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20 text-[11px] font-semibold rounded-md transition-colors flex items-center gap-1"
+              onClick={() => {
+                setEditingAddressId(null);
+                setAddressForm({
+                  fullName: "",
+                  phone: "",
+                  addressLine1: "",
+                  addressLine2: "",
+                  locality: "",
+                  city: "",
+                  state: "",
+                  postalCode: "",
+                });
+                setIsAddingAddress(true);
+              }}
+              className="px-2.5 py-1 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20 text-[11px] font-semibold rounded-md transition-colors flex items-center gap-1 cursor-pointer"
             >
               <FaPlus className="text-[9px]" /> Add Address
             </button>
           )}
         </div>
 
-        {/* Add Address Form Modal / Inline */}
+        {/* Add / Edit Address Form Modal / Inline */}
         <AnimatePresence>
           {isAddingAddress && (
             <motion.form
@@ -356,79 +447,27 @@ const MyProfile = () => {
               onSubmit={handleSaveAddress}
               className="bg-zinc-900/90 p-3 rounded-lg border border-yellow-400/30 space-y-2.5"
             >
-              <h3 className="text-xs font-bold text-yellow-400">Add New Delivery Address</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <input
-                  type="text"
-                  name="fullName"
-                  placeholder="Full Name *"
-                  value={addressForm.fullName}
-                  onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-                />
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Mobile Number (10 digits) *"
-                  value={addressForm.phone}
-                  onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-                />
-                <input
-                  type="text"
-                  name="addressLine1"
-                  placeholder="House/Flat No. & Street *"
-                  value={addressForm.addressLine1}
-                  onChange={handleAddressChange}
-                  className="sm:col-span-2 w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-                />
-                <input
-                  type="text"
-                  name="locality"
-                  placeholder="Area / Locality *"
-                  value={addressForm.locality}
-                  onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-                />
-                <input
-                  type="text"
-                  name="city"
-                  placeholder="City *"
-                  value={addressForm.city}
-                  onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-                />
-                <input
-                  type="text"
-                  name="state"
-                  placeholder="State *"
-                  value={addressForm.state}
-                  onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-                />
-                <input
-                  type="text"
-                  name="postalCode"
-                  placeholder="Pincode (6 digits) *"
-                  value={addressForm.postalCode}
-                  onChange={handleAddressChange}
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-1.5 text-xs text-white placeholder-zinc-500 focus:border-yellow-400 focus:outline-none"
-                />
-              </div>
+              <h3 className="text-xs font-bold text-yellow-400">
+                {editingAddressId ? "Edit Delivery Address" : "Add New Delivery Address"}
+              </h3>
+              <AddressForm formData={addressForm} onChange={handleAddressChange} inputSize="sm" />
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => setIsAddingAddress(false)}
-                  className="px-2.5 py-1 rounded-md text-[11px] bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                  onClick={() => {
+                    setIsAddingAddress(false);
+                    setEditingAddressId(null);
+                  }}
+                  className="px-2.5 py-1 rounded-md text-[11px] bg-zinc-800 text-zinc-300 hover:bg-zinc-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-3 py-1 rounded-md text-[11px] font-bold text-black bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50"
+                  className="px-3 py-1 rounded-md text-[11px] font-bold text-black bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 cursor-pointer"
                 >
-                  {submitting ? "Saving..." : "Save Address"}
+                  {submitting ? "Saving..." : editingAddressId ? "Update Address" : "Save Address"}
                 </button>
               </div>
             </motion.form>
@@ -442,8 +481,11 @@ const MyProfile = () => {
             <p className="text-[11px] text-zinc-400">No delivery addresses saved yet.</p>
             {!isAddingAddress && (
               <button
-                onClick={() => setIsAddingAddress(true)}
-                className="px-3 py-1.5 bg-yellow-400 text-black font-bold text-xs rounded-lg hover:bg-yellow-300 transition-colors"
+                onClick={() => {
+                  setEditingAddressId(null);
+                  setIsAddingAddress(true);
+                }}
+                className="px-3 py-1.5 bg-yellow-400 text-black font-bold text-xs rounded-lg hover:bg-yellow-300 transition-colors cursor-pointer"
               >
                 + Add Delivery Address
               </button>
@@ -454,23 +496,57 @@ const MyProfile = () => {
             {addresses.map((addr, idx) => (
               <div
                 key={addr._id || idx}
-                className={`p-3 rounded-lg border relative transition-all ${
+                className={`p-3 rounded-lg border relative transition-all flex flex-col justify-between ${
                   addr.isPrimary
-                    ? "bg-zinc-900/90 border-yellow-400/50 shadow-md"
-                    : "bg-zinc-900/50 border-zinc-700/50"
+                    ? "bg-zinc-900/90 border-yellow-400/60 shadow-md shadow-yellow-400/5"
+                    : "bg-zinc-900/50 border-zinc-700/50 hover:border-zinc-600"
                 }`}
               >
-                {addr.isPrimary && (
-                  <span className="absolute top-2.5 right-2.5 bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                    <FaStar className="text-[8px]" /> Primary
-                  </span>
-                )}
-                <p className="text-xs font-bold text-white truncate pr-16">{addr.fullName}</p>
-                <p className="text-[10px] text-zinc-400 mt-0.5">{addr.phone}</p>
-                <p className="text-[11px] text-zinc-300 mt-1.5 leading-snug line-clamp-2">
-                  {addr.addressLine1}
-                  {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}, {addr.locality}, {addr.city}, {addr.state} - <strong className="text-yellow-400">{addr.postalCode}</strong>
-                </p>
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white truncate">{addr.fullName}</p>
+                      <p className="text-[10px] text-zinc-400">{addr.phone}</p>
+                    </div>
+                    {addr.isPrimary ? (
+                      <span className="bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 flex-shrink-0">
+                        <FaStar className="text-[8px]" /> Primary
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleSetPrimaryAddress(addr._id)}
+                        disabled={submitting}
+                        className="bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/30 text-[9px] font-bold px-2 py-0.5 rounded-full transition-all flex items-center gap-1 cursor-pointer flex-shrink-0"
+                      >
+                        <FaStar className="text-[8px]" /> Set Primary
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-zinc-300 mt-1 leading-snug line-clamp-2">
+                    {addr.addressLine1}
+                    {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}, {addr.locality}, {addr.city}, {addr.state} - <strong className="text-yellow-400">{addr.postalCode}</strong>
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 mt-2 border-t border-zinc-800/80">
+                  <button
+                    type="button"
+                    onClick={() => handleEditAddress(addr)}
+                    className="text-[10px] text-zinc-400 hover:text-yellow-400 flex items-center gap-1 py-0.5 px-1.5 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <FaEdit className="text-[9px]" /> Edit
+                  </button>
+                  {addresses.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAddress(addr._id)}
+                      className="text-[10px] text-zinc-400 hover:text-red-400 flex items-center gap-1 py-0.5 px-1.5 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <FaTrash className="text-[9px]" /> Delete
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

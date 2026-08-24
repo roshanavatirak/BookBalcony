@@ -833,21 +833,35 @@ router.put("/set-primary-address", authenticateToken, async (req, res) => {
     const id = req.user?.id || req.headers.id;
     const { addressId } = req.body;
 
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    if (!addressId) {
+      return res.status(400).json({ success: false, message: "addressId is required" });
     }
 
-    // Set all addresses to non-primary
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    let updated = false;
     user.addresses.forEach(addr => {
-      addr.isPrimary = addr._id.toString() === addressId;
+      if (addr._id && addr._id.toString() === addressId.toString()) {
+        addr.isPrimary = true;
+        updated = true;
+      } else {
+        addr.isPrimary = false;
+      }
     });
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Address not found" });
+    }
 
     await user.save();
 
     return res.json({
       success: true,
-      message: "Primary address updated"
+      message: "Primary address updated successfully",
+      data: { addresses: user.addresses }
     });
   } catch (error) {
     console.error("Set primary error:", error);
